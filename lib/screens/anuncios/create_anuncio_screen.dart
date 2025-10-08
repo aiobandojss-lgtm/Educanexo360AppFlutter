@@ -1,4 +1,5 @@
 // lib/screens/anuncios/create_anuncio_screen.dart
+// ✅ ÚNICO CAMBIO: Gradient → Color sólido en header (línea 110)
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -107,12 +108,9 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
+      // ✅ CAMBIO AQUÍ: Color sólido en lugar de gradient
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Color(0xFF10B981), // Color sólido verde
       ),
       padding: const EdgeInsets.all(16),
       child: Row(

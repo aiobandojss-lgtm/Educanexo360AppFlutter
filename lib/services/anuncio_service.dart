@@ -36,7 +36,7 @@ class AnuncioService {
         queryParams['soloPublicados'] = true;
       }
 
-      // Filtros específicos
+      // Filtros específicos - ✅ SIN CASO BORRADORES
       switch (filtro) {
         case FiltroAnuncio.destacados:
           queryParams['soloDestacados'] = true;
@@ -49,9 +49,6 @@ class AnuncioService {
           break;
         case FiltroAnuncio.padres:
           queryParams['paraRol'] = 'ACUDIENTE';
-          break;
-        case FiltroAnuncio.borradores:
-          queryParams['soloPublicados'] = false;
           break;
         case FiltroAnuncio.todos:
           // Sin filtros adicionales
@@ -347,21 +344,6 @@ class AnuncioService {
     } catch (e) {
       print('❌ Error eliminando anuncio: $e');
       rethrow;
-    }
-  }
-
-  // ========================================
-  // 👁️ MARCAR COMO LEÍDO
-  // ========================================
-
-  Future<void> markAsRead(String anuncioId) async {
-    try {
-      print('👁️ Marcando anuncio como leído: $anuncioId');
-      await _apiService.put('/anuncios/$anuncioId/leer');
-      print('✅ Anuncio marcado como leído');
-    } catch (e) {
-      print('❌ Error marcando como leído: $e');
-      // No lanzar error, es operación secundaria
     }
   }
 

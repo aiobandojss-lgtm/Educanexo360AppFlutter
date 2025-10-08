@@ -365,14 +365,13 @@ class User {
   }
 }
 
-// 🏷️ ENUMS Y FILTROS
+// 🏷️ ENUMS Y FILTROS - ✅ SIN BORRADORES
 enum FiltroAnuncio {
   todos,
   destacados,
   estudiantes,
   docentes,
   padres,
-  borradores,
 }
 
 // 🔧 EXTENSION PARA FILTROS
@@ -389,8 +388,6 @@ extension FiltroAnuncioExtension on FiltroAnuncio {
         return 'Docentes';
       case FiltroAnuncio.padres:
         return 'Padres';
-      case FiltroAnuncio.borradores:
-        return 'Borradores';
     }
   }
 
@@ -406,8 +403,6 @@ extension FiltroAnuncioExtension on FiltroAnuncio {
         return '👩‍🏫';
       case FiltroAnuncio.padres:
         return '👨‍👩‍👧‍👦';
-      case FiltroAnuncio.borradores:
-        return '📝';
     }
   }
 }

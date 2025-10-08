@@ -1,4 +1,5 @@
 // lib/screens/anuncios/anuncio_detail_screen.dart
+// ✅ ÚNICO CAMBIO: Gradient → Color sólido en header (línea 200)
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -43,8 +44,7 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
           _isLoading = false;
         });
 
-        // Marcar como leído
-        provider.markAsRead(widget.anuncioId);
+        // ✅ SIN marcar como leído - Solo mostrar contador
       } else {
         _showError('Anuncio no encontrado');
       }
@@ -137,12 +137,9 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
+      // ✅ CAMBIO AQUÍ: Color sólido en lugar de gradient
       decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF10B981), Color(0xFF2563EB)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: Color(0xFF10B981), // Color sólido verde
       ),
       padding: const EdgeInsets.all(16),
       child: Column(
