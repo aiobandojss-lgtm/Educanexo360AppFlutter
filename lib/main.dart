@@ -1,5 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart'; // ← IMPORTANTE
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'config/theme.dart';
@@ -7,7 +8,8 @@ import 'config/app_config.dart';
 import 'config/routes.dart';
 import 'providers/auth_provider.dart';
 import 'providers/message_provider.dart';
-import 'providers/anuncio_provider.dart'; // ← NUEVO IMPORT
+import 'providers/anuncio_provider.dart';
+import 'providers/calendario_provider.dart'; // ← NUEVO
 import 'services/storage_service.dart';
 import 'services/api_service.dart';
 
@@ -15,7 +17,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializar formatos de fecha en español
-  await initializeDateFormatting('es', null);
+  await initializeDateFormatting('es_ES', null);
 
   // Mostrar configuración
   AppConfig.printConfig();
@@ -49,13 +51,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ✅ MultiProvider con todos los providers
     return MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => MessageProvider()),
-        ChangeNotifierProvider(
-            create: (_) => AnuncioProvider()), // ← NUEVO PROVIDER
+        ChangeNotifierProvider(create: (_) => AnuncioProvider()),
+        ChangeNotifierProvider(create: (_) => CalendarioProvider()), // ← NUEVO
       ],
       child: Builder(
         builder: (context) {
@@ -65,6 +66,18 @@ class MyApp extends StatelessWidget {
             title: 'EducaNexo360',
             debugShowCheckedModeBanner: false,
             theme: AppTheme.lightTheme,
+
+            // ✅ LOCALIZACIONES EN ESPAÑOL - CRÍTICO
+            localizationsDelegates: const [
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('es', 'ES'), // Español
+              Locale('en', 'US'), // Inglés (fallback)
+            ],
+            locale: const Locale('es', 'ES'),
 
             // Configuración de GoRouter
             routerConfig: AppRoutes.createRouter(authProvider),

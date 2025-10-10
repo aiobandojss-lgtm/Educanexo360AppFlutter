@@ -5,7 +5,7 @@ class AppConfig {
   // ==========================================
 
   // ⚠️ CAMBIAR ESTA IP POR LA DE TU SERVIDOR BACKEND
-  static const String _localIp = '192.168.1.3';
+  static const String _localIp = '192.168.1.4';
   static const int _port = 3000;
 
   // URL base según el entorno

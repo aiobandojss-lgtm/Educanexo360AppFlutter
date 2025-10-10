@@ -12,6 +12,7 @@ import '../screens/anuncios/anuncios_screen.dart';
 import '../screens/anuncios/anuncio_detail_screen.dart';
 import '../screens/anuncios/create_anuncio_screen.dart';
 import '../models/anuncio.dart';
+import '../screens/calendario/calendario_screen.dart';
 
 /// Configuración de rutas de la aplicación con GoRouter
 class AppRoutes {
@@ -134,11 +135,8 @@ class AppRoutes {
 
         // ==================== CALENDARIO ====================
         GoRoute(
-          path: calendario,
-          name: 'calendario',
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Calendario - Próximamente')),
-          ),
+          path: '/calendario',
+          builder: (context, state) => const CalendarioScreen(),
         ),
 
         // ==================== ASISTENCIA ====================
