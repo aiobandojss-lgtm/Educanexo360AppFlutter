@@ -4,6 +4,7 @@
 import 'package:flutter/material.dart';
 import '../models/usuario.dart';
 import '../services/usuario_service.dart';
+import '../services/permission_service.dart';
 
 class UsuarioProvider with ChangeNotifier {
   final UsuarioService _usuarioService = UsuarioService();
@@ -279,6 +280,79 @@ class UsuarioProvider with ChangeNotifier {
     } catch (e) {
       print('❌ Error obteniendo estudiantes asociados: $e');
       return [];
+    }
+  }
+
+  // ========================================
+  // 🔍 BUSCAR ESTUDIANTES PARA ASOCIAR
+  // ========================================
+
+  Future<List<Usuario>> buscarEstudiantesParaAsociar({
+    String? query,
+  }) async {
+    try {
+      print('🔍 Buscando estudiantes para asociar...');
+
+      // Obtener escuelaId del usuario actual
+      final currentUser = PermissionService.getCurrentUser();
+      if (currentUser?.escuelaId == null) {
+        throw Exception('No se pudo obtener la escuela del usuario actual');
+      }
+
+      return await _usuarioService.buscarEstudiantesParaAsociar(
+        escuelaId: currentUser!.escuelaId!,
+        query: query,
+      );
+    } catch (e) {
+      print('❌ Error buscando estudiantes: $e');
+      rethrow;
+    }
+  }
+
+  // ========================================
+  // ➕ ASOCIAR ESTUDIANTE
+  // ========================================
+
+  Future<void> asociarEstudiante({
+    required String acudienteId,
+    required String estudianteId,
+  }) async {
+    try {
+      print('➕ Asociando estudiante: $estudianteId a acudiente: $acudienteId');
+
+      await _usuarioService.asociarEstudiante(
+        acudienteId: acudienteId,
+        estudianteId: estudianteId,
+      );
+
+      print('✅ Estudiante asociado correctamente');
+    } catch (e) {
+      print('❌ Error asociando estudiante: $e');
+      rethrow;
+    }
+  }
+
+  // ========================================
+  // ➖ DESASOCIAR ESTUDIANTE
+  // ========================================
+
+  Future<void> desasociarEstudiante({
+    required String acudienteId,
+    required String estudianteId,
+  }) async {
+    try {
+      print(
+          '➖ Desasociando estudiante: $estudianteId de acudiente: $acudienteId');
+
+      await _usuarioService.desasociarEstudiante(
+        acudienteId: acudienteId,
+        estudianteId: estudianteId,
+      );
+
+      print('✅ Estudiante desasociado correctamente');
+    } catch (e) {
+      print('❌ Error desasociando estudiante: $e');
+      rethrow;
     }
   }
 

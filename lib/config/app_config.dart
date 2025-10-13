@@ -47,6 +47,12 @@ class AppConfig {
       '/usuarios/$id/cambiar-password';
   static String usuarioAssociatedStudents(String id) =>
       '/usuarios/$id/estudiantes-asociados';
+  static String usuarioAssociateStudent(String acudienteId) =>
+      '/usuarios/$acudienteId/estudiantes-asociados';
+
+  static String usuarioDisassociateStudent(
+          String acudienteId, String estudianteId) =>
+      '/usuarios/$acudienteId/estudiantes-asociados/$estudianteId';
 
   // ==========================================
   // ENDPOINTS DE MENSAJERÍA

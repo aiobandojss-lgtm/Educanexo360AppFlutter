@@ -1,12 +1,11 @@
 // lib/screens/usuarios/manage_students_screen.dart
-// 🎓 PANTALLA DE GESTIÓN DE ESTUDIANTES ASOCIADOS (ACUDIENTE)
-// Basada en ManageStudentsScreen.tsx
+// 🎓 PANTALLA DE GESTIÓN DE ESTUDIANTES ASOCIADOS (ACUDIENTE) - COMPLETA
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
+import 'search_students_screen.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
   final String acudienteId;
@@ -21,7 +20,6 @@ class ManageStudentsScreen extends StatefulWidget {
 }
 
 class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
-  final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   List<Usuario> _estudiantesAsociados = [];
 
@@ -29,12 +27,6 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   void initState() {
     super.initState();
     _loadEstudiantes();
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
   }
 
   Future<void> _loadEstudiantes() async {
@@ -63,6 +55,80 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
     );
   }
 
+  void _showSuccess(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  Future<void> _abrirBusquedaEstudiantes() async {
+    final estudiantesIds = _estudiantesAsociados.map((e) => e.id).toList();
+
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => SearchStudentsScreen(
+          acudienteId: widget.acudienteId,
+          estudiantesYaAsociados: estudiantesIds,
+        ),
+      ),
+    );
+
+    // Si se asoció un estudiante, recargar la lista
+    if (result == true) {
+      await _loadEstudiantes();
+    }
+  }
+
+  Future<void> _confirmarDesasociacion(Usuario estudiante) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Confirmar desasociación'),
+        content: Text(
+          '¿Estás seguro de que deseas desasociar a ${estudiante.nombreCompleto}?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Desasociar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      await _desasociarEstudiante(estudiante);
+    }
+  }
+
+  Future<void> _desasociarEstudiante(Usuario estudiante) async {
+    try {
+      final provider = context.read<UsuarioProvider>();
+      await provider.desasociarEstudiante(
+        acudienteId: widget.acudienteId,
+        estudianteId: estudiante.id,
+      );
+
+      _showSuccess('${estudiante.nombreCompleto} desasociado correctamente');
+
+      // Recargar lista
+      await _loadEstudiantes();
+    } catch (e) {
+      _showError('Error desasociando estudiante: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,15 +139,8 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            onPressed: () {
-              // TODO: Implementar búsqueda de estudiantes
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🔍 Búsqueda de estudiantes - Próximamente'),
-                  backgroundColor: Color(0xFF0891B2),
-                ),
-              );
-            },
+            onPressed: _abrirBusquedaEstudiantes,
+            tooltip: 'Agregar estudiante',
           ),
         ],
       ),
@@ -103,30 +162,59 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   Widget _buildEstudianteCard(Usuario estudiante) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
           backgroundColor: const Color(0xFFEC4899),
+          radius: 28,
           child: Text(
             estudiante.iniciales,
             style: const TextStyle(
-                color: Colors.white, fontWeight: FontWeight.bold),
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 18,
+            ),
           ),
         ),
         title: Text(
           estudiante.nombreCompleto,
-          style: const TextStyle(fontWeight: FontWeight.w600),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: 16,
+          ),
         ),
-        subtitle: Text(estudiante.email),
-        trailing: IconButton(
-          icon: const Icon(Icons.remove_circle_outline, color: Colors.red),
-          onPressed: () {
-            // TODO: Implementar desasociar estudiante
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('🔗 Desasociar estudiante - Próximamente'),
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 4),
+            Text(
+              estudiante.email,
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
               ),
-            );
-          },
+            ),
+            if (estudiante.infoAcademica?.grado != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Grado: ${estudiante.infoAcademica!.grado}',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ],
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.remove_circle_outline),
+          color: Colors.red,
+          tooltip: 'Desasociar estudiante',
+          onPressed: () => _confirmarDesasociacion(estudiante),
         ),
       ),
     );
@@ -144,24 +232,22 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             'Presiona + para agregar estudiantes',
-            style: TextStyle(fontSize: 14, color: Colors.grey),
+            style: TextStyle(fontSize: 14, color: Colors.grey[600]),
           ),
           const SizedBox(height: 24),
           ElevatedButton.icon(
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('🔍 Búsqueda de estudiantes - Próximamente'),
-                ),
-              );
-            },
+            onPressed: _abrirBusquedaEstudiantes,
             icon: const Icon(Icons.add),
             label: const Text('Agregar Estudiante'),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF6366F1),
+              foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
           ),
         ],

@@ -235,4 +235,94 @@ class UsuarioService {
       return [];
     }
   }
+
+  Future<List<Usuario>> buscarEstudiantesParaAsociar({
+    required String escuelaId,
+    String? query,
+  }) async {
+    try {
+      print('🔍 UsuarioService: Buscando estudiantes para asociar...');
+      print('   Escuela: $escuelaId');
+      print('   Query: $query');
+
+      final queryParams = <String, dynamic>{
+        'tipo': UserRole.estudiante.value,
+        'escuelaId': escuelaId,
+      };
+
+      if (query != null && query.isNotEmpty) {
+        queryParams['q'] = query;
+      }
+
+      final response = await _apiService.get(
+        AppConfig.usuarios,
+        queryParameters: queryParams,
+      );
+
+      if (response['success'] == true) {
+        final List<dynamic> data = response['data'] ?? [];
+        final estudiantes = data.map((json) => Usuario.fromJson(json)).toList();
+        print('✅ ${estudiantes.length} estudiantes encontrados');
+        return estudiantes;
+      }
+
+      return [];
+    } catch (e) {
+      print('❌ Error buscando estudiantes: $e');
+      rethrow;
+    }
+  }
+
+  // ➕ Asociar estudiante a acudiente
+  Future<void> asociarEstudiante({
+    required String acudienteId,
+    required String estudianteId,
+  }) async {
+    try {
+      print('➕ UsuarioService: Asociando estudiante...');
+      print('   Acudiente: $acudienteId');
+      print('   Estudiante: $estudianteId');
+
+      final response = await _apiService.post(
+        AppConfig.usuarioAssociateStudent(acudienteId),
+        data: {'estudianteId': estudianteId},
+      );
+
+      if (response['success'] == true) {
+        print('✅ Estudiante asociado correctamente');
+        return;
+      }
+
+      throw Exception('Error asociando estudiante');
+    } catch (e) {
+      print('❌ Error asociando estudiante: $e');
+      rethrow;
+    }
+  }
+
+  // ➖ Desasociar estudiante de acudiente
+  Future<void> desasociarEstudiante({
+    required String acudienteId,
+    required String estudianteId,
+  }) async {
+    try {
+      print('➖ UsuarioService: Desasociando estudiante...');
+      print('   Acudiente: $acudienteId');
+      print('   Estudiante: $estudianteId');
+
+      final response = await _apiService.delete(
+        AppConfig.usuarioDisassociateStudent(acudienteId, estudianteId),
+      );
+
+      if (response['success'] == true) {
+        print('✅ Estudiante desasociado correctamente');
+        return;
+      }
+
+      throw Exception('Error desasociando estudiante');
+    } catch (e) {
+      print('❌ Error desasociando estudiante: $e');
+      rethrow;
+    }
+  }
 }
