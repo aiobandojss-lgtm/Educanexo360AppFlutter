@@ -13,6 +13,10 @@ import '../screens/anuncios/anuncio_detail_screen.dart';
 import '../screens/anuncios/create_anuncio_screen.dart';
 import '../models/anuncio.dart';
 import '../screens/calendario/calendario_screen.dart';
+import '../screens/usuarios/users_management_screen.dart';
+import '../screens/usuarios/user_detail_screen.dart';
+import '../screens/usuarios/edit_user_screen.dart';
+import '../screens/usuarios/manage_students_screen.dart';
 
 /// Configuración de rutas de la aplicación con GoRouter
 class AppRoutes {
@@ -153,6 +157,48 @@ class AppRoutes {
           path: perfil,
           name: 'perfil',
           builder: (context, state) => const PerfilScreen(),
+        ),
+        // ==================== USUARIOS ====================
+        GoRoute(
+          path: '/usuarios',
+          name: 'usuarios',
+          builder: (context, state) => const UsersManagementScreen(),
+          routes: [
+            // Crear usuario
+            GoRoute(
+              path: 'create',
+              name: 'usuario-create',
+              builder: (context, state) => const EditUserScreen(),
+            ),
+            // Detalle de usuario
+            GoRoute(
+              path: ':userId',
+              name: 'usuario-detail',
+              builder: (context, state) {
+                final userId = state.pathParameters['userId']!;
+                return UserDetailScreen(userId: userId);
+              },
+            ),
+            // Editar usuario
+            GoRoute(
+              path: 'edit/:userId',
+              name: 'usuario-edit',
+              builder: (context, state) {
+                final userId = state.pathParameters['userId']!;
+                return EditUserScreen(userId: userId);
+              },
+            ),
+            GoRoute(
+              path: 'manage-students/:acudienteId',
+              name: 'manage-students',
+              pageBuilder: (context, state) {
+                final acudienteId = state.pathParameters['acudienteId']!;
+                return NoTransitionPage(
+                  child: ManageStudentsScreen(acudienteId: acudienteId),
+                );
+              },
+            ),
+          ],
         ),
       ],
 

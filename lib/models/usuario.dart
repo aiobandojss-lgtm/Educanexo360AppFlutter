@@ -138,6 +138,11 @@ class Usuario {
   final String? perfilRolId;
   final List<String>? permisos;
 
+  // ✅ AGREGAR ESTOS 3 CAMPOS NUEVOS
+  final String? fcmToken;
+  final String? platform;
+  final DateTime? fcmTokenUpdatedAt;
+
   Usuario({
     required this.id,
     required this.nombre,
@@ -157,6 +162,10 @@ class Usuario {
     this.rolBase,
     this.perfilRolId,
     this.permisos,
+    // ✅ AGREGAR EN EL CONSTRUCTOR
+    this.fcmToken,
+    this.platform,
+    this.fcmTokenUpdatedAt,
   });
 
   /// Nombre completo del usuario
@@ -172,39 +181,79 @@ class Usuario {
 
   /// Factory para crear desde JSON
   factory Usuario.fromJson(Map<String, dynamic> json) {
+    // ✅ FIX CRÍTICO: Manejar TODOS los casos de null
+
+    // 1️⃣ ID con fallback seguro
+    final userId = json['_id']?.toString() ?? json['id']?.toString() ?? '';
+    if (userId.isEmpty) {
+      print('⚠️ WARNING: Usuario sin ID válido');
+    }
+
     return Usuario(
-      id: json['_id'] ?? json['id'],
-      nombre: json['nombre'] ?? '',
-      apellidos: json['apellidos'] ?? '',
-      email: json['email'] ?? '',
-      tipo:
-          UserRole.fromString(json['tipo'] ?? json['rolBase'] ?? 'ESTUDIANTE'),
-      estado: UserStatus.fromString(json['estado'] ?? 'ACTIVO'),
-      escuelaId: json['escuelaId'],
+      // ✅ ID con triple protección
+      id: userId,
+
+      // ✅ Campos requeridos con fallback seguro
+      nombre: json['nombre']?.toString() ?? '',
+      apellidos: json['apellidos']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+
+      // ✅ Enums con fallback
+      tipo: UserRole.fromString(json['tipo']?.toString() ??
+          json['rolBase']?.toString() ??
+          'ESTUDIANTE'),
+      estado: UserStatus.fromString(json['estado']?.toString() ?? 'ACTIVO'),
+
+      // ✅ Campos opcionales (ya estaban bien)
+      escuelaId: json['escuelaId']?.toString(),
+
+      // ✅ Info académica protegida
       infoAcademica: json['info_academica'] != null
-          ? AcademicInfo.fromJson(json['info_academica'])
+          ? AcademicInfo.fromJson(
+              json['info_academica'] as Map<String, dynamic>)
           : null,
+
+      // ✅ Info contacto con doble fuente
       infoContacto: json['info_contacto'] != null || json['perfil'] != null
-          ? ContactInfo.fromJson(json['info_contacto'] ?? json['perfil'] ?? {})
+          ? ContactInfo.fromJson((json['info_contacto'] ?? json['perfil'] ?? {})
+              as Map<String, dynamic>)
           : null,
-      avatar: json['avatar'] ?? json['perfil']?['foto'],
+
+      // ✅ Avatar con doble fuente
+      avatar: json['avatar']?.toString() ?? json['perfil']?['foto']?.toString(),
+
+      // ✅ Fechas con tryParse (ya estaban bien)
       fechaNacimiento: json['fechaNacimiento'] != null
-          ? DateTime.tryParse(json['fechaNacimiento'])
+          ? DateTime.tryParse(json['fechaNacimiento'].toString())
           : null,
-      genero: json['genero'],
+
+      genero: json['genero']?.toString(),
+
       ultimoAcceso: json['ultimoAcceso'] != null
-          ? DateTime.tryParse(json['ultimoAcceso'])
+          ? DateTime.tryParse(json['ultimoAcceso'].toString())
           : null,
+
       createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'])
+          ? DateTime.tryParse(json['createdAt'].toString())
           : null,
+
       updatedAt: json['updatedAt'] != null
-          ? DateTime.tryParse(json['updatedAt'])
+          ? DateTime.tryParse(json['updatedAt'].toString())
           : null,
-      rolBase: json['rolBase'],
-      perfilRolId: json['perfilRolId'],
-      permisos:
-          json['permisos'] != null ? List<String>.from(json['permisos']) : null,
+
+      // ✅ Campos sistema futuro
+      rolBase: json['rolBase']?.toString(),
+      perfilRolId: json['perfilRolId']?.toString(),
+      permisos: json['permisos'] != null
+          ? List<String>.from(json['permisos'] as List)
+          : null,
+
+      // ✅ CAMPOS FCM (para notificaciones push)
+      fcmToken: json['fcmToken']?.toString(),
+      platform: json['platform']?.toString(),
+      fcmTokenUpdatedAt: json['fcmTokenUpdatedAt'] != null
+          ? DateTime.tryParse(json['fcmTokenUpdatedAt'].toString())
+          : null,
     );
   }
 

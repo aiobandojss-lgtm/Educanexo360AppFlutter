@@ -3,16 +3,9 @@ import '../config/app_config.dart';
 import '../models/usuario.dart';
 import 'api_service.dart';
 
-/// Servicio para gestión de usuarios
-/// Equivalente a userService.ts de React Native
 class UsuarioService {
   final ApiService _apiService = apiService;
 
-  // ==========================================
-  // OBTENER USUARIOS
-  // ==========================================
-
-  /// Obtener lista de usuarios (con filtros opcionales)
   Future<List<Usuario>> getUsers({
     UserRole? tipo,
     String? query,
@@ -43,7 +36,6 @@ class UsuarioService {
     }
   }
 
-  /// Obtener usuario por ID
   Future<Usuario> getUserById(String userId) async {
     try {
       print('👤 UsuarioService: Obteniendo usuario $userId...');
@@ -65,17 +57,15 @@ class UsuarioService {
     }
   }
 
-  // ==========================================
-  // ACTUALIZAR USUARIO
-  // ==========================================
-
-  /// Actualizar datos de usuario
+  // ✅ CORREGIDO: Agregados parámetros tipo y estado
   Future<Usuario> updateUser(
     String userId, {
     String? nombre,
     String? apellidos,
     String? email,
     String? telefono,
+    UserRole? tipo, // ✅ AGREGAR ESTA LÍNEA
+    UserStatus? estado, // ✅ AGREGAR ESTA LÍNEA
   }) async {
     try {
       print('✏️ UsuarioService: Actualizando usuario $userId...');
@@ -87,6 +77,11 @@ class UsuarioService {
       if (telefono != null) {
         data['perfil'] = {'telefono': telefono};
       }
+
+      // ✅ AGREGAR tipo y estado
+      // ✅ AGREGAR ESTAS 2 LÍNEAS
+      if (tipo != null) data['tipo'] = tipo.value;
+      if (estado != null) data['estado'] = estado.value;
 
       final response = await _apiService.put(
         AppConfig.usuarioUpdate(userId),
@@ -106,12 +101,6 @@ class UsuarioService {
     }
   }
 
-  // ==========================================
-  // CAMBIAR CONTRASEÑA
-  // ==========================================
-
-  /// Cambiar contraseña de usuario
-  /// Replica la lógica de userService.ts con dos estrategias
   Future<void> changePassword({
     required String userId,
     required String currentPassword,
@@ -142,11 +131,7 @@ class UsuarioService {
     }
   }
 
-  // ==========================================
-  // CREAR USUARIO (ADMIN)
-  // ==========================================
-
-  /// Crear nuevo usuario (solo ADMIN)
+  // ✅ CORREGIDO: Validación de campos NULL
   Future<Usuario> createUser({
     required String nombre,
     required String apellidos,
@@ -159,6 +144,7 @@ class UsuarioService {
   }) async {
     try {
       print('➕ UsuarioService: Creando usuario $email...');
+      print('🏫 EscuelaId: $escuelaId');
 
       final data = {
         'nombre': nombre,
@@ -171,52 +157,66 @@ class UsuarioService {
         if (telefono != null) 'perfil': {'telefono': telefono},
       };
 
+      print('📤 Enviando datos: ${data.keys.toList()}');
+
       final response = await _apiService.post(
         AppConfig.authRegister,
         data: data,
       );
 
+      print('📦 Respuesta recibida: ${response.keys.toList()}');
+
       if (response['success'] == true) {
-        final newUser = Usuario.fromJson(response['data']);
-        print('✅ Usuario creado: ${newUser.nombreCompleto}');
+        final userData = response['data'];
+        if (userData == null) {
+          print('⚠️ Backend no devolvió datos del usuario');
+          throw Exception('Backend no devolvió los datos del usuario creado');
+        }
+
+        // ✅ FIX: Validar y completar campos NULL del backend
+        if (userData['nombre'] == null) userData['nombre'] = nombre;
+        if (userData['apellidos'] == null) userData['apellidos'] = apellidos;
+        if (userData['email'] == null) userData['email'] = email;
+        if (userData['escuelaId'] == null) userData['escuelaId'] = escuelaId;
+        if (userData['tipo'] == null) userData['tipo'] = tipo.value;
+        if (userData['estado'] == null) userData['estado'] = estado.value;
+
+        print('✅ Parseando usuario...');
+        final newUser = Usuario.fromJson(userData);
+        print('✅ Usuario creado: ${newUser.nombreCompleto} (${newUser.id})');
         return newUser;
       }
 
-      throw Exception('Error creando usuario');
+      throw Exception(response['message'] ?? 'Error creando usuario');
     } catch (e) {
       print('❌ Error creando usuario: $e');
       rethrow;
     }
   }
 
-  // ==========================================
-  // DESACTIVAR USUARIO
-  // ==========================================
-
-  /// Desactivar usuario (soft delete)
   Future<void> deactivateUser(String userId) async {
     try {
-      print('🚫 UsuarioService: Desactivando usuario $userId...');
+      print('🗑️ UsuarioService: Desactivando usuario $userId...');
 
-      await _apiService.delete(
+      final response = await _apiService.delete(
         AppConfig.usuarioDelete(userId),
       );
 
-      print('✅ Usuario desactivado');
+      if (response['success'] == true) {
+        print('✅ Usuario desactivado');
+        return;
+      }
+
+      throw Exception('Error desactivando usuario');
     } catch (e) {
       print('❌ Error desactivando usuario: $e');
       rethrow;
     }
   }
 
-  // ==========================================
-  // ESTUDIANTES ASOCIADOS (ACUDIENTE)
-  // ==========================================
-
-  /// Obtener estudiantes asociados a un acudiente
   Future<List<Usuario>> getAssociatedStudents(String acudienteId) async {
     try {
-      print('🎓 UsuarioService: Obteniendo estudiantes asociados...');
+      print('👨‍👩‍👧‍👦 UsuarioService: Obteniendo estudiantes asociados...');
 
       final response = await _apiService.get(
         AppConfig.usuarioAssociatedStudents(acudienteId),
@@ -231,12 +231,8 @@ class UsuarioService {
 
       return [];
     } catch (e) {
-      print('⚠️ Error obteniendo estudiantes asociados: $e');
-      // Retornar array vacío en lugar de error (como en RN)
+      print('❌ Error obteniendo estudiantes asociados: $e');
       return [];
     }
   }
 }
-
-// Singleton instance
-final usuarioService = UsuarioService();

@@ -68,7 +68,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     try {
       print('📝 Actualizando perfil...');
 
-      final updatedUser = await usuarioService.updateUser(
+      final updatedUser = await UsuarioService().updateUser(
         user.id,
         nombre: _nombreController.text.trim(),
         apellidos: _apellidosController.text.trim(),

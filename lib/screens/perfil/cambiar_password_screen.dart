@@ -48,7 +48,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
     try {
       print('🔒 Cambiando contraseña...');
 
-      await usuarioService.changePassword(
+      await UsuarioService().changePassword(
         userId: user.id,
         currentPassword: _passwordActualController.text,
         newPassword: _nuevaPasswordController.text,

@@ -12,6 +12,7 @@ import 'providers/anuncio_provider.dart';
 import 'providers/calendario_provider.dart'; // ← NUEVO
 import 'services/storage_service.dart';
 import 'services/api_service.dart';
+import 'providers/usuario_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,6 +58,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => MessageProvider()),
         ChangeNotifierProvider(create: (_) => AnuncioProvider()),
         ChangeNotifierProvider(create: (_) => CalendarioProvider()), // ← NUEVO
+        ChangeNotifierProvider(create: (_) => UsuarioProvider()),
       ],
       child: Builder(
         builder: (context) {

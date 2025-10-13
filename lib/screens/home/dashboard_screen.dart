@@ -154,6 +154,35 @@ class DashboardScreen extends StatelessWidget {
       ));
     }
 
+    // 👥 Usuarios (NUEVO)
+    if (PermissionService.canAccess('usuarios.ver')) {
+      cards.add(_buildAccessCard(
+        context,
+        title: 'Usuarios',
+        icon: Icons.people_outline,
+        color: const Color(0xFF6366F1),
+        onTap: () => context.push('/usuarios'),
+      ));
+    }
+
+    // 📚 Cursos (NUEVO - Placeholder)
+    if (PermissionService.canAccess('cursos.ver')) {
+      cards.add(_buildAccessCard(
+        context,
+        title: 'Cursos',
+        icon: Icons.school_outlined,
+        color: const Color(0xFF0891B2),
+        onTap: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('📚 Módulo de Cursos - Próximamente'),
+              backgroundColor: Color(0xFF0891B2),
+            ),
+          );
+        },
+      ));
+    }
+
     // Calificaciones
     if (PermissionService.canAccess('calificaciones.ver')) {
       cards.add(_buildAccessCard(
@@ -451,6 +480,33 @@ class DashboardScreen extends StatelessWidget {
               onTap: () {
                 Navigator.pop(context);
                 context.push(AppRoutes.anuncios);
+              },
+            ),
+
+          // 👥 Usuarios (NUEVO)
+          if (PermissionService.canAccess('usuarios.ver'))
+            ListTile(
+              leading: const Icon(Icons.people_outline),
+              title: const Text('Usuarios'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/usuarios');
+              },
+            ),
+
+          // 📚 Cursos (NUEVO - Placeholder)
+          if (PermissionService.canAccess('cursos.ver'))
+            ListTile(
+              leading: const Icon(Icons.school_outlined),
+              title: const Text('Cursos'),
+              onTap: () {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('📚 Módulo de Cursos - Próximamente'),
+                    backgroundColor: Color(0xFF0891B2),
+                  ),
+                );
               },
             ),
 
