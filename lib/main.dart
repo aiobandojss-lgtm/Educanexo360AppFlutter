@@ -1,6 +1,6 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'; // ← IMPORTANTE
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
 import 'config/theme.dart';
@@ -9,10 +9,11 @@ import 'config/routes.dart';
 import 'providers/auth_provider.dart';
 import 'providers/message_provider.dart';
 import 'providers/anuncio_provider.dart';
-import 'providers/calendario_provider.dart'; // ← NUEVO
+import 'providers/calendario_provider.dart';
+import 'providers/usuario_provider.dart';
+import 'providers/curso_provider.dart';
 import 'services/storage_service.dart';
 import 'services/api_service.dart';
-import 'providers/usuario_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,8 +58,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => MessageProvider()),
         ChangeNotifierProvider(create: (_) => AnuncioProvider()),
-        ChangeNotifierProvider(create: (_) => CalendarioProvider()), // ← NUEVO
+        ChangeNotifierProvider(create: (_) => CalendarioProvider()),
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
+        ChangeNotifierProvider(create: (_) => CursoProvider()),
       ],
       child: Builder(
         builder: (context) {

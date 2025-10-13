@@ -17,6 +17,8 @@ import '../screens/usuarios/users_management_screen.dart';
 import '../screens/usuarios/user_detail_screen.dart';
 import '../screens/usuarios/edit_user_screen.dart';
 import '../screens/usuarios/manage_students_screen.dart';
+import '../screens/cursos/courses_screen.dart';
+import '../screens/cursos/course_detail_screen.dart';
 
 /// Configuración de rutas de la aplicación con GoRouter
 class AppRoutes {
@@ -29,6 +31,8 @@ class AppRoutes {
   static const String asistencia = '/asistencia';
   static const String anuncios = '/anuncios';
   static const String perfil = '/perfil';
+  static const String usuarios = '/usuarios';
+  static const String cursos = '/cursos'; // ✅ NUEVO
 
   /// Crear configuración de GoRouter
   static GoRouter createRouter(AuthProvider authProvider) {
@@ -158,6 +162,7 @@ class AppRoutes {
           name: 'perfil',
           builder: (context, state) => const PerfilScreen(),
         ),
+
         // ==================== USUARIOS ====================
         GoRoute(
           path: '/usuarios',
@@ -196,6 +201,24 @@ class AppRoutes {
                 return NoTransitionPage(
                   child: ManageStudentsScreen(acudienteId: acudienteId),
                 );
+              },
+            ),
+          ],
+        ),
+
+        // ==================== CURSOS ==================== ✅ NUEVO
+        GoRoute(
+          path: '/cursos',
+          name: 'cursos',
+          builder: (context, state) => const CoursesScreen(),
+          routes: [
+            // Detalle de curso
+            GoRoute(
+              path: ':cursoId',
+              name: 'curso-detail',
+              builder: (context, state) {
+                final cursoId = state.pathParameters['cursoId']!;
+                return CourseDetailScreen(cursoId: cursoId);
               },
             ),
           ],

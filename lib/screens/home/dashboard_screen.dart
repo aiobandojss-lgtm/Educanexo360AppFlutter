@@ -154,7 +154,7 @@ class DashboardScreen extends StatelessWidget {
       ));
     }
 
-    // 👥 Usuarios (NUEVO)
+    // 👥 Usuarios
     if (PermissionService.canAccess('usuarios.ver')) {
       cards.add(_buildAccessCard(
         context,
@@ -165,21 +165,14 @@ class DashboardScreen extends StatelessWidget {
       ));
     }
 
-    // 📚 Cursos (NUEVO - Placeholder)
+    // 📚 Cursos - ✅ NUEVO
     if (PermissionService.canAccess('cursos.ver')) {
       cards.add(_buildAccessCard(
         context,
         title: 'Cursos',
         icon: Icons.school_outlined,
         color: const Color(0xFF0891B2),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('📚 Módulo de Cursos - Próximamente'),
-              backgroundColor: Color(0xFF0891B2),
-            ),
-          );
-        },
+        onTap: () => context.push('/cursos'),
       ));
     }
 
@@ -483,7 +476,7 @@ class DashboardScreen extends StatelessWidget {
               },
             ),
 
-          // 👥 Usuarios (NUEVO)
+          // 👥 Usuarios
           if (PermissionService.canAccess('usuarios.ver'))
             ListTile(
               leading: const Icon(Icons.people_outline),
@@ -494,19 +487,14 @@ class DashboardScreen extends StatelessWidget {
               },
             ),
 
-          // 📚 Cursos (NUEVO - Placeholder)
+          // 📚 Cursos - ✅ NUEVO
           if (PermissionService.canAccess('cursos.ver'))
             ListTile(
               leading: const Icon(Icons.school_outlined),
               title: const Text('Cursos'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('📚 Módulo de Cursos - Próximamente'),
-                    backgroundColor: Color(0xFF0891B2),
-                  ),
-                );
+                context.push('/cursos');
               },
             ),
 
