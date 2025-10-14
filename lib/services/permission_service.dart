@@ -70,6 +70,7 @@ class PermissionService {
       'calendario.editar',
       'asistencia.ver',
       'asistencia.registrar',
+      'asistencia.editar',
       'asistencia.reportes',
       'anuncios.ver',
       'anuncios.crear', // ✅ ADMIN puede crear
@@ -91,6 +92,7 @@ class PermissionService {
       'calendario.editar',
       'asistencia.ver',
       'asistencia.reportes',
+      'asistencia.editar',
       'anuncios.ver',
       'anuncios.crear', // ✅ RECTOR puede crear
       'anuncios.editar', // ✅ RECTOR puede editar
@@ -134,6 +136,7 @@ class PermissionService {
       'calendario.ver',
       'calendario.crear',
       'asistencia.ver',
+      'asistencia.editar',
       'asistencia.registrar',
       'anuncios.ver',
       'anuncios.crear', // ✅ DOCENTE puede crear

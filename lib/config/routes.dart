@@ -19,6 +19,9 @@ import '../screens/usuarios/edit_user_screen.dart';
 import '../screens/usuarios/manage_students_screen.dart';
 import '../screens/cursos/courses_screen.dart';
 import '../screens/cursos/course_detail_screen.dart';
+import '../screens/asistencia/lista_asistencia_screen.dart';
+import '../screens/asistencia/registrar_asistencia_screen.dart';
+import '../screens/asistencia/detalle_asistencia_screen.dart';
 
 /// Configuración de rutas de la aplicación con GoRouter
 class AppRoutes {
@@ -32,16 +35,14 @@ class AppRoutes {
   static const String anuncios = '/anuncios';
   static const String perfil = '/perfil';
   static const String usuarios = '/usuarios';
-  static const String cursos = '/cursos'; // ✅ NUEVO
+  static const String cursos = '/cursos';
 
   /// Crear configuración de GoRouter
   static GoRouter createRouter(AuthProvider authProvider) {
     return GoRouter(
       initialLocation: login,
       debugLogDiagnostics: true,
-      refreshListenable: authProvider, // Escucha cambios de autenticación
-
-      // Redirección automática según estado de autenticación
+      refreshListenable: authProvider,
       redirect: (context, state) {
         final isAuthenticated = authProvider.isAuthenticated;
         final isLoggingIn = state.matchedLocation == login;
@@ -50,22 +51,18 @@ class AppRoutes {
         print('   Autenticado: $isAuthenticated');
         print('   Ubicación: ${state.matchedLocation}');
 
-        // Si no está autenticado y no está en login, redirigir a login
         if (!isAuthenticated && !isLoggingIn) {
           print('   → Redirigiendo a LOGIN');
           return login;
         }
 
-        // Si está autenticado y está en login, redirigir a dashboard
         if (isAuthenticated && isLoggingIn) {
           print('   → Redirigiendo a DASHBOARD');
           return dashboard;
         }
 
-        // No redirigir
         return null;
       },
-
       routes: [
         // ==================== AUTH ====================
         GoRoute(
@@ -87,13 +84,11 @@ class AppRoutes {
           name: 'mensajes',
           builder: (context, state) => const MessagesScreen(),
           routes: [
-            // Crear mensaje
             GoRoute(
               path: 'create',
               name: 'message-create',
               builder: (context, state) => const CreateMessageScreen(),
             ),
-            // Detalle de mensaje
             GoRoute(
               path: ':messageId',
               name: 'message-detail',
@@ -111,7 +106,6 @@ class AppRoutes {
           name: 'anuncios',
           builder: (context, state) => const AnunciosScreen(),
           routes: [
-            // Crear/editar anuncio
             GoRoute(
               path: 'create',
               name: 'anuncio-create',
@@ -120,7 +114,6 @@ class AppRoutes {
                 return CreateAnuncioScreen(anuncio: anuncio);
               },
             ),
-            // Detalle de anuncio
             GoRoute(
               path: ':anuncioId',
               name: 'anuncio-detail',
@@ -147,13 +140,40 @@ class AppRoutes {
           builder: (context, state) => const CalendarioScreen(),
         ),
 
-        // ==================== ASISTENCIA ====================
+        // ==================== ASISTENCIA ==================== ✅ ACTUALIZADO
         GoRoute(
           path: asistencia,
           name: 'asistencia',
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Asistencia - Próximamente')),
-          ),
+          builder: (context, state) => const ListaAsistenciaScreen(),
+          routes: [
+            // Ruta para registrar nueva asistencia
+            GoRoute(
+              path: 'registrar',
+              name: 'asistencia-registrar',
+              builder: (context, state) => const RegistrarAsistenciaScreen(),
+            ),
+            // ✅ NUEVA - Ruta para editar asistencia existente
+            GoRoute(
+              path: 'editar/:asistenciaId',
+              name: 'asistencia-editar',
+              builder: (context, state) {
+                final asistenciaId = state.pathParameters['asistenciaId']!;
+                return RegistrarAsistenciaScreen(
+                  asistenciaId: asistenciaId,
+                  isEditMode: true,
+                );
+              },
+            ),
+            // Ruta para ver detalle de un registro
+            GoRoute(
+              path: ':asistenciaId',
+              name: 'asistencia-detail',
+              builder: (context, state) {
+                final asistenciaId = state.pathParameters['asistenciaId']!;
+                return DetalleAsistenciaScreen(asistenciaId: asistenciaId);
+              },
+            ),
+          ],
         ),
 
         // ==================== PERFIL ====================
@@ -169,13 +189,11 @@ class AppRoutes {
           name: 'usuarios',
           builder: (context, state) => const UsersManagementScreen(),
           routes: [
-            // Crear usuario
             GoRoute(
               path: 'create',
               name: 'usuario-create',
               builder: (context, state) => const EditUserScreen(),
             ),
-            // Detalle de usuario
             GoRoute(
               path: ':userId',
               name: 'usuario-detail',
@@ -184,7 +202,6 @@ class AppRoutes {
                 return UserDetailScreen(userId: userId);
               },
             ),
-            // Editar usuario
             GoRoute(
               path: 'edit/:userId',
               name: 'usuario-edit',
@@ -206,13 +223,12 @@ class AppRoutes {
           ],
         ),
 
-        // ==================== CURSOS ==================== ✅ NUEVO
+        // ==================== CURSOS ====================
         GoRoute(
           path: '/cursos',
           name: 'cursos',
           builder: (context, state) => const CoursesScreen(),
           routes: [
-            // Detalle de curso
             GoRoute(
               path: ':cursoId',
               name: 'curso-detail',
@@ -224,8 +240,6 @@ class AppRoutes {
           ],
         ),
       ],
-
-      // Manejo de errores
       errorBuilder: (context, state) => Scaffold(
         body: Center(
           child: Column(

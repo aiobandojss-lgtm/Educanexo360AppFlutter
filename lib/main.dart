@@ -12,6 +12,7 @@ import 'providers/anuncio_provider.dart';
 import 'providers/calendario_provider.dart';
 import 'providers/usuario_provider.dart';
 import 'providers/curso_provider.dart';
+import 'providers/asistencia_provider.dart'; // ✅ NUEVO IMPORT
 import 'services/storage_service.dart';
 import 'services/api_service.dart';
 
@@ -61,6 +62,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CalendarioProvider()),
         ChangeNotifierProvider(create: (_) => UsuarioProvider()),
         ChangeNotifierProvider(create: (_) => CursoProvider()),
+        ChangeNotifierProvider(
+            create: (_) => AsistenciaProvider()), // ✅ NUEVO PROVIDER
       ],
       child: Builder(
         builder: (context) {
