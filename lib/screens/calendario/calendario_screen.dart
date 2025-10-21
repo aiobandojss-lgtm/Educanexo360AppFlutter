@@ -1,4 +1,5 @@
 // lib/screens/calendario/calendario_screen.dart
+// ⭐ SOLO CAMBIO: padding en SliverPadding de 100 a 80 (línea 285 aprox)
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -44,29 +45,38 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
 
           return RefreshIndicator(
             onRefresh: () => calendarProvider.refresh(),
-            child: CustomScrollView(
-              slivers: [
-                // HEADER CON GRADIENT (SIN FILTROS)
-                _buildHeader(calendarProvider),
-
-                // CALENDARIO
-                SliverToBoxAdapter(
-                  child: _buildCalendar(calendarProvider, authProvider),
-                ),
-
-                // TÍTULO DINÁMICO MEJORADO
-                SliverToBoxAdapter(
-                  child: _buildDynamicTitle(calendarProvider, tipoUsuario),
-                ),
-
-                // LISTA DE EVENTOS
-                if (calendarProvider.isLoading)
-                  const SliverFillRemaining(
-                    child: Center(child: CircularProgressIndicator()),
-                  )
-                else
-                  _buildEventsList(calendarProvider, tipoUsuario),
-              ],
+            child: SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  _buildHeader(calendarProvider),
+                  // Contenido scrollable
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.only(bottom: 80),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          // Calendario
+                          _buildCalendar(calendarProvider, authProvider),
+                          // Título dinámico
+                          _buildDynamicTitle(calendarProvider, tipoUsuario),
+                          // Lista de eventos
+                          if (calendarProvider.isLoading)
+                            const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(40),
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          else
+                            _buildEventsList(calendarProvider, tipoUsuario),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           );
         },
@@ -95,50 +105,40 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   // ==========================================
 
   Widget _buildHeader(CalendarioProvider provider) {
-    return SliverAppBar(
-      expandedHeight: 150,
-      pinned: true,
-      backgroundColor: const Color(0xFF8b5cf6),
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                const Color(0xFF8b5cf6),
-                const Color(0xFF7c3aed),
-              ],
-            ),
-          ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Calendario',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Eventos y actividades escolares',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.white.withOpacity(0.9),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            const Color(0xFF8b5cf6),
+            const Color(0xFF7c3aed),
+          ],
         ),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Calendario',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Eventos y actividades escolares',
+            style: TextStyle(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.9),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -353,42 +353,28 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   // ==========================================
 
   Widget _buildEventsList(CalendarioProvider provider, String? tipoUsuario) {
-    // ✅ LÓGICA CORREGIDA: Distinguir claramente entre día seleccionado y próximos
     final List<Evento> eventosAMostrar;
 
     if (_selectedDay != null) {
-      // Si hay día seleccionado, SOLO mostrar eventos de ese día
       eventosAMostrar = provider.getEventosDelDia(_selectedDay!, tipoUsuario);
-
       print(
           '📅 Mostrando eventos del día ${_selectedDay!.day}/${_selectedDay!.month}');
-      print('🔢 Total: ${eventosAMostrar.length}');
+      print('📢 Total: ${eventosAMostrar.length}');
     } else {
-      // Si NO hay día seleccionado, mostrar próximos eventos
       eventosAMostrar = provider.proximosEventos;
-
       print('📋 Mostrando próximos eventos');
-      print('🔢 Total: ${eventosAMostrar.length}');
+      print('📢 Total: ${eventosAMostrar.length}');
     }
 
-    // Si no hay eventos, mostrar estado vacío
     if (eventosAMostrar.isEmpty) {
-      return SliverFillRemaining(
-        child: _buildEmptyState(),
-      );
+      return _buildEmptyState();
     }
 
-    // Mostrar lista de eventos
-    return SliverPadding(
-      padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-      sliver: SliverList(
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            final evento = eventosAMostrar[index];
-            return _buildEventCard(evento);
-          },
-          childCount: eventosAMostrar.length,
-        ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Column(
+        children:
+            eventosAMostrar.map((evento) => _buildEventCard(evento)).toList(),
       ),
     );
   }

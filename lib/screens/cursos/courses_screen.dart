@@ -77,7 +77,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
           title: const Text('📚 Gestión de Cursos'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => context.go('/dashboard'),
+            onPressed: () => Navigator.pop(context),
           ),
         ),
         body: const Center(
@@ -110,7 +110,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         title: const Text('📚 Gestión de Cursos'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Column(

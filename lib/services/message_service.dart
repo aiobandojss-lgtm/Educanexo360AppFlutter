@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import '../models/message.dart';
 import 'api_service.dart';
+import 'package:path_provider/path_provider.dart';
 
 /// 📨 SERVICIO DE MENSAJERÍA
 /// Maneja TODOS los endpoints de mensajes, borradores, adjuntos, etc.
@@ -540,23 +541,76 @@ class MessageService {
   // 📎 DESCARGAR ADJUNTO
   // ========================================
 
-  Future<void> downloadAttachment(
+// ========================================
+// 📎 DESCARGAR ADJUNTO - IMPLEMENTACIÓN COMPLETA
+// ========================================
+
+  Future<Map<String, dynamic>> downloadAttachment(
     String messageId,
     String attachmentId,
     String fileName,
   ) async {
     try {
       print('📎 Descargando adjunto: $fileName');
+      print('   Mensaje ID: $messageId');
+      print('   Adjunto ID: $attachmentId');
 
+      // 1️⃣ Obtener la ruta de descarga
+      Directory? directory;
+
+      if (Platform.isAndroid) {
+        directory = await getExternalStorageDirectory();
+        if (directory != null) {
+          final downloadsPath =
+              directory.path.split('/Android')[0] + '/Download';
+          directory = Directory(downloadsPath);
+
+          if (!await directory.exists()) {
+            await directory.create(recursive: true);
+          }
+        }
+      } else if (Platform.isIOS) {
+        directory = await getApplicationDocumentsDirectory();
+      }
+
+      if (directory == null) {
+        throw Exception('No se pudo obtener el directorio de descarga');
+      }
+
+      final filePath = '${directory.path}/$fileName';
+      print('💾 Ruta de descarga: $filePath');
+
+      // 2️⃣ Descargar el archivo
       final url = '/mensajes/$messageId/adjuntos/$attachmentId';
+      print('🌐 URL: $url');
 
-      // TODO: Implementar descarga real de archivo
-      // Por ahora solo mostramos la URL
-      print('🔗 URL de descarga: $url');
-      print('ℹ️ Implementar descarga de archivos según plataforma');
+      await _apiService.download(url, filePath);
+
+      print('✅ Archivo descargado exitosamente en: $filePath');
+
+      // 3️⃣ Retornar resultado exitoso
+      return {
+        'success': true,
+        'message': 'Archivo descargado exitosamente',
+        'path': filePath,
+      };
     } catch (e) {
       print('❌ Error descargando adjunto: $e');
-      rethrow;
+      return {
+        'success': false,
+        'message': 'Error al descargar: $e',
+      };
+    }
+  }
+
+  Future<void> _scanFile(String path) async {
+    try {
+      final file = File(path);
+      if (await file.exists()) {
+        print('📱 Archivo guardado correctamente');
+      }
+    } catch (e) {
+      print('⚠️ Error: $e');
     }
   }
 

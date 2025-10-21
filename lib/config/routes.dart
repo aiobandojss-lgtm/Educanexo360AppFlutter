@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../screens/auth/login_screen.dart';
-import '../screens/home/dashboard_screen.dart';
+import '../widgets/common/main_bottom_navigation.dart';
 import '../screens/perfil/perfil_screen.dart';
 import '../screens/mensajes/messages_screen.dart';
 import '../screens/mensajes/message_detail_screen.dart';
@@ -27,7 +27,7 @@ import '../screens/asistencia/detalle_asistencia_screen.dart';
 class AppRoutes {
   // Nombres de rutas
   static const String login = '/login';
-  static const String dashboard = '/dashboard';
+  static const String home = '/'; // Nueva ruta principal
   static const String mensajes = '/mensajes';
   static const String calificaciones = '/calificaciones';
   static const String calendario = '/calendario';
@@ -57,8 +57,8 @@ class AppRoutes {
         }
 
         if (isAuthenticated && isLoggingIn) {
-          print('   → Redirigiendo a DASHBOARD');
-          return dashboard;
+          print('   → Redirigiendo a HOME');
+          return home;
         }
 
         return null;
@@ -71,11 +71,11 @@ class AppRoutes {
           builder: (context, state) => const LoginScreen(),
         ),
 
-        // ==================== DASHBOARD ====================
+        // ==================== HOME (MainBottomNavigation) ====================
         GoRoute(
-          path: dashboard,
-          name: 'dashboard',
-          builder: (context, state) => const DashboardScreen(),
+          path: home,
+          name: 'home',
+          builder: (context, state) => const MainBottomNavigation(),
         ),
 
         // ==================== MENSAJES ====================
@@ -136,23 +136,22 @@ class AppRoutes {
 
         // ==================== CALENDARIO ====================
         GoRoute(
-          path: '/calendario',
+          path: calendario,
+          name: 'calendario',
           builder: (context, state) => const CalendarioScreen(),
         ),
 
-        // ==================== ASISTENCIA ==================== ✅ ACTUALIZADO
+        // ==================== ASISTENCIA ====================
         GoRoute(
           path: asistencia,
           name: 'asistencia',
           builder: (context, state) => const ListaAsistenciaScreen(),
           routes: [
-            // Ruta para registrar nueva asistencia
             GoRoute(
               path: 'registrar',
               name: 'asistencia-registrar',
               builder: (context, state) => const RegistrarAsistenciaScreen(),
             ),
-            // ✅ NUEVA - Ruta para editar asistencia existente
             GoRoute(
               path: 'editar/:asistenciaId',
               name: 'asistencia-editar',
@@ -164,7 +163,6 @@ class AppRoutes {
                 );
               },
             ),
-            // Ruta para ver detalle de un registro
             GoRoute(
               path: ':asistenciaId',
               name: 'asistencia-detail',
@@ -185,7 +183,7 @@ class AppRoutes {
 
         // ==================== USUARIOS ====================
         GoRoute(
-          path: '/usuarios',
+          path: usuarios,
           name: 'usuarios',
           builder: (context, state) => const UsersManagementScreen(),
           routes: [
@@ -225,7 +223,7 @@ class AppRoutes {
 
         // ==================== CURSOS ====================
         GoRoute(
-          path: '/cursos',
+          path: cursos,
           name: 'cursos',
           builder: (context, state) => const CoursesScreen(),
           routes: [
@@ -262,8 +260,8 @@ class AppRoutes {
               ),
               const SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => context.go(dashboard),
-                child: const Text('Ir al Dashboard'),
+                onPressed: () => context.go(home),
+                child: const Text('Ir al Inicio'),
               ),
             ],
           ),

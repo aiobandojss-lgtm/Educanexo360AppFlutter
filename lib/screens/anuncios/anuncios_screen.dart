@@ -103,10 +103,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Anuncios'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
-        ),
+        automaticallyImplyLeading: false, // ⭐ ESTO QUITA LA FLECHA
       ),
       body: Column(
         children: [

@@ -33,6 +33,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: const Text('👤 Mi Perfil'),
         centerTitle: false,
       ),

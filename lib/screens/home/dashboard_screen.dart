@@ -1,135 +1,358 @@
 // lib/screens/home/dashboard_screen.dart
+// ✅ CORREGIDO: Línea 276 - padding bottom de 0 a 80
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
+import '../../services/dashboard_service.dart';
 import '../../services/permission_service.dart';
-import '../../config/routes.dart';
+import '../../models/usuario.dart';
 
-class DashboardScreen extends StatelessWidget {
+class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
+
+  @override
+  State<DashboardScreen> createState() => _DashboardScreenState();
+}
+
+class _DashboardScreenState extends State<DashboardScreen> {
+  bool _isLoading = true;
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+
+  // Estadísticas reales (se cargarán del backend)
+  Map<String, int> _stats = {
+    'mensajesSinLeer': 0,
+    'proximosEventos': 0,
+    'anunciosRecientes': 0,
+  };
+
+  // Información de la escuela
+  String _nombreEscuela = 'Cargando...';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      setState(() => _isLoading = true);
+
+      final authProvider = context.read<AuthProvider>();
+      final user = authProvider.currentUser;
+
+      if (user == null) return;
+
+      // Usar user.tipo.value para obtener el string del enum
+      print('🚀 Dashboard - Usuario: ${user.nombre} (${user.tipo.value})');
+      print('🏫 Dashboard - EscuelaId: ${user.escuelaId}');
+
+      // Cargar información de la escuela
+      if (user.escuelaId != null && user.escuelaId!.isNotEmpty) {
+        try {
+          final escuela =
+              await DashboardService.getEscuelaInfo(user.escuelaId!);
+          if (escuela != null && mounted) {
+            setState(() {
+              _nombreEscuela = escuela.nombre;
+            });
+            print('✅ Nombre escuela cargado: ${escuela.nombre}');
+          } else {
+            // Si no se encuentra la escuela, usar nombre por defecto
+            setState(() {
+              _nombreEscuela = 'EducaNexo360';
+            });
+          }
+        } catch (e) {
+          print('⚠️ Error obteniendo escuela: $e');
+          setState(() {
+            _nombreEscuela = 'EducaNexo360';
+          });
+        }
+      } else {
+        // Si no hay escuelaId, usar nombre por defecto
+        setState(() {
+          _nombreEscuela = 'EducaNexo360';
+        });
+      }
+
+      // Cargar estadísticas
+      try {
+        final stats = await DashboardService.getDashboardStats();
+        if (mounted) {
+          setState(() {
+            _stats = {
+              'mensajesSinLeer': stats.mensajesSinLeer,
+              'proximosEventos': stats.eventosProximos,
+              'anunciosRecientes': stats.anunciosRecientes,
+            };
+          });
+        }
+      } catch (e) {
+        print('⚠️ Error cargando estadísticas: $e');
+      }
+    } catch (e) {
+      print('❌ Error cargando dashboard: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  Future<void> _onRefresh() async {
+    await _loadDashboardData();
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Buenos días';
+    if (hour < 18) return 'Buenas tardes';
+    return 'Buenas noches';
+  }
+
+  String _getRoleIcon(UserRole tipo) {
+    switch (tipo) {
+      case UserRole.admin:
+      case UserRole.superAdmin:
+        return '👑';
+      case UserRole.rector:
+        return '🎓';
+      case UserRole.coordinador:
+        return '📋';
+      case UserRole.docente:
+        return '👨‍🏫';
+      case UserRole.estudiante:
+        return '👨‍🎓';
+      case UserRole.acudiente:
+        return '👨‍👩‍👧';
+      case UserRole.administrativo:
+        return '💼';
+      default:
+        return '👤';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('EducaNexo360'),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Notificaciones - Próximamente')),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _handleLogout(context, authProvider),
-          ),
-        ],
-      ),
-      drawer: _buildDrawer(context, authProvider),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header con bienvenida
-              _buildHeader(user?.nombreCompleto ?? 'Usuario',
-                  user?.tipo.value ?? 'Usuario'),
-              const SizedBox(height: 24),
+    if (user == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
-              // Cards de acceso rápido según permisos
-              _buildQuickAccessCards(context),
-              const SizedBox(height: 24),
+    final screenHeight = MediaQuery.of(context).size.height;
+    final userName = '${user.nombre} ${user.apellidos.split(' ')[0]}';
+    final userRole = user.tipo.value; // Obtener el string del enum
+    final roleIcon = _getRoleIcon(user.tipo);
+    final schoolName = _nombreEscuela;
 
-              // Estadísticas (si tiene permisos)
-              if (PermissionService.canAccessAny([
-                'calificaciones.ver',
-                'asistencia.ver',
-                'usuarios.ver',
-              ]))
-                _buildStatsSection(),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(String userName, String userRole) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF6366F1),
-            Color(0xFF8B5CF6),
-          ],
-        ),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF6366F1).withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
+    // IMPORTANTE: NO usar Scaffold aquí, solo el contenido
+    return RefreshIndicator(
+      key: _refreshIndicatorKey,
+      onRefresh: _onRefresh,
+      color: const Color(0xFF6366F1),
+      child: Stack(
         children: [
+          // Fondo con gradiente sutil
           Container(
-            width: 60,
-            height: 60,
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Icon(
-                Icons.person,
-                size: 32,
-                color: Color(0xFF6366F1),
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  const Color(0xFF6366F1).withOpacity(0.05),
+                  Colors.white,
+                ],
+                stops: const [0.0, 0.3],
               ),
             ),
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '¡Bienvenido!',
-                  style: TextStyle(
-                    color: Colors.white70,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w500,
+
+          SafeArea(
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                // AppBar personalizado con menú hamburguesa
+                SliverAppBar(
+                  expandedHeight: 140,
+                  floating: false,
+                  pinned: true,
+                  elevation: 0,
+                  backgroundColor: const Color(0xFF6366F1),
+                  leading: Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu, color: Colors.white),
+                      onPressed: () {
+                        // Encontrar el Scaffold padre que tiene el drawer
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
+                  ),
+                  flexibleSpace: FlexibleSpaceBar(
+                    titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
+                    title: Column(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          _getGreeting(),
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                        Text(
+                          userName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 4), // ⭐ Agregar espacio
+                          child: Text(
+                            '$roleIcon $userRole • $schoolName',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w400,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    background: Container(
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Color(0xFF6366F1),
+                            Color(0xFF8B5CF6),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                Text(
-                  userName,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  userRole,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
+
+                // Contenido del dashboard
+                // ✅ CAMBIO: padding bottom de 0 a 80
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      // Grid de estadísticas
+                      _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : _buildStatsGrid(),
+
+                      const SizedBox(height: 20),
+
+                      // Botón Nuevo Mensaje
+                      _buildActionButton(
+                        context,
+                        title: 'Nuevo Mensaje',
+                        icon: Icons.mail_outline,
+                        color: const Color(0xFF6366F1),
+                        onTap: () => context.push('/mensajes/create'),
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Mensaje motivacional
+                      Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.school,
+                              size: 48,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'La plataforma que une a toda la comunidad educativa en un solo lugar',
+                              style: TextStyle(
+                                color: Colors.grey.shade600,
+                                fontSize: 15,
+                                fontStyle: FontStyle.italic,
+                                height: 1.4,
+                              ),
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Botón Cerrar Sesión
+                      OutlinedButton.icon(
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              title: const Text('Cerrar Sesión'),
+                              content: const Text(
+                                  '¿Estás seguro de que deseas cerrar sesión?'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('Cancelar'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.pop(context);
+                                    authProvider.logout();
+                                    context.go('/login');
+                                  },
+                                  child: const Text(
+                                    'Cerrar Sesión',
+                                    style: TextStyle(color: Colors.red),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.logout, color: Colors.red),
+                        label: const Text(
+                          'Cerrar Sesión',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Colors.red),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 24, vertical: 12),
+                        ),
+                      ),
+
+                      const SizedBox(height: 24),
+                    ]),
                   ),
                 ),
               ],
@@ -140,414 +363,165 @@ class DashboardScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildQuickAccessCards(BuildContext context) {
-    final cards = <Widget>[];
-
-    // Mensajes - Todos tienen acceso
-    if (PermissionService.canAccess('mensajes.enviar')) {
-      cards.add(_buildAccessCard(
-        context,
-        title: 'Mensajes',
-        icon: Icons.mail_outline,
-        color: const Color(0xFF3B82F6),
-        onTap: () => context.push(AppRoutes.mensajes),
-      ));
-    }
-
-    // 👥 Usuarios
-    if (PermissionService.canAccess('usuarios.ver')) {
-      cards.add(_buildAccessCard(
-        context,
-        title: 'Usuarios',
-        icon: Icons.people_outline,
-        color: const Color(0xFF6366F1),
-        onTap: () => context.push('/usuarios'),
-      ));
-    }
-
-    // 📚 Cursos - ✅ NUEVO
-    if (PermissionService.canAccess('cursos.ver')) {
-      cards.add(_buildAccessCard(
-        context,
-        title: 'Cursos',
-        icon: Icons.school_outlined,
-        color: const Color(0xFF0891B2),
-        onTap: () => context.push('/cursos'),
-      ));
-    }
-
-    // Calificaciones
-    if (PermissionService.canAccess('calificaciones.ver')) {
-      cards.add(_buildAccessCard(
-        context,
-        title: 'Calificaciones',
-        icon: Icons.grade_outlined,
-        color: const Color(0xFF10B981),
-        onTap: () => context.push(AppRoutes.calificaciones),
-      ));
-    }
-
-    // Calendario
-    if (PermissionService.canAccess('calendario.ver')) {
-      cards.add(_buildAccessCard(
-        context,
-        title: 'Calendario',
-        icon: Icons.calendar_today_outlined,
-        color: const Color(0xFFF59E0B),
-        onTap: () => context.push(AppRoutes.calendario),
-      ));
-    }
-
-    // Asistencia
-    if (PermissionService.canAccess('asistencia.ver')) {
-      cards.add(_buildAccessCard(
-        context,
-        title: 'Asistencia',
-        icon: Icons.check_circle_outline,
-        color: const Color(0xFF8B5CF6),
-        onTap: () => context.push(AppRoutes.asistencia),
-      ));
-    }
-
-    // Anuncios
-    if (PermissionService.canAccess('anuncios.ver')) {
-      cards.add(_buildAccessCard(
-        context,
-        title: 'Anuncios',
-        icon: Icons.campaign_outlined,
-        color: const Color(0xFFEC4899),
-        onTap: () => context.push(AppRoutes.anuncios),
-      ));
-    }
-
+  Widget _buildStatsGrid() {
     return GridView.count(
-      crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
+      crossAxisCount: 2,
+      childAspectRatio: 1.2,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.5,
-      children: cards,
+      mainAxisSpacing: 12,
+      children: [
+        _buildLogoCard(),
+        _buildStatCard(
+          value: _stats['mensajesSinLeer'].toString(),
+          label: 'MENSAJES',
+          color: const Color(0xFF6366F1),
+          icon: Icons.mail_outline,
+        ),
+        _buildStatCard(
+          value: _stats['proximosEventos'].toString(),
+          label: 'EVENTOS',
+          color: const Color(0xFFF59E0B),
+          icon: Icons.calendar_today_outlined,
+        ),
+        _buildStatCard(
+          value: _stats['anunciosRecientes'].toString(),
+          label: 'ANUNCIOS',
+          color: const Color(0xFF10B981),
+          icon: Icons.campaign_outlined,
+        ),
+      ],
     );
   }
 
-  Widget _buildAccessCard(
+  Widget _buildLogoCard() {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF9333EA),
+            Color(0xFF7C3AED),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF9333EA).withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: const Center(
+        child: Text(
+          'E360',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 32,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -1,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatCard({
+    required String value,
+    required String label,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.1),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: TextStyle(
+                color: color,
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.grey.shade600,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton(
     BuildContext context, {
     required String title,
     required IconData icon,
     required Color color,
     required VoidCallback onTap,
   }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade200),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: color,
-                size: 28,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: Colors.grey.shade800,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildStatsSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Resumen',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w700,
-            color: Colors.grey.shade800,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _buildStatCard(
-                title: 'Mensajes',
-                value: '12',
-                subtitle: 'sin leer',
-                icon: Icons.mail_outline,
-                color: const Color(0xFF3B82F6),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _buildStatCard(
-                title: 'Eventos',
-                value: '3',
-                subtitle: 'próximos',
-                icon: Icons.event_outlined,
-                color: const Color(0xFFF59E0B),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatCard({
-    required String title,
-    required String value,
-    required String subtitle,
-    required IconData icon,
-    required Color color,
-  }) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.3),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: color,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(icon, color: color, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.grey.shade600,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, color: Colors.white, size: 20),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF1F2937),
+              ],
             ),
           ),
-          Text(
-            subtitle,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.grey.shade500,
-            ),
-          ),
-        ],
+        ),
       ),
     );
-  }
-
-  Widget _buildDrawer(BuildContext context, AuthProvider authProvider) {
-    final user = authProvider.currentUser;
-
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          UserAccountsDrawerHeader(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF6366F1),
-                  Color(0xFF8B5CF6),
-                ],
-              ),
-            ),
-            currentAccountPicture: CircleAvatar(
-              backgroundColor: Colors.white,
-              child: Text(
-                user?.nombre.substring(0, 1).toUpperCase() ?? 'U',
-                style: const TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF6366F1),
-                ),
-              ),
-            ),
-            accountName: Text(
-              user?.nombreCompleto ?? 'Usuario',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            accountEmail: Text(user?.email ?? ''),
-          ),
-
-          // Inicio
-          ListTile(
-            leading: const Icon(Icons.home_outlined),
-            title: const Text('Inicio'),
-            onTap: () {
-              Navigator.pop(context);
-              context.go(AppRoutes.dashboard);
-            },
-          ),
-
-          const Divider(),
-
-          // Opciones según permisos
-          if (PermissionService.canAccess('mensajes.enviar'))
-            ListTile(
-              leading: const Icon(Icons.mail_outline),
-              title: const Text('Mensajes'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push(AppRoutes.mensajes);
-              },
-            ),
-
-          if (PermissionService.canAccess('calificaciones.ver'))
-            ListTile(
-              leading: const Icon(Icons.grade_outlined),
-              title: const Text('Calificaciones'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push(AppRoutes.calificaciones);
-              },
-            ),
-
-          if (PermissionService.canAccess('calendario.ver'))
-            ListTile(
-              leading: const Icon(Icons.calendar_today_outlined),
-              title: const Text('Calendario'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push(AppRoutes.calendario);
-              },
-            ),
-
-          if (PermissionService.canAccess('asistencia.ver'))
-            ListTile(
-              leading: const Icon(Icons.check_circle_outline),
-              title: const Text('Asistencia'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push(AppRoutes.asistencia);
-              },
-            ),
-
-          if (PermissionService.canAccess('anuncios.ver'))
-            ListTile(
-              leading: const Icon(Icons.campaign_outlined),
-              title: const Text('Anuncios'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push(AppRoutes.anuncios);
-              },
-            ),
-
-          // 👥 Usuarios
-          if (PermissionService.canAccess('usuarios.ver'))
-            ListTile(
-              leading: const Icon(Icons.people_outline),
-              title: const Text('Usuarios'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/usuarios');
-              },
-            ),
-
-          // 📚 Cursos - ✅ NUEVO
-          if (PermissionService.canAccess('cursos.ver'))
-            ListTile(
-              leading: const Icon(Icons.school_outlined),
-              title: const Text('Cursos'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/cursos');
-              },
-            ),
-
-          const Divider(),
-
-          // Perfil
-          ListTile(
-            leading: const Icon(Icons.person_outline),
-            title: const Text('Mi Perfil'),
-            onTap: () {
-              Navigator.pop(context);
-              context.push(AppRoutes.perfil);
-            },
-          ),
-
-          // Cerrar sesión
-          ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text(
-              'Cerrar Sesión',
-              style: TextStyle(color: Colors.red),
-            ),
-            onTap: () => _handleLogout(context, authProvider),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _handleLogout(
-      BuildContext context, AuthProvider authProvider) async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Cerrar Sesión'),
-        content: const Text('¿Estás seguro de que deseas salir?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: const Text('Salir'),
-          ),
-        ],
-      ),
-    );
-
-    if (confirm == true && context.mounted) {
-      await authProvider.logout();
-      // GoRouter redirigirá automáticamente al login
-    }
   }
 }

@@ -1,9 +1,9 @@
 // lib/screens/auth/login_screen.dart
+// ✅ REESCRITURA COMPLETA - Basado en estructura React Native que funcionaba
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
-import '../../config/routes.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -40,10 +40,8 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      // La navegación la maneja automáticamente el GoRouter redirect
-      debugPrint('✅ Login exitoso - GoRouter redirigirá al dashboard');
+      debugPrint('✅ Login exitoso');
     } else {
-      // Mostrar error
       final error = authProvider.errorMessage ?? 'Error desconocido';
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -65,27 +63,22 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF6366F1), // Indigo-500
-              Color(0xFF8B5CF6), // Purple-500
+              Color(0xFF6366F1),
+              Color(0xFF8B5CF6),
             ],
           ),
         ),
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Logo
-                  _buildLogo(),
-                  const SizedBox(height: 48),
-
-                  // Card de login
-                  _buildLoginCard(),
+                  _buildHeader(),
+                  const SizedBox(height: 40),
+                  _buildLoginForm(),
                   const SizedBox(height: 24),
-
-                  // Credenciales de prueba (solo en desarrollo)
                   _buildTestCredentials(),
                 ],
               ),
@@ -96,19 +89,20 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Widget _buildLogo() {
+  Widget _buildHeader() {
     return Column(
       children: [
+        // Logo
         Container(
           width: 100,
           height: 100,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 20,
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 15,
                 offset: const Offset(0, 10),
               ),
             ],
@@ -125,188 +119,255 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         const SizedBox(height: 16),
+
+        // App Name
         const Text(
           'EDUCANEXO360',
           style: TextStyle(
-            fontSize: 24,
+            fontSize: 28,
             fontWeight: FontWeight.w800,
             color: Colors.white,
             letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 4),
+
+        // Tagline
         const Text(
           'Tu colegio en tus manos',
           style: TextStyle(
-            fontSize: 14,
-            color: Colors.white70,
-            fontWeight: FontWeight.w500,
+            fontSize: 16,
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
           ),
+        ),
+        const SizedBox(height: 4),
+
+        // Subtitle
+        Text(
+          'La plataforma que une a toda la comunidad educativa',
+          style: TextStyle(
+            fontSize: 13,
+            color: Colors.white.withOpacity(0.85),
+            fontStyle: FontStyle.italic,
+          ),
+          textAlign: TextAlign.center,
         ),
       ],
     );
   }
 
-  Widget _buildLoginCard() {
-    return Card(
-      elevation: 8,
-      shape: RoundedRectangleBorder(
+  Widget _buildLoginForm() {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(maxWidth: 400),
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.15),
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: Colors.white.withOpacity(0.3),
+          width: 1,
+        ),
       ),
-      child: Container(
-        padding: const EdgeInsets.all(24),
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Título
-              const Text(
-                'Iniciar Sesión',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF1F2937),
-                ),
-                textAlign: TextAlign.center,
+      child: Form(
+        key: _formKey,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Iniciar Sesión',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Ingresa tus credenciales',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF6B7280),
-                ),
-                textAlign: TextAlign.center,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Ingresa tus credenciales',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.white.withOpacity(0.7),
               ),
-              const SizedBox(height: 32),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
 
-              // Campo Email
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                decoration: InputDecoration(
-                  labelText: 'Correo electrónico',
-                  hintText: 'usuario@ejemplo.com',
-                  prefixIcon: const Icon(Icons.email_outlined),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+            // Email Field
+            TextFormField(
+              controller: _emailController,
+              keyboardType: TextInputType.emailAddress,
+              textInputAction: TextInputAction.next,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Email institucional',
+                labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                hintText: 'usuario@ejemplo.com',
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.email_outlined,
+                    color: Colors.white.withOpacity(0.7)),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.15),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Ingresa tu correo electrónico';
+                }
+                if (!value.contains('@')) {
+                  return 'Ingresa un correo válido';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Password Field
+            TextFormField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              textInputAction: TextInputAction.done,
+              onFieldSubmitted: (_) => _handleLogin(),
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: 'Contraseña',
+                labelStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                hintText: '••••••••',
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
+                prefixIcon: Icon(Icons.lock_outline,
+                    color: Colors.white.withOpacity(0.7)),
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscurePassword
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                  onPressed: () {
+                    setState(() => _obscurePassword = !_obscurePassword);
+                  },
+                ),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.15),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
+                ),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Ingresa tu contraseña';
+                }
+                if (value.length < 6) {
+                  return 'Mínimo 6 caracteres';
+                }
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+
+            // Remember & Forgot
+            Row(
+              children: [
+                Checkbox(
+                  value: _rememberMe,
+                  onChanged: (value) {
+                    setState(() => _rememberMe = value ?? false);
+                  },
+                  fillColor: MaterialStateProperty.all(Colors.white),
+                  checkColor: const Color(0xFF6366F1),
+                ),
+                Text(
+                  'Recordar sesión',
+                  style: TextStyle(
+                      fontSize: 14, color: Colors.white.withOpacity(0.9)),
+                ),
+                const Spacer(),
+                TextButton(
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Próximamente: Recuperar contraseña')),
+                    );
+                  },
+                  child: Text(
+                    '¿Olvidaste?',
+                    style: TextStyle(
+                        fontSize: 12, color: Colors.white.withOpacity(0.9)),
                   ),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tu correo electrónico';
-                  }
-                  if (!value.contains('@')) {
-                    return 'Ingresa un correo válido';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
+              ],
+            ),
+            const SizedBox(height: 16),
 
-              // Campo Contraseña
-              TextFormField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _handleLogin(),
-                decoration: InputDecoration(
-                  labelText: 'Contraseña',
-                  hintText: '••••••••',
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+            // Login Button
+            Consumer<AuthProvider>(
+              builder: (context, authProvider, child) {
+                return ElevatedButton(
+                  onPressed: authProvider.isLoading ? null : _handleLogin,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF6366F1),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
                     ),
-                    onPressed: () {
-                      setState(() => _obscurePassword = !_obscurePassword);
-                    },
+                    elevation: 0,
                   ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Ingresa tu contraseña';
-                  }
-                  if (value.length < 6) {
-                    return 'Mínimo 6 caracteres';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-
-              // Recordar sesión y Olvidé contraseña
-              Row(
-                children: [
-                  Checkbox(
-                    value: _rememberMe,
-                    onChanged: (value) {
-                      setState(() => _rememberMe = value ?? false);
-                    },
-                  ),
-                  const Text(
-                    'Recordar sesión',
-                    style: TextStyle(fontSize: 14),
-                  ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () {
-                      // TODO: Implementar recuperar contraseña
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Próximamente: Recuperar contraseña'),
-                        ),
-                      );
-                    },
-                    child: const Text('¿Olvidaste tu contraseña?'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // Botón Login
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
-                  return ElevatedButton(
-                    onPressed: authProvider.isLoading ? null : _handleLogin,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                    child: authProvider.isLoading
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(
-                                Colors.white,
-                              ),
-                            ),
-                          )
-                        : const Text(
-                            'INICIAR SESIÓN',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
+                  child: authProvider.isLoading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                Color(0xFF6366F1)),
                           ),
-                  );
-                },
+                        )
+                      : const Text(
+                          'INICIAR SESIÓN',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+
+            // Footer
+            Text(
+              '¿Primera vez? Solicita tus credenciales en la institución',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.white.withOpacity(0.8),
               ),
-            ],
-          ),
+              textAlign: TextAlign.center,
+            ),
+          ],
         ),
       ),
     );
@@ -326,14 +387,15 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
-              Icon(Icons.info_outline, color: Colors.white, size: 20),
-              SizedBox(width: 8),
+              Icon(Icons.info_outline,
+                  color: Colors.white.withOpacity(0.9), size: 20),
+              const SizedBox(width: 8),
               Text(
                 'Credenciales de Prueba',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: Colors.white.withOpacity(0.9),
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
                 ),
@@ -357,8 +419,8 @@ class _LoginScreenState extends State<LoginScreen> {
         children: [
           Text(
             '$role:',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.9),
               fontSize: 12,
               fontWeight: FontWeight.w500,
             ),
@@ -366,7 +428,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Text(
             '$email / $password',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withOpacity(0.8),
               fontSize: 11,
               fontFamily: 'monospace',
             ),

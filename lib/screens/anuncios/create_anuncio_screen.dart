@@ -349,6 +349,7 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // HEADER CON TÍTULO Y BOTÓN
             Row(
               children: [
                 const Text(
@@ -359,17 +360,29 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
                   ),
                 ),
                 const Spacer(),
-                ElevatedButton.icon(
-                  onPressed: _isSubmitting ? null : _pickFiles,
-                  icon: const Icon(Icons.attach_file, size: 18),
-                  label: const Text('Adjuntar'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981),
+                // ⭐ BOTÓN COMPACTO PARA EVITAR OVERFLOW
+                SizedBox(
+                  height: 32, // Altura fija
+                  child: ElevatedButton.icon(
+                    onPressed: _isSubmitting ? null : _pickFiles,
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text(
+                      'Adjuntar',
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF10B981),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      minimumSize: Size.zero,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 16),
+
+            // LISTA DE ARCHIVOS O MENSAJE VACÍO
             if (_adjuntos.isEmpty)
               const Center(
                 child: Padding(

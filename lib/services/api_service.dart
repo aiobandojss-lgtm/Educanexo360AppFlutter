@@ -345,6 +345,32 @@ class ApiService {
     }
   }
 
+  // Agregar al final de la clase ApiService
+  Future<Response> download(String endpoint, String savePath) async {
+    try {
+      print('⬇️ Descargando archivo...');
+      print('   Endpoint: $endpoint');
+      print('   Destino: $savePath');
+
+      final response = await _dio.download(
+        endpoint,
+        savePath,
+        onReceiveProgress: (received, total) {
+          if (total != -1) {
+            final progress = (received / total * 100).toStringAsFixed(0);
+            print('📥 Progreso: $progress%');
+          }
+        },
+      );
+
+      print('✅ Descarga completada');
+      return response;
+    } catch (e) {
+      print('❌ Error en descarga: $e');
+      rethrow;
+    }
+  }
+
   /// Limpiar caché de Dio
   void clearCache() {
     _dio.interceptors.clear();

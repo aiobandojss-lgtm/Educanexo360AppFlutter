@@ -594,21 +594,84 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
 
   Future<void> _handleDownloadAttachment(Adjunto attachment) async {
     try {
-      await _messageService.downloadAttachment(
+      // Mostrar diálogo de progreso
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: Card(
+            child: Padding(
+              padding: EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Descargando archivo...'),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // ⭐ GUARDAR el resultado (esto faltaba)
+      final result = await _messageService.downloadAttachment(
         widget.messageId,
         attachment.fileId,
         attachment.nombre,
       );
 
+      // Cerrar diálogo de progreso
+      if (mounted) Navigator.pop(context);
+
+      // Mostrar resultado
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Descargando ${attachment.nombre}...')),
-        );
+        if (result['success'] == true) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('✅ Descargado: ${attachment.nombre}'),
+              backgroundColor: Colors.green,
+              duration: const Duration(seconds: 3),
+              action: SnackBarAction(
+                label: 'Ver ubicación',
+                textColor: Colors.white,
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Archivo guardado'),
+                      content: Text('Ubicación:\n${result['path']}'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('❌ ${result['message']}'),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 3),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
+        Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al descargar: $e')),
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     }

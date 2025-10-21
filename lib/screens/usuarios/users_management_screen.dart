@@ -91,7 +91,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
         title: const Text('Gestión de Usuarios'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.go('/dashboard'),
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Column(
