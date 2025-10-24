@@ -1,5 +1,5 @@
 // lib/screens/home/dashboard_screen.dart
-// ✅ CORREGIDO: Línea 276 - padding bottom de 0 a 80
+// ✅ VERSIÓN FINAL CORREGIDA - TODO FUNCIONAL
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -20,14 +20,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
-  // Estadísticas reales (se cargarán del backend)
   Map<String, int> _stats = {
     'mensajesSinLeer': 0,
     'proximosEventos': 0,
     'anunciosRecientes': 0,
   };
 
-  // Información de la escuela
   String _nombreEscuela = 'Cargando...';
 
   @override
@@ -45,11 +43,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
       if (user == null) return;
 
-      // Usar user.tipo.value para obtener el string del enum
       print('🚀 Dashboard - Usuario: ${user.nombre} (${user.tipo.value})');
       print('🏫 Dashboard - EscuelaId: ${user.escuelaId}');
 
-      // Cargar información de la escuela
       if (user.escuelaId != null && user.escuelaId!.isNotEmpty) {
         try {
           final escuela =
@@ -60,7 +56,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
             });
             print('✅ Nombre escuela cargado: ${escuela.nombre}');
           } else {
-            // Si no se encuentra la escuela, usar nombre por defecto
             setState(() {
               _nombreEscuela = 'EducaNexo360';
             });
@@ -72,13 +67,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
           });
         }
       } else {
-        // Si no hay escuelaId, usar nombre por defecto
         setState(() {
           _nombreEscuela = 'EducaNexo360';
         });
       }
 
-      // Cargar estadísticas
       try {
         final stats = await DashboardService.getDashboardStats();
         if (mounted) {
@@ -121,17 +114,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
       case UserRole.rector:
         return '🎓';
       case UserRole.coordinador:
-        return '📋';
+        return '📊';
       case UserRole.docente:
         return '👨‍🏫';
       case UserRole.estudiante:
-        return '👨‍🎓';
+        return '🎒';
       case UserRole.acudiente:
         return '👨‍👩‍👧';
       case UserRole.administrativo:
         return '💼';
-      default:
-        return '👤';
+    }
+  }
+
+  String _getRoleLabel(UserRole tipo) {
+    switch (tipo) {
+      case UserRole.admin:
+        return 'Administrador';
+      case UserRole.superAdmin:
+        return 'Super Admin';
+      case UserRole.rector:
+        return 'Rector';
+      case UserRole.coordinador:
+        return 'Coordinador';
+      case UserRole.docente:
+        return 'Docente';
+      case UserRole.estudiante:
+        return 'Estudiante';
+      case UserRole.acudiente:
+        return 'Acudiente';
+      case UserRole.administrativo:
+        return 'Administrativo';
     }
   }
 
@@ -144,221 +156,200 @@ class _DashboardScreenState extends State<DashboardScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final screenHeight = MediaQuery.of(context).size.height;
     final userName = '${user.nombre} ${user.apellidos.split(' ')[0]}';
-    final userRole = user.tipo.value; // Obtener el string del enum
+    final userRole = user.tipo.value;
     final roleIcon = _getRoleIcon(user.tipo);
     final schoolName = _nombreEscuela;
 
-    // IMPORTANTE: NO usar Scaffold aquí, solo el contenido
     return RefreshIndicator(
       key: _refreshIndicatorKey,
       onRefresh: _onRefresh,
       color: const Color(0xFF6366F1),
-      child: Stack(
-        children: [
-          // Fondo con gradiente sutil
-          Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  const Color(0xFF6366F1).withOpacity(0.05),
-                  Colors.white,
-                ],
-                stops: const [0.0, 0.3],
-              ),
-            ),
-          ),
-
-          SafeArea(
-            child: CustomScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              slivers: [
-                // AppBar personalizado con menú hamburguesa
-                SliverAppBar(
-                  expandedHeight: 140,
-                  floating: false,
-                  pinned: true,
-                  elevation: 0,
-                  backgroundColor: const Color(0xFF6366F1),
-                  leading: Builder(
-                    builder: (context) => IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.white),
-                      onPressed: () {
-                        // Encontrar el Scaffold padre que tiene el drawer
-                        Scaffold.of(context).openDrawer();
-                      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            // 🎨 HEADER CON GRADIENTE - TODO EL ANCHO
+            Stack(
+              children: [
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF6366F1),
+                        Color(0xFF8B5CF6),
+                      ],
                     ),
                   ),
-                  flexibleSpace: FlexibleSpaceBar(
-                    titlePadding: const EdgeInsets.only(left: 56, bottom: 16),
-                    title: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _getGreeting(),
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w400,
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(56, 16, 16, 24),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _getGreeting(),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.white70,
+                              fontWeight: FontWeight.w400,
+                            ),
                           ),
-                        ),
-                        Text(
-                          userName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.white,
-                            fontWeight: FontWeight.w600,
+                          const SizedBox(height: 4),
+                          Text(
+                            userName,
+                            style: const TextStyle(
+                              fontSize: 24,
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 2),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 4), // ⭐ Agregar espacio
-                          child: Text(
+                          const SizedBox(height: 4),
+                          Text(
                             '$roleIcon $userRole • $schoolName',
                             style: const TextStyle(
-                              fontSize: 11,
+                              fontSize: 13,
                               color: Colors.white70,
                               fontWeight: FontWeight.w400,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                      ],
-                    ),
-                    background: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFF6366F1),
-                            Color(0xFF8B5CF6),
-                          ],
-                        ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-
-                // Contenido del dashboard
-                // ✅ CAMBIO: padding bottom de 0 a 80
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      // Grid de estadísticas
-                      _isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : _buildStatsGrid(),
-
-                      const SizedBox(height: 20),
-
-                      // Botón Nuevo Mensaje
-                      _buildActionButton(
-                        context,
-                        title: 'Nuevo Mensaje',
-                        icon: Icons.mail_outline,
-                        color: const Color(0xFF6366F1),
-                        onTap: () => context.push('/mensajes/create'),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Mensaje motivacional
-                      Container(
-                        padding: const EdgeInsets.all(20),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.school,
-                              size: 48,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'La plataforma que une a toda la comunidad educativa en un solo lugar',
-                              style: TextStyle(
-                                color: Colors.grey.shade600,
-                                fontSize: 15,
-                                fontStyle: FontStyle.italic,
-                                height: 1.4,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      // Botón Cerrar Sesión
-                      OutlinedButton.icon(
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Cerrar Sesión'),
-                              content: const Text(
-                                  '¿Estás seguro de que deseas cerrar sesión?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context),
-                                  child: const Text('Cancelar'),
-                                ),
-                                TextButton(
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                    authProvider.logout();
-                                    context.go('/login');
-                                  },
-                                  child: const Text(
-                                    'Cerrar Sesión',
-                                    style: TextStyle(color: Colors.red),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        },
-                        icon: const Icon(Icons.logout, color: Colors.red),
-                        label: const Text(
-                          'Cerrar Sesión',
-                          style: TextStyle(color: Colors.red),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: const BorderSide(color: Colors.red),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-                    ]),
+                // ✅ MENÚ HAMBURGUESA
+                SafeArea(
+                  child: Builder(
+                    builder: (context) => IconButton(
+                      icon: const Icon(Icons.menu, color: Colors.white),
+                      onPressed: () {
+                        Scaffold.of(context).openDrawer();
+                      },
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
-        ],
+
+            // 📊 CONTENIDO PRINCIPAL
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    const Color(0xFF6366F1).withOpacity(0.05),
+                    Colors.white,
+                  ],
+                  stops: const [0.0, 0.3],
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _isLoading
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(48.0),
+                              child: CircularProgressIndicator(),
+                            ),
+                          )
+                        : _buildStatsGrid(),
+                    const SizedBox(height: 24),
+                    _buildQuickActions(context),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.school,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'La plataforma que une a toda la comunidad educativa en un solo lugar',
+                            style: TextStyle(
+                              color: Colors.grey.shade600,
+                              fontSize: 15,
+                              fontStyle: FontStyle.italic,
+                              height: 1.4,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Cerrar Sesión'),
+                            content: const Text(
+                                '¿Estás seguro de que deseas cerrar sesión?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  Navigator.pop(context);
+                                  authProvider.logout();
+                                  context.go('/login');
+                                },
+                                child: const Text(
+                                  'Cerrar Sesión',
+                                  style: TextStyle(color: Colors.red),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.logout, color: Colors.red),
+                      label: const Text(
+                        'Cerrar Sesión',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 24, vertical: 12),
+                      ),
+                    ),
+                    const SizedBox(height: 100),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -476,6 +467,33 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildQuickActions(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Acciones Rápidas',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: Colors.grey.shade800,
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        // Solo Nuevo Mensaje
+        if (PermissionService.canAccess('mensajes.enviar'))
+          _buildActionButton(
+            context,
+            title: 'Nuevo Mensaje',
+            icon: Icons.edit,
+            color: const Color(0xFF6366F1),
+            onTap: () => context.push('/mensajes/create'),
+          ),
+      ],
     );
   }
 
