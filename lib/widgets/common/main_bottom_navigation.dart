@@ -65,9 +65,11 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
     );
   }
 
+  // ✅ BOTTOM NAVIGATION CON COLORES INDIVIDUALES - SIN OVERFLOW
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
+        color: Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -76,43 +78,99 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
           ),
         ],
       ),
-      child: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
-        type: BottomNavigationBarType.fixed,
-        selectedItemColor: const Color(0xFF6366F1),
-        unselectedItemColor: Colors.grey.shade600,
-        selectedFontSize: 12,
-        unselectedFontSize: 11,
-        elevation: 0,
-        backgroundColor: Colors.white,
-        items: const [
-          BottomNavigationBarItem(
-            icon: Icon(Icons.home_outlined),
-            activeIcon: Icon(Icons.home),
-            label: 'Inicio',
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          height: 60,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildNavItem(
+                index: 0,
+                icon: Icons.home_outlined,
+                activeIcon: Icons.home,
+                label: 'Inicio',
+                color: const Color(0xFF6366F1),
+              ),
+              _buildNavItem(
+                index: 1,
+                icon: Icons.mail_outline,
+                activeIcon: Icons.mail,
+                label: 'Mensajes',
+                color: const Color(0xFF3B82F6),
+              ),
+              _buildNavItem(
+                index: 2,
+                icon: Icons.calendar_today_outlined,
+                activeIcon: Icons.calendar_today,
+                label: 'Calendario',
+                color: const Color(0xFFF59E0B),
+              ),
+              _buildNavItem(
+                index: 3,
+                icon: Icons.campaign_outlined,
+                activeIcon: Icons.campaign,
+                label: 'Anuncios',
+                color: const Color(0xFF10B981),
+              ),
+              _buildNavItem(
+                index: 4,
+                icon: Icons.check_circle_outline,
+                activeIcon: Icons.check_circle,
+                label: 'Asistencia',
+                color: const Color(0xFF14B8A6),
+              ),
+            ],
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.mail_outline),
-            activeIcon: Icon(Icons.mail),
-            label: 'Mensajes',
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem({
+    required int index,
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required Color color,
+  }) {
+    final isSelected = _currentIndex == index;
+
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _onTabTapped(index),
+          splashColor: color.withOpacity(0.1),
+          highlightColor: color.withOpacity(0.05),
+          child: Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(vertical: 6),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  isSelected ? activeIcon : icon,
+                  size: 24,
+                  color: isSelected ? color : Colors.grey.shade400,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected ? color : Colors.grey.shade400,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.clip,
+                ),
+              ],
+            ),
           ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.calendar_today_outlined),
-            activeIcon: Icon(Icons.calendar_today),
-            label: 'Calendario',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.campaign_outlined),
-            activeIcon: Icon(Icons.campaign),
-            label: 'Anuncios',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.check_circle_outline),
-            activeIcon: Icon(Icons.check_circle),
-            label: 'Asistencia',
-          ),
-        ],
+        ),
       ),
     );
   }
