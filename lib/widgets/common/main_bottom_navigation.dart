@@ -8,10 +8,10 @@ import '../../screens/home/dashboard_screen.dart';
 import '../../screens/mensajes/messages_screen.dart';
 import '../../screens/calendario/calendario_screen.dart';
 import '../../screens/anuncios/anuncios_screen.dart';
-import '../../screens/asistencia/lista_asistencia_screen.dart';
+// ✅ IMPORTAR EL WRAPPER
+import '../../screens/tareas/tareas_wrapper.dart';
 
 /// Widget principal de navegación inferior con 5 tabs
-/// Dashboard, Mensajes, Calendario, Anuncios, Asistencia
 class MainBottomNavigation extends StatefulWidget {
   const MainBottomNavigation({super.key});
 
@@ -22,7 +22,6 @@ class MainBottomNavigation extends StatefulWidget {
 class _MainBottomNavigationState extends State<MainBottomNavigation> {
   int _currentIndex = 0;
 
-  // Lista de pantallas según el índice
   late final List<Widget> _screens;
 
   @override
@@ -33,7 +32,8 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
       const MessagesScreen(),
       const CalendarioScreen(),
       const AnunciosScreen(),
-      const ListaAsistenciaScreen(),
+      // ✅ USAR EL WRAPPER en lugar de MisTareasScreen
+      const TareasWrapper(),
     ];
   }
 
@@ -48,7 +48,6 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
     final authProvider = context.watch<AuthProvider>();
     final user = authProvider.currentUser;
 
-    // Verificar que hay usuario autenticado
     if (user == null) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -65,7 +64,6 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
     );
   }
 
-  // ✅ BOTTOM NAVIGATION CON COLORES INDIVIDUALES - SIN OVERFLOW
   Widget _buildBottomNavigationBar() {
     return Container(
       decoration: BoxDecoration(
@@ -116,10 +114,10 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
               ),
               _buildNavItem(
                 index: 4,
-                icon: Icons.check_circle_outline,
-                activeIcon: Icons.check_circle,
-                label: 'Asistencia',
-                color: const Color(0xFF14B8A6),
+                icon: Icons.assignment_outlined,
+                activeIcon: Icons.assignment,
+                label: 'Tareas',
+                color: const Color(0xFF9333EA),
               ),
             ],
           ),
@@ -183,7 +181,6 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          // Header del Drawer
           UserAccountsDrawerHeader(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
@@ -212,60 +209,53 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
             ),
             accountEmail: Text(user.email),
           ),
-
-          // Dashboard Principal (siempre visible)
           ListTile(
             leading: const Icon(Icons.home_outlined),
             title: const Text('Dashboard Principal'),
             selected: _currentIndex == 0,
             onTap: () {
-              Navigator.pop(context); // Cerrar drawer
+              Navigator.pop(context);
               setState(() => _currentIndex = 0);
             },
           ),
-
           const Divider(),
-
-          // 👥 Usuarios (solo con permiso)
           if (PermissionService.canAccess('usuarios.ver'))
             ListTile(
               leading: const Icon(Icons.people_outline),
               title: const Text('Usuarios'),
               onTap: () {
-                Navigator.pop(context); // Cerrar drawer PRIMERO
-                // Usar push en lugar de go para mantener el stack
+                Navigator.pop(context);
                 context.push('/usuarios');
               },
             ),
-
-          // 📚 Cursos (solo con permiso)
           if (PermissionService.canAccess('cursos.ver'))
             ListTile(
               leading: const Icon(Icons.school_outlined),
               title: const Text('Cursos'),
               onTap: () {
-                Navigator.pop(context); // Cerrar drawer PRIMERO
-                // Usar push en lugar de go para mantener el stack
+                Navigator.pop(context);
                 context.push('/cursos');
               },
             ),
-
+          if (PermissionService.canAccess('asistencia.ver'))
+            ListTile(
+              leading: const Icon(Icons.check_circle_outline),
+              title: const Text('Asistencia'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/asistencia');
+              },
+            ),
           const Divider(),
-
-          // 👤 Perfil (TODOS los usuarios)
           ListTile(
             leading: const Icon(Icons.person_outline),
             title: const Text('Perfil'),
             onTap: () {
-              Navigator.pop(context); // Cerrar drawer PRIMERO
-              // Usar push en lugar de go para mantener el stack
+              Navigator.pop(context);
               context.push('/perfil');
             },
           ),
-
           const Divider(),
-
-          // 🚪 Cerrar Sesión (TODOS los usuarios)
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text(
@@ -273,7 +263,7 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
               style: TextStyle(color: Colors.red),
             ),
             onTap: () {
-              Navigator.pop(context); // Cerrar drawer primero
+              Navigator.pop(context);
               _showLogoutDialog(context, authProvider);
             },
           ),

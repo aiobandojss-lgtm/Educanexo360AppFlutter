@@ -5,7 +5,7 @@ class AppConfig {
   // ==========================================
 
   // ⚠️ CAMBIAR ESTA IP POR LA DE TU SERVIDOR BACKEND
-  static const String _localIp = '192.168.1.4';
+  static const String _localIp = '192.168.40.10'; // 👈 ACTUALIZA CON TU IP
   static const int _port = 3000;
 
   // URL base según el entorno
@@ -171,6 +171,34 @@ class AppConfig {
   static String boletinEstudiante(String estudianteId) =>
       '/boletin/estudiante/$estudianteId';
   static String boletinCurso(String cursoId) => '/boletin/curso/$cursoId';
+
+  // ==========================================
+  // ENDPOINTS DE TAREAS
+  // ==========================================
+
+  static const String tareas = '/tareas';
+  static const String misTareas = '/tareas/especial/mis-tareas';
+
+  static String tareaDetail(String id) => '/tareas/$id';
+  static String tareaUpdate(String id) => '/tareas/$id';
+  static String tareaDelete(String id) => '/tareas/$id';
+  static String tareaCerrar(String id) => '/tareas/$id/cerrar';
+
+  // 🔧 ARCHIVOS DE REFERENCIA (material del docente)
+  // ✅ CORREGIDO: Es /archivos NO /archivos-referencia
+  static String tareaArchivos(String id) => '/tareas/$id/archivos';
+  static String tareaArchivoDelete(String tareaId, String archivoId) =>
+      '/tareas/$tareaId/archivos/$archivoId';
+  static String tareaArchivoDownload(String tareaId, String archivoId) =>
+      '/tareas/$tareaId/archivos/$archivoId';
+
+  // Entregas de estudiantes
+  static String tareaMarcarVista(String id) => '/tareas/$id/marcar-vista';
+  static String tareaEntregar(String id) => '/tareas/$id/entregar';
+  static String tareaMiEntrega(String id) => '/tareas/$id/mi-entrega';
+  static String tareaEntregas(String id) => '/tareas/$id/entregas';
+  static String tareaCalificar(String tareaId, String entregaId) =>
+      '/tareas/$tareaId/entregas/$entregaId/calificar';
 
   // ==========================================
   // UTILIDADES

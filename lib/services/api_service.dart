@@ -182,6 +182,17 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
+      // ✅ LOGS DE DEBUG
+      print('🌐 ========== POST DEBUG ==========');
+      print('📍 BaseURL: ${_dio.options.baseUrl}');
+      print('📍 Endpoint: $endpoint');
+      print('📍 URL Final: ${_dio.options.baseUrl}$endpoint');
+      print('📦 Data type: ${data.runtimeType}');
+      if (data is Map) {
+        print('📦 Data keys: ${(data as Map).keys}');
+      }
+      print('==================================\n');
+
       final response = await _dio.post(
         endpoint,
         data: data,

@@ -22,8 +22,18 @@ import '../screens/cursos/course_detail_screen.dart';
 import '../screens/asistencia/lista_asistencia_screen.dart';
 import '../screens/asistencia/registrar_asistencia_screen.dart';
 import '../screens/asistencia/detalle_asistencia_screen.dart';
+// Imports de TAREAS
+import '../screens/tareas/mis_tareas_screen.dart';
+import '../screens/tareas/detalle_tarea_screen.dart';
+import '../screens/tareas/entregar_tarea_screen.dart';
+import '../screens/tareas/lista_tareas_screen.dart';
+import '../screens/tareas/formulario_tarea_screen.dart';
+import '../screens/tareas/lista_entregas_screen.dart';
+import '../screens/tareas/calificar_entrega_screen.dart';
+import '../models/tarea.dart';
+import '../screens/tareas/tareas_wrapper.dart';
 
-/// Configuración de rutas de la aplicación con GoRouter
+/// ConfiguraciÃ³n de rutas de la aplicaciÃ³n con GoRouter
 class AppRoutes {
   // Nombres de rutas
   static const String login = '/login';
@@ -36,8 +46,9 @@ class AppRoutes {
   static const String perfil = '/perfil';
   static const String usuarios = '/usuarios';
   static const String cursos = '/cursos';
+  static const String tareas = '/tareas';
 
-  /// Crear configuración de GoRouter
+  /// Crear configuraciÃ³n de GoRouter
   static GoRouter createRouter(AuthProvider authProvider) {
     return GoRouter(
       initialLocation: login,
@@ -47,17 +58,17 @@ class AppRoutes {
         final isAuthenticated = authProvider.isAuthenticated;
         final isLoggingIn = state.matchedLocation == login;
 
-        print('🔀 Router: Redireccionando...');
+        print('ðŸ”€ Router: Redireccionando...');
         print('   Autenticado: $isAuthenticated');
-        print('   Ubicación: ${state.matchedLocation}');
+        print('   UbicaciÃ³n: ${state.matchedLocation}');
 
         if (!isAuthenticated && !isLoggingIn) {
-          print('   → Redirigiendo a LOGIN');
+          print('   â†’ Redirigiendo a LOGIN');
           return login;
         }
 
         if (isAuthenticated && isLoggingIn) {
-          print('   → Redirigiendo a HOME');
+          print('   â†’ Redirigiendo a HOME');
           return home;
         }
 
@@ -130,7 +141,7 @@ class AppRoutes {
           path: calificaciones,
           name: 'calificaciones',
           builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Calificaciones - Próximamente')),
+            body: Center(child: Text('Calificaciones - PrÃ³ximamente')),
           ),
         ),
 
@@ -237,6 +248,72 @@ class AppRoutes {
             ),
           ],
         ),
+
+        // ==================== TAREAS ====================
+        GoRoute(
+          path: tareas,
+          name: 'tareas',
+          builder: (context, state) {
+            return const TareasWrapper();
+          },
+          routes: [
+            // Crear nueva tarea (docentes)
+            GoRoute(
+              path: 'crear',
+              name: 'tarea-crear',
+              builder: (context, state) => const FormularioTareaScreen(),
+            ),
+            // Editar tarea (docentes)
+            GoRoute(
+              path: 'editar/:tareaId',
+              name: 'tarea-editar',
+              builder: (context, state) {
+                final tareaId = state.pathParameters['tareaId']!;
+                return FormularioTareaScreen(tareaId: tareaId);
+              },
+            ),
+            // Detalle de tarea
+            GoRoute(
+              path: ':tareaId',
+              name: 'tarea-detalle',
+              builder: (context, state) {
+                final tareaId = state.pathParameters['tareaId']!;
+                return DetalleTareaScreen(tareaId: tareaId);
+              },
+            ),
+            // Entregar tarea (estudiantes)
+            GoRoute(
+              path: ':tareaId/entregar',
+              name: 'tarea-entregar',
+              builder: (context, state) {
+                final tareaId = state.pathParameters['tareaId']!;
+                return EntregarTareaScreen(tareaId: tareaId);
+              },
+            ),
+            // Ver entregas de una tarea (docentes)
+            GoRoute(
+              path: ':tareaId/entregas',
+              name: 'tarea-entregas',
+              builder: (context, state) {
+                final tareaId = state.pathParameters['tareaId']!;
+                return ListaEntregasScreen(tareaId: tareaId);
+              },
+            ),
+            // Calificar una entrega especÃ­fica (docentes)
+            GoRoute(
+              path: ':tareaId/entregas/:entregaId',
+              name: 'tarea-calificar',
+              builder: (context, state) {
+                final tareaId = state.pathParameters['tareaId']!;
+                final entregaId = state.pathParameters['entregaId']!;
+                return CalificarEntregaScreen(
+                  tareaId: tareaId,
+                  entregaId: entregaId,
+                );
+              },
+            ),
+          ],
+        ),
       ],
       errorBuilder: (context, state) => Scaffold(
         body: Center(
@@ -250,7 +327,7 @@ class AppRoutes {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Página no encontrada',
+                'PÃ¡gina no encontrada',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
