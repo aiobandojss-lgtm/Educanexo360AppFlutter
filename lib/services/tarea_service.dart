@@ -565,4 +565,61 @@ class TareaService {
       rethrow;
     }
   }
+
+  /// Obtener tareas de un estudiante específico (para acudientes)
+  Future<List<Tarea>> tareasEstudiante({
+    required String estudianteId,
+  }) async {
+    try {
+      print('📥 Obteniendo tareas del estudiante: $estudianteId');
+
+      final response = await _apiService.get(
+        '/tareas/especial/estudiante/$estudianteId',
+      );
+
+      if (response['success'] == true) {
+        final List<dynamic> tareasJson = response['data'] ?? [];
+
+        // El backend retorna tareas con campo 'entregaEstudiante'
+        // Necesitamos mapearlo al formato que espera el modelo Tarea
+        final tareas = tareasJson.map((json) {
+          // Si viene entregaEstudiante, moverlo a entregas
+          if (json['entregaEstudiante'] != null) {
+            json['entregas'] = [json['entregaEstudiante']];
+          }
+          return Tarea.fromJson(json);
+        }).toList();
+
+        print('✅ Tareas del estudiante obtenidas: ${tareas.length}');
+        return tareas;
+      }
+
+      throw Exception(
+          response['message'] ?? 'Error al obtener tareas del estudiante');
+    } catch (e) {
+      print('❌ Error en tareasEstudiante: $e');
+      rethrow;
+    }
+  }
+
+  /// Obtener información básica de un estudiante (para selector)
+  Future<Map<String, dynamic>> obtenerInfoEstudiante(
+      String estudianteId) async {
+    try {
+      print('📥 Obteniendo info del estudiante: $estudianteId');
+
+      final response = await _apiService.get(
+        '/usuarios/$estudianteId',
+      );
+
+      if (response['success'] == true) {
+        return response['data'];
+      }
+
+      throw Exception('Error al obtener información del estudiante');
+    } catch (e) {
+      print('❌ Error en obtenerInfoEstudiante: $e');
+      rethrow;
+    }
+  }
 }

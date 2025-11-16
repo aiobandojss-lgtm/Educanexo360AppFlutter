@@ -12,6 +12,7 @@ class TareaCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool mostrarDocente;
   final bool compacto;
+  final bool isReadOnly; // ⬅️ AGREGAR ESTA LÍNEA
 
   const TareaCard({
     super.key,
@@ -20,6 +21,7 @@ class TareaCard extends StatelessWidget {
     this.onTap,
     this.mostrarDocente = true,
     this.compacto = false,
+    this.isReadOnly = false, // ⬅️ AGREGAR ESTA LÍNEA
   });
 
   @override
@@ -83,6 +85,36 @@ class TareaCard extends StatelessWidget {
               if (miEntrega != null) ...[
                 const SizedBox(height: 12),
                 _buildEstadoEntrega(context),
+              ],
+
+              // Badge "Solo lectura" para acudientes
+              if (isReadOnly) ...[
+                const SizedBox(height: 12),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.visibility_outlined,
+                          size: 16, color: Colors.blue),
+                      const SizedBox(width: 8),
+                      const Text(
+                        'Vista informativa - Solo lectura',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.blue,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
 
               // Archivos de referencia

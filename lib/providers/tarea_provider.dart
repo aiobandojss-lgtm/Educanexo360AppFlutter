@@ -31,6 +31,12 @@ class TareaProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingMisTareas = false;
 
+  // Para acudientes (tareas de un hijo específico)
+  String? _estudianteSeleccionadoId;
+  String? _nombreEstudianteSeleccionado;
+  List<Tarea> _tareasHijo = [];
+  bool _isLoadingTareasHijo = false;
+
   // Filtros para listado general
   EstadoTarea? _estadoFilter;
   PrioridadTarea? _prioridadFilter;
@@ -51,6 +57,12 @@ class TareaProvider with ChangeNotifier {
   List<Tarea> get misTareas => _misTareas;
   FiltroTareaEstudiante get currentFilter => _currentFilter;
   bool get isLoadingMisTareas => _isLoadingMisTareas;
+
+// Tareas del hijo (acudiente)
+  String? get estudianteSeleccionadoId => _estudianteSeleccionadoId;
+  String? get nombreEstudianteSeleccionado => _nombreEstudianteSeleccionado;
+  List<Tarea> get tareasHijo => _tareasHijo;
+  bool get isLoadingTareasHijo => _isLoadingTareasHijo;
 
   // Filtros
   EstadoTarea? get estadoFilter => _estadoFilter;
@@ -628,6 +640,80 @@ class TareaProvider with ChangeNotifier {
     _searchQuery = '';
     _isLoading = false;
     _isLoadingMisTareas = false;
+    notifyListeners();
+  }
+
+  // ========================================
+// 📥 TAREAS DE UN HIJO (ACUDIENTE)
+// ========================================
+
+  /// Cargar tareas de un hijo (para acudientes)
+  Future<void> cargarTareasHijo({
+    required String estudianteId,
+    String? nombreEstudiante,
+    bool refresh = false,
+  }) async {
+    try {
+      _isLoadingTareasHijo = true;
+      notifyListeners();
+
+      print('📥 Cargando tareas del hijo: $estudianteId');
+
+      final tareas = await _tareaService.tareasEstudiante(
+        estudianteId: estudianteId,
+      );
+
+      _tareasHijo = tareas;
+      _estudianteSeleccionadoId = estudianteId;
+      if (nombreEstudiante != null) {
+        _nombreEstudianteSeleccionado = nombreEstudiante;
+      }
+
+      _isLoadingTareasHijo = false;
+
+      print('✅ Tareas del hijo cargadas: ${_tareasHijo.length}');
+      notifyListeners();
+    } catch (e) {
+      print('❌ Error cargando tareas del hijo: $e');
+      _isLoadingTareasHijo = false;
+      notifyListeners();
+      rethrow;
+    }
+  }
+
+  /// Filtrar tareas por estado (en Flutter, no en backend)
+  List<Tarea> filtrarTareasPorEstado(FiltroTareaEstudiante filtro) {
+    return _tareasHijo.where((tarea) {
+      // La entrega del estudiante está en tarea.entregas[0]
+      if (tarea.entregas.isEmpty) return false;
+
+      final entrega = tarea.entregas[0];
+      final estado = entrega.estado;
+
+      switch (filtro) {
+        case FiltroTareaEstudiante.pendientes:
+          return estado == EstadoEntrega.pendiente ||
+              estado == EstadoEntrega.vista ||
+              estado == EstadoEntrega.atrasada;
+
+        case FiltroTareaEstudiante.entregadas:
+          return estado == EstadoEntrega.entregada;
+
+        case FiltroTareaEstudiante.calificadas:
+          return estado == EstadoEntrega.calificada;
+
+        default:
+          return true;
+      }
+    }).toList();
+  }
+
+  /// Limpiar selección de estudiante
+  void limpiarSeleccionEstudiante() {
+    _estudianteSeleccionadoId = null;
+    _nombreEstudianteSeleccionado = null;
+    _tareasHijo = [];
+    _isLoadingTareasHijo = false;
     notifyListeners();
   }
 }

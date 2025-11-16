@@ -2,9 +2,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
-import '../../models/usuario.dart'; // Para acceder al enum UserRole
+import '../../models/usuario.dart';
 import 'mis_tareas_screen.dart';
 import 'lista_tareas_screen.dart';
+import 'selector_hijo_screen.dart';
 
 /// Wrapper que decide qué pantalla de tareas mostrar según el rol
 class TareasWrapper extends StatelessWidget {
@@ -22,10 +23,6 @@ class TareasWrapper extends StatelessWidget {
       );
     }
 
-    // ✅ SOLUCIÓN: Convertir el enum a string y comparar
-    // usuario.tipo es UserRole.admin, UserRole.docente, etc.
-    // Lo convertimos a String y extraemos solo el nombre (admin, docente, etc.)
-    // Luego lo pasamos a mayúsculas para comparar
     final tipoUsuario = usuario.tipo.toString().split('.').last.toUpperCase();
 
     print('=====================================');
@@ -35,19 +32,27 @@ class TareasWrapper extends StatelessWidget {
     print('Tipo convertido: "$tipoUsuario"');
     print('=====================================');
 
-    // ✅ COMPARACIÓN CORRECTA después de convertir a String
     final esDocente = tipoUsuario == 'ADMIN' ||
         tipoUsuario == 'DOCENTE' ||
         tipoUsuario == 'RECTOR' ||
         tipoUsuario == 'COORDINADOR';
 
+    final esAcudiente = tipoUsuario == 'ACUDIENTE';
+    final esEstudiante = tipoUsuario == 'ESTUDIANTE';
+
     print('Es Docente: $esDocente');
-    print('Mostrará: ${esDocente ? "ListaTareasScreen" : "MisTareasScreen"}');
+    print('Es Acudiente: $esAcudiente');
+    print('Es Estudiante: $esEstudiante');
+    print(
+        'Mostrará: ${esDocente ? "ListaTareasScreen" : (esAcudiente ? "SelectorHijoScreen" : "MisTareasScreen")}');
     print('=====================================');
 
     // Decidir qué pantalla mostrar
     if (esDocente) {
       return const ListaTareasScreen();
+    } else if (esAcudiente) {
+      // ✅ ÚNICO CAMBIO: Pasar parámetro isMainTab
+      return const SelectorHijoScreen(isMainTab: true);
     } else {
       return const MisTareasScreen();
     }

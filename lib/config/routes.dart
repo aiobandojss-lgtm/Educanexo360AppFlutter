@@ -32,6 +32,8 @@ import '../screens/tareas/lista_entregas_screen.dart';
 import '../screens/tareas/calificar_entrega_screen.dart';
 import '../models/tarea.dart';
 import '../screens/tareas/tareas_wrapper.dart';
+import '../screens/tareas/selector_hijo_screen.dart';
+import '../screens/tareas/tareas_hijo_screen.dart';
 
 /// ConfiguraciÃ³n de rutas de la aplicaciÃ³n con GoRouter
 class AppRoutes {
@@ -310,6 +312,19 @@ class AppRoutes {
                   tareaId: tareaId,
                   entregaId: entregaId,
                 );
+              },
+            ),
+            GoRoute(
+              path: 'seleccionar-hijo',
+              name: 'selector-hijo',
+              builder: (context, state) => const SelectorHijoScreen(),
+            ),
+            GoRoute(
+              path: 'hijo/:estudianteId',
+              name: 'tareas-hijo',
+              builder: (context, state) {
+                final estudianteId = state.pathParameters['estudianteId']!;
+                return TareasHijoScreen(estudianteId: estudianteId);
               },
             ),
           ],
