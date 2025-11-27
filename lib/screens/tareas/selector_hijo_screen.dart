@@ -1,5 +1,5 @@
 // lib/screens/tareas/selector_hijo_screen.dart
-// ✅ VERSIÓN DEBUG - Para diagnosticar problema de estudiantes asociados
+// ✅ VERSIÓN DEBUG MEJORADA - Para diagnosticar problema del campo grado
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -44,10 +44,9 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
 
       final authProvider = context.read<AuthProvider>();
 
-      // 🔍 DEBUG COMPLETO DEL USUARIO
-      print('\n═══════════════════════════════════════');
+      print('\n╔════════════════════════════════════════');
       print('🔍 DEBUG COMPLETO - SELECTOR HIJO');
-      print('═══════════════════════════════════════');
+      print('╚════════════════════════════════════════');
       print('👤 Usuario completo:');
       print('   Nombre: ${authProvider.currentUser?.nombreCompleto}');
       print('   Tipo: ${authProvider.currentUser?.tipo}');
@@ -67,7 +66,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
       } else {
         print('   ⚠️ infoAcademica es NULL - Este es el problema');
       }
-      print('═══════════════════════════════════════\n');
+      print('╚════════════════════════════════════════\n');
 
       final estudiantesIds =
           authProvider.currentUser?.infoAcademica?.estudiantesAsociados ?? [];
@@ -77,7 +76,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
       print('📋 IDs de estudiantes asociados: ${estudiantesIds.length}');
       print('   IDs: $estudiantesIds');
       print('🔧 isMainTab: ${widget.isMainTab}');
-      print('───────────────────────────────────────');
+      print('─────────────────────────────────────────');
 
       if (estudiantesIds.isEmpty) {
         print('⚠️ No hay estudiantes asociados');
@@ -106,6 +105,31 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
           print('      success: ${response['success']}');
           print('      data != null: ${response['data'] != null}');
 
+          // 🔍 DEBUG CRÍTICO: Ver contenido de info_academica
+          final dataToCheck = response['data'] ?? response;
+          if (dataToCheck['info_academica'] != null) {
+            print('   🎓 INFO_ACADEMICA encontrada:');
+            print('      Tipo: ${dataToCheck['info_academica'].runtimeType}');
+            print('      Contenido completo: ${dataToCheck['info_academica']}');
+            if (dataToCheck['info_academica']['grado'] != null) {
+              print('      📍 GRADO:');
+              print(
+                  '         Tipo: ${dataToCheck['info_academica']['grado'].runtimeType}');
+              print(
+                  '         Valor: ${dataToCheck['info_academica']['grado']}');
+              if (dataToCheck['info_academica']['grado'] is Map) {
+                print(
+                    '         Keys del objeto: ${(dataToCheck['info_academica']['grado'] as Map).keys.toList()}');
+                print(
+                    '         Nombre: ${dataToCheck['info_academica']['grado']['nombre']}');
+              }
+            } else {
+              print('      ⚠️ GRADO es NULL');
+            }
+          } else {
+            print('   ⚠️ NO HAY info_academica en la respuesta');
+          }
+
           // ✅ MEJORA: Manejar diferentes formatos de respuesta
           Usuario? estudiante;
 
@@ -131,7 +155,8 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
             print('      Apellidos: ${estudiante.apellidos}');
             print('      Nombre completo: ${estudiante.nombreCompleto}');
             print(
-                '      Curso: ${estudiante.infoAcademica?.grado ?? "Sin curso"}');
+                '      infoAcademica?.grado: ${estudiante.infoAcademica?.grado}');
+            print('      cursoDisplay: ${estudiante.cursoDisplay}');
 
             estudiantesTemp.add(estudiante);
           } else {
@@ -145,11 +170,11 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
         }
       }
 
-      print('\n═══════════════════════════════════════');
+      print('\n╔════════════════════════════════════════');
       print('✅ CARGA COMPLETADA');
       print(
           '   Total estudiantes cargados: ${estudiantesTemp.length}/${estudiantesIds.length}');
-      print('═══════════════════════════════════════\n');
+      print('╚════════════════════════════════════════\n');
 
       setState(() {
         _estudiantes = estudiantesTemp;

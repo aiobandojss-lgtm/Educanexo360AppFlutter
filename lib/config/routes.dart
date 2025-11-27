@@ -303,7 +303,7 @@ class AppRoutes {
             ),
             // Calificar una entrega especÃ­fica (docentes)
             GoRoute(
-              path: ':tareaId/entregas/:entregaId',
+              path: ':tareaId/entregas/:entregaId/calificar',
               name: 'tarea-calificar',
               builder: (context, state) {
                 final tareaId = state.pathParameters['tareaId']!;

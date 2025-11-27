@@ -57,8 +57,27 @@ class AcademicInfo {
   });
 
   factory AcademicInfo.fromJson(Map<String, dynamic> json) {
+    // 🔧 CORRECCIÓN: Manejar cuando grado viene como objeto populated
+    // El backend puede enviar grado de 3 formas:
+    // 1. Como String directo: "5° A"
+    // 2. Como ID: "673d1234567890abcdef1234"
+    // 3. Como objeto populated: { _id: "...", nombre: "5° A", ... }
+    String? gradoValue;
+
+    if (json['grado'] != null) {
+      if (json['grado'] is String) {
+        // Caso 1 y 2: Es un string (puede ser nombre o ID)
+        gradoValue = json['grado'] as String;
+      } else if (json['grado'] is Map) {
+        // Caso 3: Es un objeto populated, extraer el nombre
+        final gradoObj = json['grado'] as Map<String, dynamic>;
+        gradoValue =
+            gradoObj['nombre']?.toString() ?? gradoObj['_id']?.toString();
+      }
+    }
+
     return AcademicInfo(
-      grado: json['grado'],
+      grado: gradoValue,
       docentePrincipal: json['docente_principal'],
       cursos: json['cursos'] != null ? List<String>.from(json['cursos']) : null,
       estudiantesAsociados: json['estudiantes_asociados'] != null
@@ -138,7 +157,7 @@ class Usuario {
   final String? perfilRolId;
   final List<String>? permisos;
 
-  // ✅ AGREGAR ESTOS 3 CAMPOS NUEVOS
+  // Campos FCM
   final String? fcmToken;
   final String? platform;
   final DateTime? fcmTokenUpdatedAt;
@@ -162,7 +181,6 @@ class Usuario {
     this.rolBase,
     this.perfilRolId,
     this.permisos,
-    // ✅ AGREGAR EN EL CONSTRUCTOR
     this.fcmToken,
     this.platform,
     this.fcmTokenUpdatedAt,
@@ -195,48 +213,46 @@ class Usuario {
 
   /// Factory para crear desde JSON
   factory Usuario.fromJson(Map<String, dynamic> json) {
-    // ✅ FIX CRÍTICO: Manejar TODOS los casos de null
-
-    // 1️⃣ ID con fallback seguro
+    // ID con fallback seguro
     final userId = json['_id']?.toString() ?? json['id']?.toString() ?? '';
     if (userId.isEmpty) {
       print('⚠️ WARNING: Usuario sin ID válido');
     }
 
     return Usuario(
-      // ✅ ID con triple protección
+      // ID con triple protección
       id: userId,
 
-      // ✅ Campos requeridos con fallback seguro
+      // Campos requeridos con fallback seguro
       nombre: json['nombre']?.toString() ?? '',
       apellidos: json['apellidos']?.toString() ?? '',
       email: json['email']?.toString() ?? '',
 
-      // ✅ Enums con fallback
+      // Enums con fallback
       tipo: UserRole.fromString(json['tipo']?.toString() ??
           json['rolBase']?.toString() ??
           'ESTUDIANTE'),
       estado: UserStatus.fromString(json['estado']?.toString() ?? 'ACTIVO'),
 
-      // ✅ Campos opcionales (ya estaban bien)
+      // Campos opcionales
       escuelaId: json['escuelaId']?.toString(),
 
-      // ✅ Info académica protegida
+      // Info académica protegida
       infoAcademica: json['info_academica'] != null
           ? AcademicInfo.fromJson(
               json['info_academica'] as Map<String, dynamic>)
           : null,
 
-      // ✅ Info contacto con doble fuente
+      // Info contacto con doble fuente
       infoContacto: json['info_contacto'] != null || json['perfil'] != null
           ? ContactInfo.fromJson((json['info_contacto'] ?? json['perfil'] ?? {})
               as Map<String, dynamic>)
           : null,
 
-      // ✅ Avatar con doble fuente
+      // Avatar con doble fuente
       avatar: json['avatar']?.toString() ?? json['perfil']?['foto']?.toString(),
 
-      // ✅ Fechas con tryParse (ya estaban bien)
+      // Fechas con tryParse
       fechaNacimiento: json['fechaNacimiento'] != null
           ? DateTime.tryParse(json['fechaNacimiento'].toString())
           : null,
@@ -255,14 +271,14 @@ class Usuario {
           ? DateTime.tryParse(json['updatedAt'].toString())
           : null,
 
-      // ✅ Campos sistema futuro
+      // Campos sistema futuro
       rolBase: json['rolBase']?.toString(),
       perfilRolId: json['perfilRolId']?.toString(),
       permisos: json['permisos'] != null
           ? List<String>.from(json['permisos'] as List)
           : null,
 
-      // ✅ CAMPOS FCM (para notificaciones push)
+      // CAMPOS FCM (para notificaciones push)
       fcmToken: json['fcmToken']?.toString(),
       platform: json['platform']?.toString(),
       fcmTokenUpdatedAt: json['fcmTokenUpdatedAt'] != null
