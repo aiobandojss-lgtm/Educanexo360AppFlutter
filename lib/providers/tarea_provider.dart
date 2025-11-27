@@ -5,13 +5,13 @@ import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import '../services/tarea_service.dart';
 
-/// 📚 PROVIDER DE TAREAS
-/// Maneja estado, operaciones y sincronización
+/// ðŸ“š PROVIDER DE TAREAS
+/// Maneja estado, operaciones y sincronizaciÃ³n
 class TareaProvider with ChangeNotifier {
   final TareaService _tareaService = TareaService();
 
   // ========================================
-  // 📊 ESTADO
+  // ðŸ“Š ESTADO
   // ========================================
 
   // Para listado general (docentes/admin)
@@ -31,12 +31,6 @@ class TareaProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingMisTareas = false;
 
-  // Para acudientes (tareas de un hijo específico)
-  String? _estudianteSeleccionadoId;
-  String? _nombreEstudianteSeleccionado;
-  List<Tarea> _tareasHijo = [];
-  bool _isLoadingTareasHijo = false;
-
   // Filtros para listado general
   EstadoTarea? _estadoFilter;
   PrioridadTarea? _prioridadFilter;
@@ -45,7 +39,7 @@ class TareaProvider with ChangeNotifier {
   String _searchQuery = '';
 
   // ========================================
-  // 🔍 GETTERS
+  // ðŸ” GETTERS
   // ========================================
 
   // Listado general
@@ -58,12 +52,6 @@ class TareaProvider with ChangeNotifier {
   FiltroTareaEstudiante get currentFilter => _currentFilter;
   bool get isLoadingMisTareas => _isLoadingMisTareas;
 
-// Tareas del hijo (acudiente)
-  String? get estudianteSeleccionadoId => _estudianteSeleccionadoId;
-  String? get nombreEstudianteSeleccionado => _nombreEstudianteSeleccionado;
-  List<Tarea> get tareasHijo => _tareasHijo;
-  bool get isLoadingTareasHijo => _isLoadingTareasHijo;
-
   // Filtros
   EstadoTarea? get estadoFilter => _estadoFilter;
   PrioridadTarea? get prioridadFilter => _prioridadFilter;
@@ -71,19 +59,19 @@ class TareaProvider with ChangeNotifier {
   String? get asignaturaFilter => _asignaturaFilter;
   String get searchQuery => _searchQuery;
 
-  // Paginación
+  // PaginaciÃ³n
   int get totalTareas => _meta['total'] ?? 0;
   int get currentPage => _meta['pagina'] ?? 1;
   int get totalPages => _meta['paginas'] ?? 1;
   bool get hasMorePages => currentPage < totalPages;
 
-  // Estadísticas rápidas de mis tareas
+  // EstadÃ­sticas rÃ¡pidas de mis tareas
   int get misTareasPendientes =>
       _misTareas.where((t) => !t.estaVencida && !t.estaCerrada).length;
   int get misTareasVencidas => _misTareas.where((t) => t.estaVencida).length;
 
   // ========================================
-  // 📋 LISTAR TAREAS (GENERAL - DOCENTES/ADMIN)
+  // ðŸ“‹ LISTAR TAREAS (GENERAL - DOCENTES/ADMIN)
   // ========================================
 
   Future<void> listarTareas({
@@ -97,7 +85,7 @@ class TareaProvider with ChangeNotifier {
         notifyListeners();
       }
 
-      print('🔥 Cargando tareas... (página $page)');
+      print('ðŸ”¥ Cargando tareas... (pÃ¡gina $page)');
 
       final result = await _tareaService.listarTareas(
         page: page,
@@ -111,17 +99,17 @@ class TareaProvider with ChangeNotifier {
       if (refresh || page == 1) {
         _tareas = result['tareas'];
       } else {
-        // Paginación: agregar tareas nuevas
+        // PaginaciÃ³n: agregar tareas nuevas
         _tareas = [..._tareas, ...result['tareas']];
       }
 
       _meta = result['meta'];
       _isLoading = false;
 
-      print('✅ Tareas cargadas: ${_tareas.length}');
+      print('âœ… Tareas cargadas: ${_tareas.length}');
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando tareas: $e');
+      print('âŒ Error cargando tareas: $e');
       _isLoading = false;
       notifyListeners();
       rethrow;
@@ -129,7 +117,7 @@ class TareaProvider with ChangeNotifier {
   }
 
   // ========================================
-  // 🎯 MIS TAREAS (ESTUDIANTES)
+  // ðŸŽ¯ MIS TAREAS (ESTUDIANTES)
   // ========================================
 
   Future<void> cargarMisTareas({
@@ -140,7 +128,7 @@ class TareaProvider with ChangeNotifier {
       _isLoadingMisTareas = true;
       notifyListeners();
 
-      print('🔥 Cargando mis tareas...');
+      print('ðŸ”¥ Cargando mis tareas...');
       print('   Filtro: ${filtro?.displayName ?? "Todas"}');
 
       final tareas = await _tareaService.misTareas(filtro: filtro);
@@ -152,10 +140,10 @@ class TareaProvider with ChangeNotifier {
 
       _isLoadingMisTareas = false;
 
-      print('✅ Mis tareas cargadas: ${_misTareas.length}');
+      print('âœ… Mis tareas cargadas: ${_misTareas.length}');
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando mis tareas: $e');
+      print('âŒ Error cargando mis tareas: $e');
       _isLoadingMisTareas = false;
       notifyListeners();
       rethrow;
@@ -163,13 +151,13 @@ class TareaProvider with ChangeNotifier {
   }
 
   // ========================================
-  // 🔄 CAMBIAR FILTRO (ESTUDIANTE)
+  // ðŸ”„ CAMBIAR FILTRO (ESTUDIANTE)
   // ========================================
 
   Future<void> cambiarFiltro(FiltroTareaEstudiante filtro) async {
     if (_currentFilter == filtro) return;
 
-    print('🔄 Cambiando filtro: ${filtro.displayName}');
+    print('ðŸ”„ Cambiando filtro: ${filtro.displayName}');
     _currentFilter = filtro;
     notifyListeners();
 
@@ -177,11 +165,11 @@ class TareaProvider with ChangeNotifier {
   }
 
   // ========================================
-  // 🔍 BÚSQUEDA Y FILTROS (DOCENTE)
+  // ðŸ” BÃšSQUEDA Y FILTROS (DOCENTE)
   // ========================================
 
   Future<void> buscar(String query) async {
-    print('🔍 Buscando: $query');
+    print('ðŸ” Buscando: $query');
     _searchQuery = query;
     notifyListeners();
     await listarTareas(refresh: true);
@@ -189,7 +177,7 @@ class TareaProvider with ChangeNotifier {
 
   void limpiarBusqueda() {
     if (_searchQuery.isNotEmpty) {
-      print('🧹 Limpiando búsqueda');
+      print('ðŸ§¹ Limpiando bÃºsqueda');
       _searchQuery = '';
       listarTareas(refresh: true);
     }
@@ -220,7 +208,7 @@ class TareaProvider with ChangeNotifier {
   }
 
   void limpiarFiltros() {
-    print('🧹 Limpiando filtros');
+    print('ðŸ§¹ Limpiando filtros');
     _estadoFilter = null;
     _prioridadFilter = null;
     _cursoFilter = null;
@@ -230,7 +218,7 @@ class TareaProvider with ChangeNotifier {
   }
 
   // ========================================
-  // ✉️ CREAR TAREA
+  // âœ‰ï¸ CREAR TAREA
   // ========================================
 
   Future<Tarea> crearTarea({
@@ -248,7 +236,7 @@ class TareaProvider with ChangeNotifier {
     List<File>? archivosReferencia,
   }) async {
     try {
-      print('📝 Creando tarea: $titulo');
+      print('ðŸ“ Creando tarea: $titulo');
 
       final tarea = await _tareaService.crearTarea(
         titulo: titulo,
@@ -265,20 +253,20 @@ class TareaProvider with ChangeNotifier {
         archivosReferencia: archivosReferencia,
       );
 
-      print('✅ Tarea creada con ID: ${tarea.id}');
+      print('âœ… Tarea creada con ID: ${tarea.id}');
 
       // Refrescar lista
       await listarTareas(refresh: true);
 
       return tarea;
     } catch (e) {
-      print('❌ Error creando tarea: $e');
+      print('âŒ Error creando tarea: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // 📝 ACTUALIZAR TAREA
+  // ðŸ“ ACTUALIZAR TAREA
   // ========================================
 
   Future<Tarea> actualizarTarea({
@@ -293,7 +281,7 @@ class TareaProvider with ChangeNotifier {
     double? pesoEvaluacion,
   }) async {
     try {
-      print('📝 Actualizando tarea: $tareaId');
+      print('ðŸ“ Actualizando tarea: $tareaId');
 
       final tarea = await _tareaService.actualizarTarea(
         tareaId: tareaId,
@@ -313,23 +301,23 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('✅ Tarea actualizada');
+      print('âœ… Tarea actualizada');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('❌ Error actualizando tarea: $e');
+      print('âŒ Error actualizando tarea: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // 🗑️ ELIMINAR TAREA
+  // ðŸ—‘ï¸ ELIMINAR TAREA
   // ========================================
 
   Future<void> eliminarTarea(String tareaId) async {
     try {
-      print('🗑️ Eliminando tarea: $tareaId');
+      print('ðŸ—‘ï¸ Eliminando tarea: $tareaId');
 
       // Optimistic update
       _tareas.removeWhere((t) => t.id == tareaId);
@@ -337,9 +325,9 @@ class TareaProvider with ChangeNotifier {
 
       await _tareaService.eliminarTarea(tareaId);
 
-      print('✅ Tarea eliminada');
+      print('âœ… Tarea eliminada');
     } catch (e) {
-      print('❌ Error eliminando tarea: $e');
+      print('âŒ Error eliminando tarea: $e');
       // Recargar en caso de error
       await listarTareas(refresh: true);
       rethrow;
@@ -347,12 +335,12 @@ class TareaProvider with ChangeNotifier {
   }
 
   // ========================================
-  // 🔒 CERRAR TAREA
+  // ðŸ”’ CERRAR TAREA
   // ========================================
 
   Future<Tarea> cerrarTarea(String tareaId) async {
     try {
-      print('🔒 Cerrando tarea: $tareaId');
+      print('ðŸ”’ Cerrando tarea: $tareaId');
 
       final tarea = await _tareaService.cerrarTarea(tareaId);
 
@@ -362,18 +350,18 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('✅ Tarea cerrada');
+      print('âœ… Tarea cerrada');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('❌ Error cerrando tarea: $e');
+      print('âŒ Error cerrando tarea: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // 📎 GESTIÓN DE ARCHIVOS DE REFERENCIA
+  // ðŸ“Ž GESTIÃ“N DE ARCHIVOS DE REFERENCIA
   // ========================================
 
   Future<Tarea> subirArchivosReferencia({
@@ -381,7 +369,7 @@ class TareaProvider with ChangeNotifier {
     required List<File> archivos,
   }) async {
     try {
-      print('📎 Subiendo archivos de referencia a tarea: $tareaId');
+      print('ðŸ“Ž Subiendo archivos de referencia a tarea: $tareaId');
 
       final tarea = await _tareaService.subirArchivosReferencia(
         tareaId: tareaId,
@@ -394,12 +382,12 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('✅ Archivos subidos');
+      print('âœ… Archivos subidos');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('❌ Error subiendo archivos: $e');
+      print('âŒ Error subiendo archivos: $e');
       rethrow;
     }
   }
@@ -409,7 +397,7 @@ class TareaProvider with ChangeNotifier {
     required String archivoId,
   }) async {
     try {
-      print('🗑️ Eliminando archivo de referencia: $archivoId');
+      print('ðŸ—‘ï¸ Eliminando archivo de referencia: $archivoId');
 
       final tarea = await _tareaService.eliminarArchivoReferencia(
         tareaId: tareaId,
@@ -422,18 +410,18 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('✅ Archivo eliminado');
+      print('âœ… Archivo eliminado');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('❌ Error eliminando archivo: $e');
+      print('âŒ Error eliminando archivo: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // ✅ ENTREGAR TAREA (ESTUDIANTE)
+  // âœ… ENTREGAR TAREA (ESTUDIANTE)
   // ========================================
 
   Future<EntregaTarea> entregarTarea({
@@ -442,7 +430,7 @@ class TareaProvider with ChangeNotifier {
     String? comentarioEstudiante,
   }) async {
     try {
-      print('📤 Entregando tarea: $tareaId');
+      print('ðŸ“¤ Entregando tarea: $tareaId');
 
       final entrega = await _tareaService.entregarTarea(
         tareaId: tareaId,
@@ -450,35 +438,35 @@ class TareaProvider with ChangeNotifier {
         comentarioEstudiante: comentarioEstudiante,
       );
 
-      print('✅ Tarea entregada');
+      print('âœ… Tarea entregada');
 
       // Refrescar mis tareas
       await cargarMisTareas(filtro: _currentFilter, refresh: true);
 
       return entrega;
     } catch (e) {
-      print('❌ Error entregando tarea: $e');
+      print('âŒ Error entregando tarea: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // 👁️ MARCAR COMO VISTA (ESTUDIANTE)
+  // ðŸ‘ï¸ MARCAR COMO VISTA (ESTUDIANTE)
   // ========================================
 
   Future<void> marcarVista(String tareaId) async {
     try {
-      print('👁️ Marcando tarea como vista: $tareaId');
+      print('ðŸ‘ï¸ Marcando tarea como vista: $tareaId');
       await _tareaService.marcarVista(tareaId);
-      print('✅ Tarea marcada como vista');
+      print('âœ… Tarea marcada como vista');
     } catch (e) {
-      print('❌ Error marcando vista: $e');
-      // No hacer rethrow, es una operación de fondo
+      print('âŒ Error marcando vista: $e');
+      // No hacer rethrow, es una operaciÃ³n de fondo
     }
   }
 
   // ========================================
-  // ⭐ CALIFICAR ENTREGA (DOCENTE)
+  // â­ CALIFICAR ENTREGA (DOCENTE)
   // ========================================
 
   Future<EntregaTarea> calificarEntrega({
@@ -488,7 +476,7 @@ class TareaProvider with ChangeNotifier {
     String? comentarioDocente,
   }) async {
     try {
-      print('⭐ Calificando entrega: $entregaId');
+      print('â­ Calificando entrega: $entregaId');
 
       final entrega = await _tareaService.calificarEntrega(
         tareaId: tareaId,
@@ -497,9 +485,9 @@ class TareaProvider with ChangeNotifier {
         comentarioDocente: comentarioDocente,
       );
 
-      print('✅ Entrega calificada');
+      print('âœ… Entrega calificada');
 
-      // Refrescar tarea actual si está en la lista
+      // Refrescar tarea actual si estÃ¡ en la lista
       final index = _tareas.indexWhere((t) => t.id == tareaId);
       if (index != -1) {
         // Refrescar la tarea completa para actualizar las entregas
@@ -512,18 +500,18 @@ class TareaProvider with ChangeNotifier {
 
       return entrega;
     } catch (e) {
-      print('❌ Error calificando entrega: $e');
+      print('âŒ Error calificando entrega: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // 📖 OBTENER TAREA POR ID
+  // ðŸ“– OBTENER TAREA POR ID
   // ========================================
 
   Future<Tarea?> obtenerTarea(String tareaId) async {
     try {
-      print('🔥 Obteniendo tarea: $tareaId');
+      print('ðŸ”¥ Obteniendo tarea: $tareaId');
 
       // Primero buscar en lista local
       final localTarea = _tareas.firstWhere(
@@ -556,74 +544,74 @@ class TareaProvider with ChangeNotifier {
       );
 
       if (localTarea.id == tareaId) {
-        print('✅ Tarea encontrada en cache local');
+        print('âœ… Tarea encontrada en cache local');
         return localTarea;
       }
 
-      // Si no está en local, obtener del servidor
-      print('📡 Obteniendo del servidor...');
+      // Si no estÃ¡ en local, obtener del servidor
+      print('ðŸ“¡ Obteniendo del servidor...');
       final tarea = await _tareaService.obtenerTarea(tareaId);
 
       if (tarea != null) {
-        print('✅ Tarea obtenida del servidor');
+        print('âœ… Tarea obtenida del servidor');
       }
 
       return tarea;
     } catch (e) {
-      print('❌ Error obteniendo tarea: $e');
+      print('âŒ Error obteniendo tarea: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // 📊 VER ENTREGAS (DOCENTE)
+  // ðŸ“Š VER ENTREGAS (DOCENTE)
   // ========================================
 
   Future<List<EntregaTarea>> verEntregas(String tareaId) async {
     try {
-      print('📊 Obteniendo entregas de tarea: $tareaId');
+      print('ðŸ“Š Obteniendo entregas de tarea: $tareaId');
       final entregas = await _tareaService.verEntregas(tareaId);
-      print('✅ Entregas obtenidas: ${entregas.length}');
+      print('âœ… Entregas obtenidas: ${entregas.length}');
       return entregas;
     } catch (e) {
-      print('❌ Error obteniendo entregas: $e');
+      print('âŒ Error obteniendo entregas: $e');
       rethrow;
     }
   }
 
   // ========================================
-  // 🔄 REFRESCAR
+  // ðŸ”„ REFRESCAR
   // ========================================
 
   Future<void> refrescar() async {
-    print('🔄 Refrescando lista...');
+    print('ðŸ”„ Refrescando lista...');
     await listarTareas(refresh: true);
   }
 
   Future<void> refrescarMisTareas() async {
-    print('🔄 Refrescando mis tareas...');
+    print('ðŸ”„ Refrescando mis tareas...');
     await cargarMisTareas(filtro: _currentFilter, refresh: true);
   }
 
   // ========================================
-  // 📄 CARGAR MÁS (PAGINACIÓN)
+  // ðŸ“„ CARGAR MÃS (PAGINACIÃ“N)
   // ========================================
 
   Future<void> cargarMas() async {
     if (!hasMorePages || _isLoading) return;
 
-    print('📄 Cargando más tareas... (página ${currentPage + 1})');
+    print('ðŸ“„ Cargando mÃ¡s tareas... (pÃ¡gina ${currentPage + 1})');
 
     final nextPage = currentPage + 1;
     await listarTareas(page: nextPage);
   }
 
   // ========================================
-  // 🧹 LIMPIAR ESTADO
+  // ðŸ§¹ LIMPIAR ESTADO
   // ========================================
 
   void limpiarEstado() {
-    print('🧹 Limpiando estado del provider');
+    print('ðŸ§¹ Limpiando estado del provider');
     _tareas = [];
     _misTareas = [];
     _meta = {
@@ -644,31 +632,31 @@ class TareaProvider with ChangeNotifier {
   }
 
   // ========================================
-// 📥 TAREAS DE UN HIJO (ACUDIENTE)
-// ========================================
+  // 👨‍👩‍👧 TAREAS DE HIJO (ACUDIENTES)
+  // ========================================
 
-  /// Cargar tareas de un hijo (para acudientes)
+  List<Tarea> _tareasHijo = [];
+  bool _isLoadingTareasHijo = false;
+
+  List<Tarea> get tareasHijo => _tareasHijo;
+  bool get isLoadingTareasHijo => _isLoadingTareasHijo;
+
+  /// Cargar tareas de un estudiante específico (para acudientes)
   Future<void> cargarTareasHijo({
     required String estudianteId,
-    String? nombreEstudiante,
     bool refresh = false,
   }) async {
     try {
       _isLoadingTareasHijo = true;
       notifyListeners();
 
-      print('📥 Cargando tareas del hijo: $estudianteId');
+      print('📚 Cargando tareas del hijo: $estudianteId');
 
       final tareas = await _tareaService.tareasEstudiante(
         estudianteId: estudianteId,
       );
 
       _tareasHijo = tareas;
-      _estudianteSeleccionadoId = estudianteId;
-      if (nombreEstudiante != null) {
-        _nombreEstudianteSeleccionado = nombreEstudiante;
-      }
-
       _isLoadingTareasHijo = false;
 
       print('✅ Tareas del hijo cargadas: ${_tareasHijo.length}');
@@ -681,39 +669,42 @@ class TareaProvider with ChangeNotifier {
     }
   }
 
-  /// Filtrar tareas por estado (en Flutter, no en backend)
+  /// Filtrar tareas de hijo por estado de entrega
   List<Tarea> filtrarTareasPorEstado(FiltroTareaEstudiante filtro) {
-    return _tareasHijo.where((tarea) {
-      // La entrega del estudiante está en tarea.entregas[0]
-      if (tarea.entregas.isEmpty) return false;
+    if (_tareasHijo.isEmpty) return [];
 
-      final entrega = tarea.entregas[0];
-      final estado = entrega.estado;
+    return _tareasHijo.where((tarea) {
+      // Obtener la primera entrega (del estudiante)
+      final entrega = tarea.entregas.isNotEmpty ? tarea.entregas[0] : null;
+
+      if (entrega == null) {
+        // Si no hay entrega, es pendiente
+        return filtro == FiltroTareaEstudiante.pendientes;
+      }
 
       switch (filtro) {
         case FiltroTareaEstudiante.pendientes:
-          return estado == EstadoEntrega.pendiente ||
-              estado == EstadoEntrega.vista ||
-              estado == EstadoEntrega.atrasada;
+          // Pendientes: estado PENDIENTE o VISTA (no entregada aún)
+          return entrega.estado == EstadoEntrega.pendiente ||
+              entrega.estado == EstadoEntrega.vista;
 
         case FiltroTareaEstudiante.entregadas:
-          return estado == EstadoEntrega.entregada;
+          // Entregadas: estado ENTREGADA o ATRASADA (pero NO calificada)
+          return (entrega.estado == EstadoEntrega.entregada ||
+                  entrega.estado == EstadoEntrega.atrasada) &&
+              !entrega.estaCalificada;
 
         case FiltroTareaEstudiante.calificadas:
-          return estado == EstadoEntrega.calificada;
+          // Calificadas: estado CALIFICADA o tiene calificación
+          return entrega.estado == EstadoEntrega.calificada ||
+              entrega.estaCalificada;
+
+        case FiltroTareaEstudiante.todas:
+          return true;
 
         default:
-          return true;
+          return false;
       }
     }).toList();
-  }
-
-  /// Limpiar selección de estudiante
-  void limpiarSeleccionEstudiante() {
-    _estudianteSeleccionadoId = null;
-    _nombreEstudianteSeleccionado = null;
-    _tareasHijo = [];
-    _isLoadingTareasHijo = false;
-    notifyListeners();
   }
 }

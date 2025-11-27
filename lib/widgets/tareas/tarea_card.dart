@@ -1,10 +1,10 @@
 // lib/widgets/tareas/tarea_card.dart
-// ✅ CORREGIDO: Overflow y lógica de "VENCIDA"
+// âœ… CORREGIDO: Overflow y lÃ³gica de "VENCIDA"
 
 import 'package:flutter/material.dart';
 import '../../models/tarea.dart';
 
-/// 📚 TARJETA DE TAREA
+/// ðŸ“š TARJETA DE TAREA
 /// Widget reutilizable para mostrar tareas en listas
 class TareaCard extends StatelessWidget {
   final Tarea tarea;
@@ -12,7 +12,7 @@ class TareaCard extends StatelessWidget {
   final VoidCallback? onTap;
   final bool mostrarDocente;
   final bool compacto;
-  final bool isReadOnly; // ⬅️ AGREGAR ESTA LÍNEA
+  final bool isReadOnly; // Modo solo lectura (para acudientes)
 
   const TareaCard({
     super.key,
@@ -21,7 +21,7 @@ class TareaCard extends StatelessWidget {
     this.onTap,
     this.mostrarDocente = true,
     this.compacto = false,
-    this.isReadOnly = false, // ⬅️ AGREGAR ESTA LÍNEA
+    this.isReadOnly = false, // Por defecto no es read-only
   });
 
   @override
@@ -49,7 +49,7 @@ class TareaCard extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // Título
+              // TÃ­tulo
               Text(
                 tarea.titulo,
                 style: const TextStyle(
@@ -63,7 +63,7 @@ class TareaCard extends StatelessWidget {
 
               const SizedBox(height: 8),
 
-              // Descripción
+              // DescripciÃ³n
               if (!compacto)
                 Text(
                   tarea.descripcion,
@@ -87,40 +87,18 @@ class TareaCard extends StatelessWidget {
                 _buildEstadoEntrega(context),
               ],
 
-              // Badge "Solo lectura" para acudientes
-              if (isReadOnly) ...[
-                const SizedBox(height: 12),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: Colors.blue.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.blue.withOpacity(0.3)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.visibility_outlined,
-                          size: 16, color: Colors.blue),
-                      const SizedBox(width: 8),
-                      const Text(
-                        'Vista informativa - Solo lectura',
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: Colors.blue,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-
-              // Archivos de referencia
+              // Archivos de referencia (del docente)
               if (tarea.tieneArchivosReferencia && !compacto) ...[
                 const SizedBox(height: 12),
-                _buildArchivosInfo(),
+                _buildArchivosReferenciaInfo(),
+              ],
+
+              // Archivos de entrega (del estudiante)
+              if (miEntrega != null &&
+                  miEntrega!.archivos.isNotEmpty &&
+                  !compacto) ...[
+                const SizedBox(height: 12),
+                _buildArchivosEntregaInfo(),
               ],
             ],
           ),
@@ -130,11 +108,11 @@ class TareaCard extends StatelessWidget {
   }
 
   // ========================================
-  // 🎨 HEADER CON BADGES
+  // ðŸŽ¨ HEADER CON BADGES
   // ========================================
 
   Widget _buildHeader(BuildContext context) {
-    // ✅ CORRECCIÓN 4: Solo mostrar "VENCIDA" si NO ha sido entregada
+    // âœ… CORRECCIÃ“N 4: Solo mostrar "VENCIDA" si NO ha sido entregada
     final bool yafueEntregada = miEntrega?.estado == EstadoEntrega.entregada ||
         miEntrega?.estado == EstadoEntrega.atrasada ||
         miEntrega?.estado == EstadoEntrega.calificada;
@@ -172,7 +150,7 @@ class TareaCard extends StatelessWidget {
 
         const SizedBox(width: 8),
 
-        // Badge de estado de tarea (si está cerrada)
+        // Badge de estado de tarea (si estÃ¡ cerrada)
         if (tarea.estaCerrada)
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -192,7 +170,7 @@ class TareaCard extends StatelessWidget {
 
         const Spacer(),
 
-        // ✅ CORRECCIÓN 1: Fecha límite con Flexible para evitar overflow
+        // âœ… CORRECCIÃ“N 1: Fecha lÃ­mite con Flexible para evitar overflow
         Flexible(
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -233,7 +211,7 @@ class TareaCard extends StatelessWidget {
   }
 
   // ========================================
-  // ℹ️ INFO ROW (Asignatura, Curso, Docente)
+  // â„¹ï¸ INFO ROW (Asignatura, Curso, Docente)
   // ========================================
 
   Widget _buildInfoRow(BuildContext context) {
@@ -263,7 +241,7 @@ class TareaCard extends StatelessWidget {
             color: Colors.purple,
           ),
 
-        // Calificación máxima
+        // CalificaciÃ³n mÃ¡xima
         _buildInfoChip(
           icon: Icons.star_outline,
           label: '${tarea.calificacionMaxima.toStringAsFixed(1)} pts',
@@ -304,7 +282,7 @@ class TareaCard extends StatelessWidget {
   }
 
   // ========================================
-  // 📊 ESTADO DE MI ENTREGA (ESTUDIANTE)
+  // ðŸ“Š ESTADO DE MI ENTREGA (ESTUDIANTE)
   // ========================================
 
   Widget _buildEstadoEntrega(BuildContext context) {
@@ -363,7 +341,7 @@ class TareaCard extends StatelessWidget {
           if (entrega.estaCalificada && entrega.comentarioDocente != null) ...[
             const SizedBox(height: 8),
             Text(
-              'Retroalimentación:',
+              'RetroalimentaciÃ³n:',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
@@ -407,15 +385,16 @@ class TareaCard extends StatelessWidget {
   }
 
   // ========================================
-  // 📎 INFO DE ARCHIVOS
+  // 📎 INFO DE ARCHIVOS DE REFERENCIA
   // ========================================
 
-  Widget _buildArchivosInfo() {
+  Widget _buildArchivosReferenciaInfo() {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: Colors.blue[50],
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.blue[200]!),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -424,9 +403,10 @@ class TareaCard extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             '${tarea.cantidadArchivosReferencia} archivo${tarea.cantidadArchivosReferencia > 1 ? 's' : ''} de referencia',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
+              color: Colors.blue[700],
             ),
           ),
         ],
@@ -435,11 +415,41 @@ class TareaCard extends StatelessWidget {
   }
 
   // ========================================
-  // 🎨 HELPERS
+  // 📤 INFO DE ARCHIVOS DE ENTREGA
+  // ========================================
+
+  Widget _buildArchivosEntregaInfo() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.green[50],
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Colors.green[200]!),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text('📤', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 6),
+          Text(
+            '${miEntrega!.archivos.length} archivo${miEntrega!.archivos.length > 1 ? 's' : ''} entregado${miEntrega!.archivos.length > 1 ? 's' : ''}',
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.green[700],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ========================================
+  // ðŸŽ¨ HELPERS
   // ========================================
 
   Color _getBorderColor() {
-    // Si está vencida y pendiente, borde rojo
+    // Si estÃ¡ vencida y pendiente, borde rojo
     if (tarea.estaVencida && miEntrega?.estado == EstadoEntrega.pendiente) {
       return Colors.red;
     }
@@ -451,7 +461,7 @@ class TareaCard extends StatelessWidget {
     if (tarea.prioridad == PrioridadTarea.alta) {
       return Color(tarea.prioridad.color).withOpacity(0.3);
     }
-    // Si está calificada, borde verde
+    // Si estÃ¡ calificada, borde verde
     if (miEntrega?.estaCalificada == true) {
       return Colors.green;
     }
@@ -460,7 +470,7 @@ class TareaCard extends StatelessWidget {
   }
 
   double _getBorderWidth() {
-    // Bordes más gruesos para estados importantes
+    // Bordes mÃ¡s gruesos para estados importantes
     if (tarea.estaVencida ||
         tarea.vencePronto ||
         tarea.prioridad == PrioridadTarea.alta) {
@@ -478,7 +488,7 @@ class TareaCard extends StatelessWidget {
     } else if (diff.inDays == 1) {
       return 'Ayer';
     } else if (diff.inDays < 7) {
-      return 'Hace ${diff.inDays} días';
+      return 'Hace ${diff.inDays} dÃ­as';
     } else {
       return '${fecha.day}/${fecha.month}/${fecha.year}';
     }

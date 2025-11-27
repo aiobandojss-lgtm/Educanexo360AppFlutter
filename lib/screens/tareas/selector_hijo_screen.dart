@@ -383,8 +383,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            estudiante.infoAcademica?.grado ??
-                                'Sin curso asignado',
+                            estudiante.cursoDisplay,
                             style: TextStyle(
                               fontSize: 14,
                               color: Colors.grey[600],

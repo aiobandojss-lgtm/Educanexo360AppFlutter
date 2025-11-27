@@ -179,6 +179,20 @@ class Usuario {
     return '$primerNombre$primerApellido';
   }
 
+  /// Obtener el grado/curso del estudiante
+  String? get cursoOGrado {
+    if (infoAcademica?.grado != null && infoAcademica!.grado!.isNotEmpty) {
+      return infoAcademica!.grado;
+    }
+    if (infoAcademica?.cursos != null && infoAcademica!.cursos!.isNotEmpty) {
+      return 'Curso asignado';
+    }
+    return null;
+  }
+
+  /// Nombre del curso para mostrar
+  String get cursoDisplay => cursoOGrado ?? 'Sin curso asignado';
+
   /// Factory para crear desde JSON
   factory Usuario.fromJson(Map<String, dynamic> json) {
     // ✅ FIX CRÍTICO: Manejar TODOS los casos de null
