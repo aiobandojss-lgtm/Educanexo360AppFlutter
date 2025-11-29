@@ -154,12 +154,54 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
   }
 
   void _filtrarAsignaturasPorCurso(String cursoId) {
-    // Aquí podrías hacer una petición al backend para obtener
-    // solo las asignaturas del curso seleccionado
-    // Por ahora, mostramos todas
+    print('🔍 FILTRAR ASIGNATURAS - Curso ID: $cursoId');
+    print('   Total asignaturas disponibles: ${_asignaturas.length}');
+
+    // Filtrar asignaturas que tienen este cursoId
+    final asignaturasFiltradas = _asignaturas.where((asignatura) {
+      // Obtener el cursoId de la asignatura
+      final asignaturaCursoId = asignatura['cursoId'];
+
+      // Puede venir como String directo o como objeto {$oid: "..."}
+      String cursoIdDeAsignatura;
+      if (asignaturaCursoId is String) {
+        cursoIdDeAsignatura = asignaturaCursoId;
+      } else if (asignaturaCursoId is Map) {
+        cursoIdDeAsignatura =
+            asignaturaCursoId['\$oid'] ?? asignaturaCursoId['_id'] ?? '';
+      } else {
+        cursoIdDeAsignatura = asignaturaCursoId.toString();
+      }
+
+      final coincide = cursoIdDeAsignatura == cursoId;
+
+      if (coincide) {
+        print(
+            '   ✅ ${asignatura['nombre']} - INCLUIDA (cursoId: $cursoIdDeAsignatura)');
+      }
+
+      return coincide;
+    }).toList();
+
+    print('   Asignaturas filtradas: ${asignaturasFiltradas.length}');
+
     setState(() {
-      _asignaturasFiltradas = _asignaturas;
+      _asignaturasFiltradas = asignaturasFiltradas;
+
+      if (_asignaturaSeleccionada != null) {
+        final asignaturaEstaEnCurso = asignaturasFiltradas.any(
+          (a) => a['_id'] == _asignaturaSeleccionada,
+        );
+
+        if (!asignaturaEstaEnCurso) {
+          print(
+              '   ⚠️ Asignatura previamente seleccionada no está en este curso');
+          _asignaturaSeleccionada = null;
+        }
+      }
     });
+
+    print('   _asignaturasFiltradas final: ${_asignaturasFiltradas.length}');
   }
 
   Future<void> _seleccionarFechaLimite() async {
@@ -623,8 +665,10 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             );
           }).toList(),
           onChanged: (value) {
+            print('📌 CURSO SELECCIONADO: $value');
             setState(() {
               _cursoSeleccionado = value;
+              print('   _cursoSeleccionado ahora es: $_cursoSeleccionado');
               _asignaturaSeleccionada = null; // Resetear asignatura
               if (value != null) {
                 _filtrarAsignaturasPorCurso(value);
@@ -643,6 +687,10 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
   }
 
   Widget _buildAsignaturaDropdown() {
+    print(
+        '🎨 BUILD Dropdown Asignaturas - _cursoSeleccionado: $_cursoSeleccionado');
+    print('   _asignaturasFiltradas length: ${_asignaturasFiltradas.length}');
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -664,18 +712,24 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             fillColor: Colors.grey[50],
             prefixIcon: const Icon(Icons.book),
           ),
-          hint: const Text('Selecciona una asignatura'),
-          items: _asignaturasFiltradas.map((asignatura) {
-            return DropdownMenuItem<String>(
-              value: asignatura['_id'],
-              child: Text(asignatura['nombre']),
-            );
-          }).toList(),
-          onChanged: (value) {
-            setState(() {
-              _asignaturaSeleccionada = value;
-            });
-          },
+          hint: Text(_cursoSeleccionado == null
+              ? 'Primero selecciona un curso'
+              : 'Selecciona una asignatura'),
+          items: _cursoSeleccionado == null
+              ? []
+              : _asignaturasFiltradas.map((asignatura) {
+                  return DropdownMenuItem<String>(
+                    value: asignatura['_id'],
+                    child: Text(asignatura['nombre']),
+                  );
+                }).toList(),
+          onChanged: _cursoSeleccionado == null
+              ? null
+              : (value) {
+                  setState(() {
+                    _asignaturaSeleccionada = value;
+                  });
+                },
           validator: (value) {
             if (value == null) {
               return 'Selecciona una asignatura';
