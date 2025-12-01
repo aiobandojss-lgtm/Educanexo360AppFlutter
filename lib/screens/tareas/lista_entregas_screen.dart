@@ -150,7 +150,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Entregas'),
@@ -227,7 +227,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF10B981),
+        color: Color(0xFF8B5CF6),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -322,7 +322,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
                 style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF10B981),
+                  color: Color(0xFF8B5CF6),
                 ),
               ),
             ],
@@ -337,7 +337,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
               minHeight: 10,
               backgroundColor: Colors.grey[200],
               valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFF10B981)),
+                  const AlwaysStoppedAnimation<Color>(Color(0xFF8B5CF6)),
             ),
           ),
           const SizedBox(height: 16),
@@ -410,7 +410,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -418,12 +418,12 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
       ),
       child: Column(
         children: [
-          Icon(icon, size: 24, color: color),
-          const SizedBox(height: 4),
+          Icon(icon, size: 20, color: color),
+          const SizedBox(height: 2),
           Text(
             value,
             style: TextStyle(
-              fontSize: 20,
+              fontSize: 16,
               fontWeight: FontWeight.w800,
               color: color,
             ),
@@ -431,7 +431,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               color: color,
               fontWeight: FontWeight.w600,
             ),
@@ -493,7 +493,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     required bool isActive,
     required VoidCallback onTap,
   }) {
-    final chipColor = color ?? const Color(0xFF10B981);
+    final chipColor = color ?? const Color(0xFF8B5CF6);
 
     return FilterChip(
       selected: isActive,
@@ -682,7 +682,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
                       style: TextStyle(fontWeight: FontWeight.w700),
                     ),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF10B981),
+                      backgroundColor: const Color(0xFF8B5CF6),
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(

@@ -371,7 +371,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
           ? FloatingActionButton.extended(
               onPressed: () =>
                   context.push('/tareas/${widget.tareaId}/entregar'),
-              backgroundColor: const Color(0xFF10B981),
+              backgroundColor: const Color(0xFF8B5CF6),
               icon: const Icon(Icons.assignment),
               label: const Text('Entregar Tarea'),
             )
@@ -506,10 +506,10 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF10B981).withOpacity(0.1),
+                        color: const Color(0xFF8B5CF6).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
-                          color: const Color(0xFF10B981),
+                          color: const Color(0xFF8B5CF6),
                           width: 2,
                         ),
                       ),
@@ -524,7 +524,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
-                                  color: Color(0xFF10B981),
+                                  color: Color(0xFF8B5CF6),
                                 ),
                               ),
                               Text(
@@ -532,7 +532,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 24,
-                                  color: Color(0xFF10B981),
+                                  color: Color(0xFF8B5CF6),
                                 ),
                               ),
                             ],
@@ -555,7 +555,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                                   const Text(
                                     '💬 Retroalimentación del docente:',
                                     style: TextStyle(
-                                      color: Color(0xFF10B981),
+                                      color: Color(0xFF8B5CF6),
                                       fontSize: 13,
                                       fontWeight: FontWeight.bold,
                                     ),
@@ -587,7 +587,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                         icon: const Icon(Icons.assignment),
                         label: const Text('Entregar Ahora'),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF10B981),
+                          backgroundColor: const Color(0xFF8B5CF6),
                         ),
                       ),
                     ),
@@ -622,7 +622,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
               onPressed: () =>
                   context.push('/tareas/${widget.tareaId}/entregas'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF10B981),
+                backgroundColor: const Color(0xFF8B5CF6),
               ),
               child: const Text('Ver y Calificar Entregas'),
             ),

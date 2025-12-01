@@ -87,7 +87,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Mis Tareas'),
@@ -147,7 +147,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF10B981),
+        color: Color(0xFF8B5CF6),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -404,10 +404,10 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF10B981) : Colors.white,
+          color: isActive ? const Color(0xFF8B5CF6) : Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isActive ? const Color(0xFF10B981) : Colors.grey[300]!,
+            color: isActive ? const Color(0xFF8B5CF6) : Colors.grey[300]!,
           ),
         ),
         child: Text(
@@ -476,9 +476,9 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: const Color(0xFF10B981).withOpacity(0.1),
+        color: const Color(0xFF8B5CF6).withOpacity(0.1),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFF10B981)),
+        border: Border.all(color: const Color(0xFF8B5CF6)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -488,7 +488,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
             style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF10B981),
+              color: Color(0xFF8B5CF6),
             ),
           ),
           const SizedBox(width: 6),
@@ -497,7 +497,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
             child: const Icon(
               Icons.close,
               size: 16,
-              color: Color(0xFF10B981),
+              color: Color(0xFF8B5CF6),
             ),
           ),
         ],
@@ -593,7 +593,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
                 icon: const Icon(Icons.clear_all),
                 label: const Text('Limpiar filtros'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
+                  backgroundColor: const Color(0xFF8B5CF6),
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -611,7 +611,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
   Widget _buildFAB() {
     return FloatingActionButton.extended(
       onPressed: () => context.push('/tareas/crear'),
-      backgroundColor: const Color(0xFF10B981),
+      backgroundColor: const Color(0xFF8B5CF6),
       icon: const Icon(Icons.add, size: 24),
       label: const Text(
         'Crear Tarea',

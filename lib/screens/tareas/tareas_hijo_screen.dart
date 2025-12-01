@@ -72,7 +72,7 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Tareas del estudiante'),
@@ -88,7 +88,7 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
         onPressed: () {
           context.pop();
         },
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: const Color(0xFF8B5CF6),
         icon: const Icon(Icons.arrow_back),
         label: const Text('Regresar'),
       ),
@@ -102,7 +102,7 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF10B981),
+        color: Color(0xFF8B5CF6),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -149,9 +149,9 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
       child: TabBar(
         controller: _tabController,
         onTap: _onTabChanged,
-        labelColor: const Color(0xFF10B981),
+        labelColor: const Color(0xFF8B5CF6),
         unselectedLabelColor: Colors.grey,
-        indicatorColor: const Color(0xFF10B981),
+        indicatorColor: const Color(0xFF8B5CF6),
         indicatorWeight: 3,
         tabs: [
           Tab(text: 'Pendientes ($pendientes)'),
@@ -177,7 +177,7 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: const Color(0xFF10B981),
+      color: const Color(0xFF8B5CF6),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: tareasFiltradas.length,

@@ -81,7 +81,7 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: const Color(0xFF8B5CF6),
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Mis Tareas'),
@@ -108,7 +108,7 @@ class _MisTareasScreenState extends State<MisTareasScreen>
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF10B981),
+        color: Color(0xFF8B5CF6),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -147,9 +147,9 @@ class _MisTareasScreenState extends State<MisTareasScreen>
         child: TabBar(
           controller: _tabController,
           onTap: _onTabChanged,
-          labelColor: const Color(0xFF10B981),
+          labelColor: const Color(0xFF8B5CF6),
           unselectedLabelColor: Colors.grey,
-          indicatorColor: const Color(0xFF10B981),
+          indicatorColor: const Color(0xFF8B5CF6),
           indicatorWeight: 3,
           tabs: const [
             Tab(
@@ -197,7 +197,7 @@ class _MisTareasScreenState extends State<MisTareasScreen>
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: const Color(0xFF10B981),
+      color: const Color(0xFF8B5CF6),
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
@@ -215,25 +215,28 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   }
 
   Widget _buildEmptyState(FiltroTareaEstudiante filtro) {
-    String emoji = 'ðŸ“š';
+    //Emoji para "No hay tareas"
+    String emoji = '📚';
     String titulo = 'No hay tareas';
     String mensaje = '';
 
     switch (filtro) {
       case FiltroTareaEstudiante.pendientes:
-        emoji = 'âœ…';
+        //Emoji para "No tienes tareas pendientes"
+        emoji = '✅';
         titulo = 'No tienes tareas pendientes';
-        mensaje = 'Â¡EstÃ¡s al dÃ­a con tus entregas!';
+        mensaje = 'Estás al día con tus entregas!';
         break;
       case FiltroTareaEstudiante.entregadas:
-        emoji = 'ðŸ“¤';
+        //Emoji para "No tienes tareas entregadas"
+        emoji = '📤';
         titulo = 'No tienes tareas entregadas';
-        mensaje = 'Las tareas entregadas aparecerÃ¡n aquÃ­';
+        mensaje = 'Las tareas entregadas aparecerán aquí';
         break;
       case FiltroTareaEstudiante.calificadas:
-        emoji = 'â­';
-        titulo = 'No tienes tareas calificadas aÃºn';
-        mensaje = 'Tus calificaciones aparecerÃ¡n aquÃ­';
+        emoji = '⭐';
+        titulo = 'No tienes tareas calificadas aún';
+        mensaje = 'Tus calificaciones aparecerán aquí';
         break;
       default:
         break;
