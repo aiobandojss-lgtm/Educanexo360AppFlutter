@@ -196,39 +196,42 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
     required String valor,
     Color color = Colors.white,
   }) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: 6),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: color.withOpacity(0.9),
-                  fontWeight: FontWeight.w500,
-                ),
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            Icon(icon, size: 20, color: const Color(0xFF8B5CF6)),
+            const SizedBox(height: 4),
+            Text(
+              valor,
+              style: const TextStyle(
+                fontSize: 18,
+                color: Color(0xFF8B5CF6),
+                fontWeight: FontWeight.w800,
               ),
-              Text(
-                valor,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: color,
-                  fontWeight: FontWeight.w700,
-                ),
+            ),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
               ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }

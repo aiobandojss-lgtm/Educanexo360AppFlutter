@@ -410,20 +410,20 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Column(
         children: [
-          Icon(icon, size: 20, color: color),
+          Icon(icon, size: 16, color: color),
           const SizedBox(height: 2),
           Text(
             value,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               fontWeight: FontWeight.w800,
               color: color,
             ),
@@ -431,7 +431,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 9,
               color: color,
               fontWeight: FontWeight.w600,
             ),
