@@ -197,7 +197,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         title: const Text('Tareas de mis hijos'),
         elevation: 0,
@@ -217,7 +217,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             CircularProgressIndicator(
-              color: Color(0xFF8B5CF6),
+              color: Color(0xFF059669),
             ),
             SizedBox(height: 16),
             Text(
@@ -247,7 +247,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
               ElevatedButton(
                 onPressed: _cargarEstudiantes,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF8B5CF6),
+                  backgroundColor: const Color(0xFF059669),
                   foregroundColor: Colors.white,
                 ),
                 child: const Text('Reintentar'),
@@ -297,7 +297,14 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
         Container(
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Color(0xFF8B5CF6),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF047857), // Verde Emerald-700
+                Color(0xFF14B8A6), // Teal-500
+              ],
+            ),
           ),
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
           child: Column(
@@ -328,7 +335,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
         Expanded(
           child: RefreshIndicator(
             onRefresh: _cargarEstudiantes,
-            color: const Color(0xFF8B5CF6),
+            color: const Color(0xFF059669),
             child: ListView.builder(
               padding: const EdgeInsets.all(16),
               itemCount: _estudiantes.length,
@@ -373,13 +380,13 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
               // Avatar con inicial
               CircleAvatar(
                 radius: 30,
-                backgroundColor: const Color(0xFF8B5CF6).withOpacity(0.1),
+                backgroundColor: const Color(0xFF059669).withOpacity(0.1),
                 child: Text(
                   inicial,
                   style: const TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF8B5CF6),
+                    color: Color(0xFF059669),
                   ),
                 ),
               ),

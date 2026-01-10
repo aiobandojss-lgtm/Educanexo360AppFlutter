@@ -6,8 +6,8 @@ import 'package:flutter/material.dart';
 /// Traducidos desde src/constants/theme/colors.ts
 class AppColors {
   // Colores principales
-  static const Color primary = Color(0xFF6366F1); // #6366f1
-  static const Color secondary = Color(0xFF8B5CF6); // #8b5cf6
+  static const Color primary = Color(0xFF059669); // #059669 Emerald-600
+  static const Color secondary = Color(0xFF0D9488); // #0d9488 Teal-600
   static const Color success = Color(0xFF10B981); // #10b981
   static const Color warning = Color(0xFFF59E0B); // #f59e0b
   static const Color error = Color(0xFFEF4444); // #ef4444
@@ -15,14 +15,14 @@ class AppColors {
   static const Color black = Color(0xFF000000);
 
   // Superficies
-  static const Color surfaceMain = Color(0xFFF8FAFC); // #f8fafc
-  static const Color surfaceSecondary = Color(0xFFF1F5F9); // #f1f5f9
+  static const Color surfaceMain = Color(0xFFF0FDF4); // #f0fdf4 Green-50
+  static const Color surfaceSecondary = Color(0xFFDCFCE7); // #dcfce7 Green-100
   static const Color onSurface = Color(0xFF1E293B); // #1e293b
   static const Color onSurfaceVariant = Color(0xFF64748B); // #64748b
 
-  // Púrpura
-  static const Color purple500 = Color(0xFF8B5CF6);
-  static const Color purple600 = Color(0xFF7C3AED);
+  // PÃºrpura
+  static const Color emerald700 = Color(0xFF047857); // #047857 Emerald-700
+  static const Color teal500 = Color(0xFF14B8A6); // #14b8a6 Teal-500
 
   // Grises
   static const Color gray500 = Color(0xFF6B7280);
@@ -51,7 +51,7 @@ class AppColors {
   }
 }
 
-/// Tipografía de EducaNexo360
+/// TipografÃ­a de EducaNexo360
 /// Traducida desde src/constants/theme/typography.ts
 class AppTypography {
   // Headers principales
@@ -124,7 +124,7 @@ class AppTypography {
     letterSpacing: 1.5,
   );
 
-  // Específicos de EducaNexo360
+  // EspecÃ­ficos de EducaNexo360
   static const TextStyle welcomeText = TextStyle(
     fontSize: 15,
     fontWeight: FontWeight.w500,
@@ -207,7 +207,7 @@ class AppTypography {
   );
 }
 
-/// Tema principal de la aplicación
+/// Tema principal de la aplicaciÃ³n
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(

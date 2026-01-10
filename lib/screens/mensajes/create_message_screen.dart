@@ -1,5 +1,5 @@
 // lib/screens/messages/create_message_screen.dart
-// ✅ VERSIÓN FINAL - ESTRUCTURA ANTI-OVERFLOW + FUNCIONALIDAD COMPLETA
+// Ã¢Å“â€¦ VERSIÃƒâ€œN FINAL - ESTRUCTURA ANTI-OVERFLOW + FUNCIONALIDAD COMPLETA
 
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -78,7 +78,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     await messageProvider.loadRecipientsAndCourses();
   }
 
-  // 🔧 VALIDACIÓN DE TAMAÑO DE ARCHIVOS
+  // Ã°Å¸â€Â§ VALIDACIÃƒâ€œN DE TAMAÃƒâ€˜O DE ARCHIVOS
   bool _validateFileSize(List<File> files) {
     const maxFileSize = 4 * 1024 * 1024; // 4MB por archivo
     const maxTotalSize = 10 * 1024 * 1024; // 10MB total
@@ -118,7 +118,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     return true;
   }
 
-  // 📎 ADJUNTAR DOCUMENTO
+  // Ã°Å¸â€œÅ½ ADJUNTAR DOCUMENTO
   Future<void> _handleAttachDocument() async {
     try {
       final result = await FilePicker.platform.pickFiles(
@@ -159,8 +159,8 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     }
   }
 
-  // 🖼️ ADJUNTAR IMAGEN
-  // 🖼️ ADJUNTAR IMAGEN
+  // Ã°Å¸â€“Â¼Ã¯Â¸Â ADJUNTAR IMAGEN
+  // Ã°Å¸â€“Â¼Ã¯Â¸Â ADJUNTAR IMAGEN
   Future<void> _handleAttachImage() async {
     try {
       final ImagePicker picker = ImagePicker();
@@ -201,7 +201,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     }
   }
 
-  // 🗑️ ELIMINAR ADJUNTO
+  // Ã°Å¸â€”â€˜Ã¯Â¸Â ELIMINAR ADJUNTO
   void _removeAttachment(int index) {
     setState(() {
       _attachments.removeAt(index);
@@ -215,7 +215,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 📤 ENVIAR MENSAJE
+  // Ã°Å¸â€œÂ¤ ENVIAR MENSAJE
   Future<void> _handleSendMessage() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -271,7 +271,6 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       }
     } catch (e) {
       debugPrint('❌ Error enviando mensaje: $e');
-
       if (mounted) {
         String errorMessage = 'No se pudo enviar el mensaje';
         if (e.toString().contains('message')) {
@@ -291,7 +290,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     }
   }
 
-  // 💾 GUARDAR BORRADOR
+  // Ã°Å¸â€™Â¾ GUARDAR BORRADOR
   Future<void> _handleSaveDraft() async {
     if (_asuntoController.text.trim().isEmpty &&
         _contenidoController.text.trim().isEmpty) {
@@ -348,7 +347,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     }
   }
 
-  // 🚪 CONFIRMACIÓN AL SALIR
+  // Ã°Å¸Å¡Âª CONFIRMACIÃƒâ€œN AL SALIR
   Future<bool> _onWillPop() async {
     if (!_hasUnsavedChanges) return true;
 
@@ -375,7 +374,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     return shouldPop ?? false;
   }
 
-  // 👥 MOSTRAR SELECTOR DE DESTINATARIOS
+  // Ã°Å¸â€˜Â¥ MOSTRAR SELECTOR DE DESTINATARIOS
   void _showRecipientSelector() async {
     final messageProvider = context.read<MessageProvider>();
     final recipients = messageProvider.availableRecipients;
@@ -396,7 +395,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     }
   }
 
-  // 🏫 MOSTRAR SELECTOR DE CURSOS
+  // Ã°Å¸ÂÂ« MOSTRAR SELECTOR DE CURSOS
   void _showCourseSelector() async {
     final messageProvider = context.read<MessageProvider>();
     final courses = messageProvider.availableCourses;
@@ -414,7 +413,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     }
   }
 
-  // 📊 FORMATEAR TAMAÑO DE ARCHIVO
+  // Ã°Å¸â€œÅ  FORMATEAR TAMAÃƒâ€˜O DE ARCHIVO
   String _formatFileSize(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
@@ -433,7 +432,21 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       onWillPop: _onWillPop,
       child: Scaffold(
         appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          foregroundColor: Colors.white,
           title: Text(title),
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF047857), // Verde Emerald-700
+                  Color(0xFF14B8A6), // Teal-500
+                ],
+              ),
+            ),
+          ),
           actions: [
             if (!widget.isReply)
               Padding(
@@ -452,49 +465,49 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         body: _loading
             ? const Center(child: CircularProgressIndicator())
             : SafeArea(
-                // ✅ ESTRUCTURA ANTI-OVERFLOW (igual al login)
+                // Ã¢Å“â€¦ ESTRUCTURA ANTI-OVERFLOW (igual al login)
                 child: Center(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.all(16),
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        // 📨 HEADER DE RESPUESTA (si aplica)
+                        // Ã°Å¸â€œÂ¨ HEADER DE RESPUESTA (si aplica)
                         if (widget.isReply && widget.originalMessage != null)
                           _buildReplyHeader(),
 
-                        // 📝 FORMULARIO PRINCIPAL
+                        // Ã°Å¸â€œÂ FORMULARIO PRINCIPAL
                         Form(
                           key: _formKey,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
-                              // 👥 DESTINATARIOS INDIVIDUALES
+                              // Ã°Å¸â€˜Â¥ DESTINATARIOS INDIVIDUALES
                               _buildRecipientsSection(),
                               const SizedBox(height: 16),
 
-                              // 🏫 ENVÍO MASIVO A CURSO (solo si tiene permiso)
+                              // Ã°Å¸ÂÂ« ENVÃƒÂO MASIVO A CURSO (solo si tiene permiso)
                               if (canSendMasive && !widget.isReply) ...[
                                 _buildCourseSection(),
                                 const SizedBox(height: 16),
                               ],
 
-                              // ✉️ ASUNTO
+                              // Ã¢Å“â€°Ã¯Â¸Â ASUNTO
                               _buildAsuntoField(),
                               const SizedBox(height: 16),
 
-                              // 📄 CONTENIDO
+                              // Ã°Å¸â€œâ€ž CONTENIDO
                               _buildContenidoField(),
                               const SizedBox(height: 16),
 
-                              // 🚩 PRIORIDAD
+                              // Ã°Å¸Å¡Â© PRIORIDAD
                               _buildPrioridadSelector(),
                               const SizedBox(height: 16),
 
-                              // 📎 ADJUNTOS
+                              // Ã°Å¸â€œÅ½ ADJUNTOS
                               _buildAttachmentsSection(),
 
-                              // 🔽 ESPACIO PARA FAB
+                              // Ã°Å¸â€Â½ ESPACIO PARA FAB
                               const SizedBox(height: 100),
                             ],
                           ),
@@ -515,19 +528,19 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 📨 WIDGET: HEADER DE RESPUESTA
+  // Ã°Å¸â€œÂ¨ WIDGET: HEADER DE RESPUESTA
   Widget _buildReplyHeader() {
     return Container(
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: Color(0xFFDCFCE7),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue[200]!),
+        border: Border.all(color: Color(0xFF10B981)!),
       ),
       child: Row(
         children: [
-          const Icon(Icons.reply, size: 20, color: Colors.blue),
+          const Icon(Icons.reply, size: 20, color: Color(0xFF059669)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -537,7 +550,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                   'Respondiendo a:',
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.blue,
+                    color: Color(0xFF059669),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -547,7 +560,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w700,
-                    color: Colors.blue,
+                    color: Color(0xFF059669),
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -560,7 +573,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 👥 WIDGET: DESTINATARIOS
+  // Ã°Å¸â€˜Â¥ WIDGET: DESTINATARIOS
   Widget _buildRecipientsSection() {
     final isReadOnly = widget.isReply;
 
@@ -574,14 +587,14 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
             Row(
               children: [
                 const Icon(Icons.people_outline,
-                    size: 22, color: Colors.indigo),
+                    size: 22, color: Color(0xFF059669)),
                 const SizedBox(width: 8),
                 Text(
                   isReadOnly ? 'Para:' : 'Destinatarios individuales',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.indigo,
+                    color: Color(0xFF059669),
                   ),
                 ),
               ],
@@ -631,7 +644,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                 label: const Text('Agregar destinatarios'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 44),
-                  backgroundColor: Colors.indigo,
+                  backgroundColor: Color(0xFF059669),
                 ),
               ),
             ],
@@ -641,7 +654,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 🏫 WIDGET: CURSO
+  // Ã°Å¸ÂÂ« WIDGET: CURSO
   Widget _buildCourseSection() {
     return Card(
       elevation: 2,
@@ -707,7 +720,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // ✉️ WIDGET: ASUNTO
+  // Ã¢Å“â€°Ã¯Â¸Â WIDGET: ASUNTO
   Widget _buildAsuntoField() {
     return TextFormField(
       controller: _asuntoController,
@@ -732,13 +745,13 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 📄 WIDGET: CONTENIDO
+  // Ã°Å¸â€œâ€ž WIDGET: CONTENIDO
   Widget _buildContenidoField() {
     return TextFormField(
       controller: _contenidoController,
       decoration: InputDecoration(
         labelText: 'Mensaje *',
-        hintText: 'Escribe tu mensaje aquí...',
+        hintText: 'Escribe tu mensaje aquí­...',
         prefixIcon: const Icon(Icons.message),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         filled: true,
@@ -759,7 +772,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 🚩 WIDGET: PRIORIDAD
+  // Ã°Å¸Å¡Â© WIDGET: PRIORIDAD
   Widget _buildPrioridadSelector() {
     return Card(
       elevation: 2,
@@ -837,7 +850,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 📎 WIDGET: ADJUNTOS
+  // Ã°Å¸â€œÅ½ WIDGET: ADJUNTOS
   Widget _buildAttachmentsSection() {
     return Card(
       elevation: 2,
@@ -848,14 +861,15 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.attach_file, size: 22, color: Colors.purple),
+                const Icon(Icons.attach_file,
+                    size: 22, color: Color(0xFF059669)),
                 const SizedBox(width: 8),
                 Text(
                   'Archivos adjuntos${_attachments.isNotEmpty ? " (${_attachments.length})" : ""}',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.purple,
+                    color: Color(0xFF059669),
                   ),
                 ),
               ],
@@ -871,7 +885,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                     icon: const Text('📎', style: TextStyle(fontSize: 18)),
                     label: const Text('Documento'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue[700],
+                      backgroundColor: Color(0xFF0D9488),
                       minimumSize: const Size(double.infinity, 44),
                     ),
                   ),
@@ -919,16 +933,16 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Colors.purple[50],
+                      color: Color(0xFFF0FDF4),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.purple[200]!),
+                      border: Border.all(color: Color(0xFF10B981)!),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           _getFileIcon(fileName),
                           size: 28,
-                          color: Colors.purple[700],
+                          color: Color(0xFF059669),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -967,7 +981,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                 }).toList(),
               ),
 
-            // INFORMACIÓN DE LÍMITES
+            // INFORMACIÃƒâ€œN DE LÃƒÂMITES
             if (_attachments.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(top: 8),
@@ -987,7 +1001,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     );
   }
 
-  // 📄 HELPER: ICONO DE ARCHIVO
+  // Ã°Å¸â€œâ€ž HELPER: ICONO DE ARCHIVO
   IconData _getFileIcon(String fileName) {
     final extension = fileName.split('.').last.toLowerCase();
     switch (extension) {
@@ -1011,7 +1025,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
 }
 
 // ============================================
-// 🔹 DIALOG: SELECTOR DE DESTINATARIOS
+// Ã°Å¸â€Â¹ DIALOG: SELECTOR DE DESTINATARIOS
 // ============================================
 
 class _RecipientSelectorDialog extends StatefulWidget {
@@ -1061,7 +1075,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.indigo,
+                color: Color(0xFF059669),
                 borderRadius: const BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -1089,7 +1103,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
               ),
             ),
 
-            // BÚSQUEDA
+            // BÃƒÅ¡SQUEDA
             Padding(
               padding: const EdgeInsets.all(16),
               child: TextField(
@@ -1111,17 +1125,17 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Colors.indigo[50],
+                color: Color(0xFFDCFCE7),
                 child: Row(
                   children: [
                     Icon(Icons.check_circle,
-                        color: Colors.indigo[700], size: 20),
+                        color: Color(0xFF047857), size: 20),
                     const SizedBox(width: 8),
                     Text(
                       '${_selected.length} destinatario(s) seleccionado(s)',
                       style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: Colors.indigo[700],
+                        color: Color(0xFF047857),
                       ),
                     ),
                   ],
@@ -1173,7 +1187,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                               ),
                             ),
                           ),
-                          activeColor: Colors.indigo,
+                          activeColor: Color(0xFF059669),
                           onChanged: (checked) {
                             setState(() {
                               if (checked == true) {
@@ -1188,7 +1202,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                     ),
             ),
 
-            // BOTONES DE ACCIÓN
+            // BOTONES DE ACCIÃƒâ€œN
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1217,7 +1231,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                       icon: const Icon(Icons.check),
                       label: Text('Seleccionar (${_selected.length})'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo,
+                        backgroundColor: Color(0xFF059669),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -1233,7 +1247,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
 }
 
 // ============================================
-// 🔹 DIALOG: SELECTOR DE CURSOS
+// Ã°Å¸â€Â¹ DIALOG: SELECTOR DE CURSOS
 // ============================================
 
 class _CourseSelectorDialog extends StatelessWidget {
@@ -1331,7 +1345,7 @@ class _CourseSelectorDialog extends StatelessWidget {
                     ),
             ),
 
-            // BOTÓN CANCELAR
+            // BOTÃƒâ€œN CANCELAR
             Container(
               padding: const EdgeInsets.all(16),
               child: OutlinedButton(

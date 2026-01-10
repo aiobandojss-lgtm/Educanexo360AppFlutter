@@ -102,7 +102,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
         backgroundColor: const Color(0xFF10B981),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('Anuncios'),
+        //title: const Text('Anuncios'),
         automaticallyImplyLeading: false, // ⭐ ESTO QUITA LA FLECHA
       ),
       body: Column(
@@ -136,7 +136,14 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF10B981), // ✅ Color sólido como React Native
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF047857), // Verde Emerald-700
+            Color(0xFF14B8A6), // Teal-500
+          ],
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(

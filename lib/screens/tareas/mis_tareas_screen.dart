@@ -81,7 +81,7 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Mis Tareas'),
@@ -108,7 +108,14 @@ class _MisTareasScreenState extends State<MisTareasScreen>
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF8B5CF6),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF047857), // Verde Emerald-700
+            Color(0xFF14B8A6), // Teal-500
+          ],
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -147,9 +154,9 @@ class _MisTareasScreenState extends State<MisTareasScreen>
         child: TabBar(
           controller: _tabController,
           onTap: _onTabChanged,
-          labelColor: const Color(0xFF8B5CF6),
+          labelColor: const Color(0xFF059669),
           unselectedLabelColor: Colors.grey,
-          indicatorColor: const Color(0xFF8B5CF6),
+          indicatorColor: const Color(0xFF059669),
           indicatorWeight: 3,
           tabs: const [
             Tab(
@@ -197,7 +204,7 @@ class _MisTareasScreenState extends State<MisTareasScreen>
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: const Color(0xFF8B5CF6),
+      color: const Color(0xFF059669),
       child: ListView.builder(
         controller: _scrollController,
         padding: const EdgeInsets.all(16),

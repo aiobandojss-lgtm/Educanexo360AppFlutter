@@ -17,7 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -63,8 +62,8 @@ class _LoginScreenState extends State<LoginScreen> {
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF6366F1),
-              Color(0xFF8B5CF6),
+              Color(0xFF047857), // Emerald-700
+              Color(0xFF14B8A6), // Teal-500
             ],
           ),
         ),
@@ -78,8 +77,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildHeader(),
                   const SizedBox(height: 40),
                   _buildLoginForm(),
-                  const SizedBox(height: 24),
-                  _buildTestCredentials(),
                 ],
               ),
             ),
@@ -113,7 +110,7 @@ class _LoginScreenState extends State<LoginScreen> {
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF6366F1),
+                color: Color(0xFF059669), // Emerald-600
               ),
             ),
           ),
@@ -287,37 +284,22 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
             const SizedBox(height: 12),
 
-            // Remember & Forgot
-            Row(
-              children: [
-                Checkbox(
-                  value: _rememberMe,
-                  onChanged: (value) {
-                    setState(() => _rememberMe = value ?? false);
-                  },
-                  fillColor: MaterialStateProperty.all(Colors.white),
-                  checkColor: const Color(0xFF6366F1),
-                ),
-                Text(
-                  'Recordar sesión',
+            // Forgot Password (solo este botón, sin checkbox)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                        content: Text('Próximamente: Recuperar contraseña')),
+                  );
+                },
+                child: Text(
+                  '¿Olvidaste tu contraseña?',
                   style: TextStyle(
-                      fontSize: 14, color: Colors.white.withOpacity(0.9)),
+                      fontSize: 12, color: Colors.white.withOpacity(0.9)),
                 ),
-                const Spacer(),
-                TextButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text('Próximamente: Recuperar contraseña')),
-                    );
-                  },
-                  child: Text(
-                    '¿Olvidaste?',
-                    style: TextStyle(
-                        fontSize: 12, color: Colors.white.withOpacity(0.9)),
-                  ),
-                ),
-              ],
+              ),
             ),
             const SizedBox(height: 16),
 
@@ -328,7 +310,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: authProvider.isLoading ? null : _handleLogin,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF6366F1),
+                    foregroundColor: const Color(0xFF059669), // Emerald-600
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
@@ -342,7 +324,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                                Color(0xFF6366F1)),
+                                Color(0xFF059669)), // Emerald-600
                           ),
                         )
                       : const Text(
@@ -369,72 +351,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildTestCredentials() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.white.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.info_outline,
-                  color: Colors.white.withOpacity(0.9), size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Credenciales de Prueba',
-                style: TextStyle(
-                  color: Colors.white.withOpacity(0.9),
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          _buildCredentialRow('ADMIN', 'admin@colegio.edu.co', 'password123'),
-          _buildCredentialRow(
-              'Usuario', 'aiobandojss@gmail.com', 'Js2002S2009+++'),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCredentialRow(String role, String email, String password) {
-    return Padding(
-      padding: const EdgeInsets.only(top: 4),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '$role:',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.9),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          Text(
-            '$email / $password',
-            style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
-              fontSize: 11,
-              fontFamily: 'monospace',
-            ),
-          ),
-          const SizedBox(height: 4),
-        ],
       ),
     );
   }

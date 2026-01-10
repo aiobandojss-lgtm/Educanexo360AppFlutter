@@ -339,7 +339,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
                       label:
                           Text(_enviando ? 'Entregando...' : 'Entregar Tarea'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8B5CF6),
+                        backgroundColor: const Color(0xFF059669),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
                     ),

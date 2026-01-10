@@ -150,7 +150,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     if (_isLoading || _curso == null) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF6366F1),
+          backgroundColor: const Color(0xFF059669),
           foregroundColor: Colors.white,
           title: const Text('Cargando...'),
         ),
@@ -158,7 +158,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       );
     }
 
-    final nivelColor = _nivelColors[_curso!.nivel] ?? const Color(0xFF6366F1);
+    final nivelColor = _nivelColors[_curso!.nivel] ?? const Color(0xFF059669);
     final nivelIcon = _nivelIcons[_curso!.nivel] ?? '📚';
 
     return Scaffold(
@@ -221,7 +221,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   }
 
   // ========================================
-  // 🔖 PESTAÑAS
+  // 📖 PESTAÑAS
   // ========================================
 
   Widget _buildTabs() {
@@ -263,7 +263,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
-              color: isActive ? const Color(0xFF6366F1) : Colors.transparent,
+              color: isActive ? const Color(0xFF059669) : Colors.transparent,
               width: 2,
             ),
           ),
@@ -273,7 +273,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: isActive ? const Color(0xFF6366F1) : Colors.grey[600],
+            color: isActive ? const Color(0xFF059669) : Colors.grey[600],
           ),
           textAlign: TextAlign.center,
         ),
@@ -420,7 +420,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             width: 50,
             height: 50,
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1),
+              color: const Color(0xFF059669),
               borderRadius: BorderRadius.circular(25),
             ),
             child: Center(
@@ -483,7 +483,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF6366F1),
+                    color: Color(0xFF059669),
                   ),
                 ),
                 const Text(
@@ -513,7 +513,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.w800,
-                    color: Color(0xFF6366F1),
+                    color: Color(0xFF059669),
                   ),
                 ),
                 const Text(
@@ -722,7 +722,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1),
+                    color: const Color(0xFF059669),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Text(

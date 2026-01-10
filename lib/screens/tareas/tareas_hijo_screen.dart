@@ -72,7 +72,7 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Tareas del estudiante'),
@@ -88,7 +88,7 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
         onPressed: () {
           context.pop();
         },
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: const Color(0xFF059669),
         icon: const Icon(Icons.arrow_back),
         label: const Text('Regresar'),
       ),
@@ -102,7 +102,14 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF8B5CF6),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF047857), // Verde Emerald-700
+            Color(0xFF14B8A6), // Teal-500
+          ],
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -149,9 +156,9 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
       child: TabBar(
         controller: _tabController,
         onTap: _onTabChanged,
-        labelColor: const Color(0xFF8B5CF6),
+        labelColor: const Color(0xFF059669),
         unselectedLabelColor: Colors.grey,
-        indicatorColor: const Color(0xFF8B5CF6),
+        indicatorColor: const Color(0xFF059669),
         indicatorWeight: 3,
         tabs: [
           Tab(text: 'Pendientes ($pendientes)'),
@@ -177,7 +184,7 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
-      color: const Color(0xFF8B5CF6),
+      color: const Color(0xFF059669),
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: tareasFiltradas.length,

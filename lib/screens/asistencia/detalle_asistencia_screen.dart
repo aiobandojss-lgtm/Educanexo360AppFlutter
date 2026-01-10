@@ -145,9 +145,21 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Detalle de Asistencia'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF047857), // Verde Emerald-700
+                Color(0xFF14B8A6), // Teal-500
+              ],
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
         actions: [
           // ✅ BOTÓN EDITAR - Solo si NO está finalizado
           Consumer<AsistenciaProvider>(
@@ -277,14 +289,14 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.indigo[700]!, Colors.indigo[500]!],
+          colors: [const Color(0xFF047857), const Color(0xFF14B8A6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.indigo.withOpacity(0.3),
+            color: Color(0xFF059669).withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -498,7 +510,7 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
                       if (estadisticas.permisos > 0)
                         _buildContador(
                           icon: Icons.shield,
-                          color: Colors.purple,
+                          color: const Color(0xFF059669),
                           label: 'Permisos',
                           valor: estadisticas.permisos,
                         ),
@@ -612,7 +624,8 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.people, color: Colors.indigo, size: 24),
+                const Icon(Icons.people,
+                    color: const Color(0xFF059669), size: 24),
                 const SizedBox(width: 8),
                 Text(
                   'Estudiantes (${registro.estudiantes.length})',
@@ -810,7 +823,7 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
       case 'JUSTIFICADO':
         return Colors.blue;
       case 'PERMISO':
-        return Colors.purple;
+        return const Color(0xFF059669);
       default:
         return Colors.grey;
     }

@@ -1,5 +1,5 @@
 // lib/screens/calendario/calendario_screen.dart
-// ⭐ SOLO CAMBIO: padding en SliverPadding de 100 a 80 (línea 285 aprox)
+// ✅ MIGRACIÓN A VERDE/TEAL - 10 CAMBIOS APLICADOS
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -86,7 +86,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       floatingActionButton: PermissionService.canAccess('calendario.crear')
           ? FloatingActionButton.extended(
               onPressed: () => _navigateToCreateEvento(),
-              backgroundColor: const Color(0xFF8b5cf6),
+              backgroundColor: const Color(0xFF059669), // ← VERDE (cambio 1/10)
               icon: const Icon(Icons.add, color: Colors.white),
               label: const Text(
                 'Crear Evento',
@@ -112,8 +112,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF8b5cf6),
-            const Color(0xFF7c3aed),
+            const Color(0xFF047857), // ← VERDE OSCURO (cambio 2/10)
+            const Color(0xFF14B8A6), // ← TEAL (cambio 3/10)
           ],
         ),
       ),
@@ -185,15 +185,16 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             // ESTILOS
             calendarStyle: CalendarStyle(
               todayDecoration: BoxDecoration(
-                color: const Color(0xFF8b5cf6).withOpacity(0.3),
+                color: const Color(0xFF059669)
+                    .withOpacity(0.3), // ← VERDE (cambio 4/10)
                 shape: BoxShape.circle,
               ),
               selectedDecoration: const BoxDecoration(
-                color: Color(0xFF8b5cf6),
+                color: Color(0xFF059669), // ← VERDE (cambio 5/10)
                 shape: BoxShape.circle,
               ),
               markerDecoration: const BoxDecoration(
-                color: Color(0xFFf59e0b), // Punto amarillo
+                color: Color(0xFFf59e0b), // ✅ MANTENER Naranja
                 shape: BoxShape.circle,
               ),
               markersMaxCount: 1,
@@ -260,20 +261,20 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           IconButton(
             icon: const Icon(Icons.chevron_left),
             onPressed: () => provider.mesAnterior(),
-            color: const Color(0xFF8b5cf6),
+            color: const Color(0xFF059669), // ← VERDE (cambio 6/10)
           ),
           Text(
             nombreMes.toUpperCase(),
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF8b5cf6),
+              color: Color(0xFF059669), // ← VERDE (cambio 7/10)
             ),
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),
             onPressed: () => provider.mesSiguiente(),
-            color: const Color(0xFF8b5cf6),
+            color: const Color(0xFF059669), // ← VERDE (cambio 8/10)
           ),
         ],
       ),
@@ -359,11 +360,11 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       eventosAMostrar = provider.getEventosDelDia(_selectedDay!, tipoUsuario);
       print(
           '📅 Mostrando eventos del día ${_selectedDay!.day}/${_selectedDay!.month}');
-      print('📢 Total: ${eventosAMostrar.length}');
+      print('🔢 Total: ${eventosAMostrar.length}');
     } else {
       eventosAMostrar = provider.proximosEventos;
       print('📋 Mostrando próximos eventos');
-      print('📢 Total: ${eventosAMostrar.length}');
+      print('🔢 Total: ${eventosAMostrar.length}');
     }
 
     if (eventosAMostrar.isEmpty) {
@@ -576,7 +577,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               _navigateToCreateEvento(fechaInicial: day);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8b5cf6),
+              backgroundColor: const Color(0xFF059669), // ← VERDE (cambio 9/10)
             ),
             child: const Text('Crear evento'),
           ),
@@ -629,7 +630,8 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               icon: const Icon(Icons.add),
               label: const Text('Crear evento para este día'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8b5cf6),
+                backgroundColor:
+                    const Color(0xFF059669), // ← VERDE (cambio 10/10)
                 foregroundColor: Colors.white,
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

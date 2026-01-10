@@ -89,35 +89,35 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
                 icon: Icons.home_outlined,
                 activeIcon: Icons.home,
                 label: 'Inicio',
-                color: const Color(0xFF6366F1),
+                color: const Color(0xFF059669), // ✅ VERDE Emerald-600
               ),
               _buildNavItem(
                 index: 1,
                 icon: Icons.mail_outline,
                 activeIcon: Icons.mail,
                 label: 'Mensajes',
-                color: const Color(0xFF3B82F6),
+                color: const Color(0xFF0D9488), // ✅ TEAL Teal-600
               ),
               _buildNavItem(
                 index: 2,
                 icon: Icons.calendar_today_outlined,
                 activeIcon: Icons.calendar_today,
                 label: 'Calendario',
-                color: const Color(0xFFF59E0B),
+                color: const Color(0xFFF59E0B), // ✅ MANTENER Naranja
               ),
               _buildNavItem(
                 index: 3,
                 icon: Icons.campaign_outlined,
                 activeIcon: Icons.campaign,
                 label: 'Anuncios',
-                color: const Color(0xFF10B981),
+                color: const Color(0xFF10B981), // ✅ MANTENER Verde
               ),
               _buildNavItem(
                 index: 4,
                 icon: Icons.assignment_outlined,
                 activeIcon: Icons.assignment,
                 label: 'Tareas',
-                color: const Color(0xFF9333EA),
+                color: const Color(0xFF047857), // ✅ VERDE Emerald-700
               ),
             ],
           ),
@@ -187,8 +187,8 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  Color(0xFF6366F1),
-                  Color(0xFF8B5CF6),
+                  Color(0xFF047857), // ✅ VERDE Emerald-700
+                  Color(0xFF14B8A6), // ✅ TEAL Teal-500
                 ],
               ),
             ),
@@ -199,7 +199,7 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
                 style: const TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.w700,
-                  color: Color(0xFF6366F1),
+                  color: Color(0xFF059669), // ✅ VERDE Emerald-600
                 ),
               ),
             ),

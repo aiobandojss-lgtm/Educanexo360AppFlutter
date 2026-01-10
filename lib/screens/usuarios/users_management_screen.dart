@@ -21,7 +21,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   // 🎨 COLORES POR ROL (igual que React Native)
   static const Map<UserRole, Color> _roleColors = {
     UserRole.superAdmin: Color(0xFF7C3AED),
-    UserRole.admin: Color(0xFF6366F1),
+    UserRole.admin: Color(0xFF059669),
     UserRole.rector: Color(0xFF0284C7),
     UserRole.coordinador: Color(0xFF0891B2),
     UserRole.administrativo: Color(0xFF10B981),
@@ -84,30 +84,22 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
     final canCreate = PermissionService.canAccess('usuarios.crear');
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF6366F1),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Gestión de Usuarios'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header con info
+            _buildHeader(),
+
+            // Barra de búsqueda
+            _buildSearchBar(),
+
+            // Filtros por rol
+            _buildFilters(),
+
+            // Lista de usuarios
+            Expanded(child: _buildUsersList()),
+          ],
         ),
-      ),
-      body: Column(
-        children: [
-          // Header con info
-          _buildHeader(),
-
-          // Barra de búsqueda
-          _buildSearchBar(),
-
-          // Filtros por rol
-          _buildFilters(),
-
-          // Lista de usuarios
-          Expanded(child: _buildUsersList()),
-        ],
       ),
 
       // FAB para crear usuario (solo admin)
@@ -126,19 +118,35 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
         return Container(
           width: double.infinity,
           decoration: const BoxDecoration(
-            color: Color(0xFF6366F1),
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF047857), // Verde Emerald-700
+                Color(0xFF14B8A6), // Teal-500
+              ],
+            ),
           ),
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                '👥 Gestión de Usuarios',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
+              Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    '👥 Gestión de Usuarios',
+                    style: TextStyle(
+                      fontSize: 24,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 6),
               Text(
@@ -294,14 +302,14 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                   ),
                   onSelected: (_) => usuarioProvider.changeFilter(filtro.rol),
                   backgroundColor: Colors.white,
-                  selectedColor: const Color(0xFF6366F1),
+                  selectedColor: const Color(0xFF059669),
                   labelStyle: TextStyle(
                     color: isActive ? Colors.white : Colors.grey[700],
                     fontWeight: FontWeight.w600,
                   ),
                   side: BorderSide(
                     color:
-                        isActive ? const Color(0xFF6366F1) : Colors.grey[300]!,
+                        isActive ? const Color(0xFF059669) : Colors.grey[300]!,
                   ),
                 ),
               );
@@ -350,7 +358,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   // ========================================
 
   Widget _buildUserCard(Usuario usuario) {
-    final roleColor = _roleColors[usuario.tipo] ?? const Color(0xFF6366F1);
+    final roleColor = _roleColors[usuario.tipo] ?? const Color(0xFF059669);
     final roleIcon = _roleIcons[usuario.tipo] ?? '👤';
 
     return GestureDetector(
@@ -506,7 +514,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   Widget _buildFAB() {
     return FloatingActionButton(
       onPressed: () => context.push('/usuarios/create'),
-      backgroundColor: const Color(0xFF6366F1),
+      backgroundColor: const Color(0xFF059669),
       child: const Icon(Icons.add, size: 28),
     );
   }

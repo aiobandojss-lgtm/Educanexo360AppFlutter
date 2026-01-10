@@ -57,7 +57,8 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF8b5cf6),
+          backgroundColor:
+              const Color(0xFF059669), // ✅ CAMBIO 1: púrpura → verde
           elevation: 0,
         ),
         body: const Center(child: CircularProgressIndicator()),
@@ -67,7 +68,8 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
     if (_evento == null) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF8b5cf6),
+          backgroundColor:
+              const Color(0xFF059669), // ✅ CAMBIO 2: púrpura → verde
           elevation: 0,
         ),
         body: Center(
@@ -256,7 +258,7 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
           // FECHA Y HORA
           _buildInfoRow(
             icon: Icons.event,
-            iconColor: const Color(0xFF8b5cf6),
+            iconColor: const Color(0xFF059669), // ✅ CAMBIO 3: púrpura → verde
             title: 'Fecha y hora',
             subtitle: evento.todoElDia
                 ? DateFormat('d \'de\' MMMM yyyy', 'es_ES')
@@ -359,7 +361,7 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
         children: [
           Row(
             children: [
-              Icon(icon, color: const Color(0xFF8b5cf6), size: 20),
+              Icon(icon, color: const Color(0xFF059669), size: 20),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -582,7 +584,8 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
               icon: const Icon(Icons.edit),
               label: const Text('Editar'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF8b5cf6),
+                backgroundColor:
+                    const Color(0xFF059669), // ✅ CAMBIO 4: púrpura → verde
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 shape: RoundedRectangleBorder(

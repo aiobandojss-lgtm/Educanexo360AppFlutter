@@ -137,9 +137,16 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
 
   Widget _buildHeader(BuildContext context) {
     return Container(
-      // ✅ CAMBIO AQUÍ: Color sólido en lugar de gradient
+      // ✅ CAMBIO AQUÍ: Gradiente disfuminado (consistente con calendario)
       decoration: const BoxDecoration(
-        color: Color(0xFF10B981), // Color sólido verde
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF047857), // Verde Emerald-700
+            Color(0xFF14B8A6), // Teal-500
+          ],
+        ),
       ),
       padding: const EdgeInsets.all(16),
       child: Column(

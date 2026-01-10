@@ -147,7 +147,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         elevation: 0,
         title: const Text('Calificar Entrega'),
@@ -216,7 +216,14 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF8B5CF6),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF047857), // Verde Emerald-700
+            Color(0xFF14B8A6), // Teal-500
+          ],
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -499,19 +506,19 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             decoration: BoxDecoration(
-              color: const Color(0xFF8B5CF6).withOpacity(0.1),
+              color: const Color(0xFF059669).withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: const Row(
               children: [
-                Icon(Icons.rate_review, color: Color(0xFF8B5CF6), size: 20),
+                Icon(Icons.rate_review, color: Color(0xFF059669), size: 20),
                 SizedBox(width: 8),
                 Text(
                   'Calificación y Retroalimentación',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFF8B5CF6),
+                    color: Color(0xFF059669),
                   ),
                 ),
               ],
@@ -593,7 +600,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
               ),
               filled: true,
               fillColor: Colors.grey[50],
-              prefixIcon: const Icon(Icons.comment, color: Color(0xFF8B5CF6)),
+              prefixIcon: const Icon(Icons.comment, color: Color(0xFF059669)),
             ),
             maxLines: 5,
             maxLength: 500,
@@ -696,7 +703,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
           child: ElevatedButton(
             onPressed: _isSaving ? null : _guardarCalificacion,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6),
+              backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(

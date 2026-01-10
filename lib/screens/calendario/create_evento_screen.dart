@@ -86,246 +86,281 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF8b5cf6),
-        elevation: 0,
-        title: Text(
-          _isEditMode ? 'Editar Evento' : 'Crear Evento',
-          style: const TextStyle(
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-          ),
-        ),
-      ),
-      body: Form(
-        key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+      body: SafeArea(
+        child: Column(
           children: [
-            _buildSection(
-              title: 'Información básica',
-              children: [
-                _buildTextField(
-                  controller: _tituloController,
-                  label: 'Título del evento',
-                  hint: 'Ej: Reunión de padres',
-                  icon: Icons.title,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El título es obligatorio';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _descripcionController,
-                  label: 'Descripción',
-                  hint: 'Describe el evento...',
-                  icon: Icons.description,
-                  maxLines: 4,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'La descripción es obligatoria';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                _buildTextField(
-                  controller: _lugarController,
-                  label: 'Lugar (opcional)',
-                  hint: 'Ej: Auditorio principal',
-                  icon: Icons.location_on,
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildSection(
-              title: 'Fecha y hora',
-              children: [
-                _buildSwitchTile(
-                  title: 'Evento de todo el día',
-                  value: _todoElDia,
-                  onChanged: (value) {
-                    setState(() => _todoElDia = value);
-                  },
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildDateTimePicker(
-                        label: 'Fecha inicio',
-                        date: _fechaInicio,
-                        time: _horaInicio,
-                        showTime: !_todoElDia,
-                        onDateChanged: (date) {
-                          setState(() => _fechaInicio = date);
-                        },
-                        onTimeChanged: (time) {
-                          setState(() => _horaInicio = time);
-                        },
-                      ),
-                    ),
+            // Header con gradiente disfuminado
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    Color(0xFF047857), // Verde Emerald-700
+                    Color(0xFF14B8A6), // Teal-500
                   ],
                 ),
-                const SizedBox(height: 16),
-                Row(
+              ),
+              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.arrow_back, color: Colors.white),
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    _isEditMode ? 'Editar Evento' : 'Crear Evento',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Body
+            Expanded(
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(16),
                   children: [
-                    Expanded(
-                      child: _buildDateTimePicker(
-                        label: 'Fecha fin',
-                        date: _fechaFin,
-                        time: _horaFin,
-                        showTime: !_todoElDia,
-                        onDateChanged: (date) {
-                          setState(() => _fechaFin = date);
-                        },
-                        onTimeChanged: (time) {
-                          setState(() => _horaFin = time);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildSection(
-              title: 'Tipo de evento',
-              children: [
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: EventType.values.map((tipo) {
-                    final isSelected = _tipoSeleccionado == tipo;
-                    return ChoiceChip(
-                      label: Text('${tipo.icon} ${tipo.displayName}'),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() => _tipoSeleccionado = tipo);
-                        }
-                      },
-                      selectedColor: _getEventTypeColor(tipo).withOpacity(0.2),
-                      labelStyle: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected
-                            ? _getEventTypeColor(tipo)
-                            : Colors.grey[700],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            _buildSection(
-              title: 'Estado del evento',
-              children: [
-                if (_isEditMode)
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    margin: const EdgeInsets.only(bottom: 12),
-                    decoration: BoxDecoration(
-                      color:
-                          _getStatusColor(_estadoSeleccionado).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: _getStatusColor(_estadoSeleccionado)
-                            .withOpacity(0.3),
-                      ),
-                    ),
-                    child: Row(
+                    _buildSection(
+                      title: 'Información básica',
                       children: [
-                        Icon(
-                          Icons.info_outline,
-                          color: _getStatusColor(_estadoSeleccionado),
-                          size: 20,
+                        _buildTextField(
+                          controller: _tituloController,
+                          label: 'Título del evento',
+                          hint: 'Ej: Reunión de padres',
+                          icon: Icons.title,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'El título es obligatorio';
+                            }
+                            return null;
+                          },
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Estado actual: ${_estadoSeleccionado.displayName}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: _getStatusColor(_estadoSeleccionado),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _descripcionController,
+                          label: 'Descripción',
+                          hint: 'Describe el evento...',
+                          icon: Icons.description,
+                          maxLines: 4,
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'La descripción es obligatoria';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        _buildTextField(
+                          controller: _lugarController,
+                          label: 'Lugar (opcional)',
+                          hint: 'Ej: Auditorio principal',
+                          icon: Icons.location_on,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      title: 'Fecha y hora',
+                      children: [
+                        _buildSwitchTile(
+                          title: 'Evento de todo el día',
+                          value: _todoElDia,
+                          onChanged: (value) {
+                            setState(() => _todoElDia = value);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDateTimePicker(
+                                label: 'Fecha inicio',
+                                date: _fechaInicio,
+                                time: _horaInicio,
+                                showTime: !_todoElDia,
+                                onDateChanged: (date) {
+                                  setState(() => _fechaInicio = date);
+                                },
+                                onTimeChanged: (time) {
+                                  setState(() => _horaInicio = time);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildDateTimePicker(
+                                label: 'Fecha fin',
+                                date: _fechaFin,
+                                time: _horaFin,
+                                showTime: !_todoElDia,
+                                onDateChanged: (date) {
+                                  setState(() => _fechaFin = date);
+                                },
+                                onTimeChanged: (time) {
+                                  setState(() => _horaFin = time);
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      title: 'Tipo de evento',
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: EventType.values.map((tipo) {
+                            final isSelected = _tipoSeleccionado == tipo;
+                            return ChoiceChip(
+                              label: Text('${tipo.icon} ${tipo.displayName}'),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() => _tipoSeleccionado = tipo);
+                                }
+                              },
+                              selectedColor:
+                                  _getEventTypeColor(tipo).withOpacity(0.2),
+                              labelStyle: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? _getEventTypeColor(tipo)
+                                    : Colors.grey[700],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      title: 'Estado del evento',
+                      children: [
+                        if (_isEditMode)
+                          Container(
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 12),
+                            decoration: BoxDecoration(
+                              color: _getStatusColor(_estadoSeleccionado)
+                                  .withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: _getStatusColor(_estadoSeleccionado)
+                                    .withOpacity(0.3),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: _getStatusColor(_estadoSeleccionado),
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Estado actual: ${_estadoSeleccionado.displayName}',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: _getStatusColor(_estadoSeleccionado),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: EventStatus.values.map((estado) {
+                            final isSelected = _estadoSeleccionado == estado;
+                            return ChoiceChip(
+                              label: Text(estado.displayName),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) {
+                                  setState(() {
+                                    print(
+                                        '🔄 Cambiando estado UI: ${_estadoSeleccionado.value} → ${estado.value}');
+                                    _estadoSeleccionado = estado;
+                                  });
+                                }
+                              },
+                              selectedColor:
+                                  _getStatusColor(estado).withOpacity(0.2),
+                              labelStyle: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                                color: isSelected
+                                    ? _getStatusColor(estado)
+                                    : Colors.grey[700],
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.blue[50],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(Icons.lightbulb_outline,
+                                  color: Colors.blue[700], size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  'Selecciona el estado del evento. Los usuarios verán eventos según su estado.',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.blue[900],
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
-                  ),
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: EventStatus.values.map((estado) {
-                    final isSelected = _estadoSeleccionado == estado;
-                    return ChoiceChip(
-                      label: Text(estado.displayName),
-                      selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            print(
-                                '🔄 Cambiando estado UI: ${_estadoSeleccionado.value} → ${estado.value}');
-                            _estadoSeleccionado = estado;
-                          });
-                        }
-                      },
-                      selectedColor: _getStatusColor(estado).withOpacity(0.2),
-                      labelStyle: TextStyle(
-                        fontWeight:
-                            isSelected ? FontWeight.bold : FontWeight.normal,
-                        color: isSelected
-                            ? _getStatusColor(estado)
-                            : Colors.grey[700],
-                      ),
-                    );
-                  }).toList(),
+                    const SizedBox(height: 24),
+                    _buildSection(
+                      title: 'Archivo adjunto (opcional)',
+                      children: [
+                        if (_archivoAdjunto != null)
+                          _buildFileCard()
+                        else if (_isEditMode &&
+                            widget.evento!.archivoAdjunto != null)
+                          _buildExistingFileCard()
+                        else
+                          _buildFilePickerButton(),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    _buildActionButtons(),
+                    const SizedBox(height: 40),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: Colors.blue[50],
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline,
-                          color: Colors.blue[700], size: 20),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          'Selecciona el estado del evento. Los usuarios verán eventos según su estado.',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.blue[900],
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+              ),
             ),
-            const SizedBox(height: 24),
-            _buildSection(
-              title: 'Archivo adjunto (opcional)',
-              children: [
-                if (_archivoAdjunto != null)
-                  _buildFileCard()
-                else if (_isEditMode && widget.evento!.archivoAdjunto != null)
-                  _buildExistingFileCard()
-                else
-                  _buildFilePickerButton(),
-              ],
-            ),
-            const SizedBox(height: 32),
-            _buildActionButtons(),
-            const SizedBox(height: 40),
           ],
         ),
       ),

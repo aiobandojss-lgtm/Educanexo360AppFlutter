@@ -142,7 +142,7 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         title: const Text('Buscar Estudiantes'),
       ),
@@ -176,7 +176,7 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
                 ElevatedButton(
                   onPressed: _isLoading ? null : _buscarEstudiantes,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF6366F1),
+                    backgroundColor: const Color(0xFF059669),
                     padding: const EdgeInsets.symmetric(
                       horizontal: 24,
                       vertical: 16,

@@ -10,8 +10,8 @@ import '../../services/message_service.dart';
 import 'package:go_router/go_router.dart';
 import '../mensajes/create_message_screen.dart';
 
-/// 📖 PANTALLA DE DETALLE DE MENSAJE
-/// Muestra el mensaje completo con todas sus características
+/// ðŸ“– PANTALLA DE DETALLE DE MENSAJE
+/// Muestra el mensaje completo con todas sus caracterÃ­sticas
 class MessageDetailScreen extends StatefulWidget {
   final String messageId;
 
@@ -42,19 +42,19 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     final authProvider = context.read<AuthProvider>();
     final currentUserId = authProvider.currentUser?.id ?? '';
 
-    // ❌ NO permitir responder si:
+    // âŒ NO permitir responder si:
     // 1. Es un borrador
     if (_message!.isDraft) return false;
 
     // 2. El mensaje fue enviado por el usuario actual
     if (_message!.remitente.id == currentUserId) return false;
 
-    // ✅ Permitir responder solo si es destinatario
+    // âœ… Permitir responder solo si es destinatario
     return _message!.destinatarios.any((d) => d.id == currentUserId);
   }
 
   // ========================================
-  // 🔄 CARGAR MENSAJE
+  // ðŸ”„ CARGAR MENSAJE
   // ========================================
 
   Future<void> _loadMessage() async {
@@ -72,7 +72,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
         throw Exception('Mensaje no encontrado');
       }
 
-      // Marcar como leído automáticamente si es el destinatario
+      // Marcar como leÃ­do automÃ¡ticamente si es el destinatario
       final authProvider = context.read<AuthProvider>();
       final currentUserId = authProvider.currentUser?.id ?? '';
 
@@ -81,7 +81,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
             message.destinatarios.any((d) => d.id == currentUserId);
 
         if (isRecipient) {
-          print('👁️ Marcando mensaje como leído...');
+          print('👁 Marcando mensaje como leído...');
           await _messageService.markAsRead(widget.messageId);
         }
       }
@@ -100,7 +100,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   }
 
   // ========================================
-  // 🎨 UI
+  // ðŸŽ¨ UI
   // ========================================
 
   @override
@@ -195,7 +195,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
           ],
         ),
       ),
-      floatingActionButton: _canReply() // ← CAMBIAR ESTA CONDICIÓN
+      floatingActionButton: _canReply() // â† CAMBIAR ESTA CONDICIÃ“N
           ? FloatingActionButton.extended(
               onPressed: _handleReply,
               icon: const Icon(Icons.reply),
@@ -206,7 +206,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   }
 
   // ========================================
-  // 🎨 WIDGETS
+  // ðŸŽ¨ WIDGETS
   // ========================================
 
   Widget _buildSenderHeader(Message message, Color primaryColor) {
@@ -464,7 +464,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Colors.blue[50],
+            color: Color(0xFFDCFCE7),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -498,7 +498,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   }
 
   // ========================================
-  // 🔧 HELPERS
+  // ðŸ”§ HELPERS
   // ========================================
 
   String _stripHtml(String html) {
@@ -513,7 +513,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   }
 
   // ========================================
-  // 🎯 ACCIONES
+  // ðŸŽ¯ ACCIONES
   // ========================================
 
   void _handleReply() {
@@ -594,7 +594,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
 
   Future<void> _handleDownloadAttachment(Adjunto attachment) async {
     try {
-      // Mostrar diálogo de progreso
+      // Mostrar diÃ¡logo de progreso
       showDialog(
         context: context,
         barrierDismissible: false,
@@ -615,14 +615,14 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
         ),
       );
 
-      // ⭐ GUARDAR el resultado (esto faltaba)
+      // â­ GUARDAR el resultado (esto faltaba)
       final result = await _messageService.downloadAttachment(
         widget.messageId,
         attachment.fileId,
         attachment.nombre,
       );
 
-      // Cerrar diálogo de progreso
+      // Cerrar diÃ¡logo de progreso
       if (mounted) Navigator.pop(context);
 
       // Mostrar resultado

@@ -284,7 +284,20 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
         backgroundColor: Colors.grey[50],
         appBar: AppBar(
           title: const Text('Cargando...'),
-          backgroundColor: Colors.indigo,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFF047857), // Verde Emerald-700
+                  Color(0xFF14B8A6), // Teal-500
+                ],
+              ),
+            ),
+          ),
           foregroundColor: Colors.white,
         ),
         body: const Center(
@@ -298,9 +311,21 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
       appBar: AppBar(
         title: Text(
             widget.isEditMode ? 'Editar Asistencia' : 'Registrar Asistencia'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF047857), // Verde Emerald-700
+                Color(0xFF14B8A6), // Teal-500
+              ],
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
         actions: [
           if (_guardando)
             const Center(
@@ -375,7 +400,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today, color: Colors.indigo[700]),
+                  Icon(Icons.calendar_today, color: const Color(0xFF047857)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -918,7 +943,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
                     ? 'Actualizar Asistencia'
                     : 'Guardar Asistencia')),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.indigo,
+              backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
@@ -946,7 +971,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
       case 'JUSTIFICADO':
         return Colors.blue;
       case 'PERMISO':
-        return Colors.purple;
+        return const Color(0xFF059669);
       default:
         return Colors.grey;
     }

@@ -31,7 +31,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   // 🎨 COLORES POR ROL
   static const Map<UserRole, Color> _roleColors = {
     UserRole.superAdmin: Color(0xFF7C3AED),
-    UserRole.admin: Color(0xFF6366F1),
+    UserRole.admin: Color(0xFF059669),
     UserRole.rector: Color(0xFF0284C7),
     UserRole.coordinador: Color(0xFF0891B2),
     UserRole.administrativo: Color(0xFF10B981),
@@ -266,7 +266,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
     if (_isLoading || _usuario == null) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: const Color(0xFF6366F1),
+          backgroundColor: const Color(0xFF059669),
           foregroundColor: Colors.white,
           title: const Text('Cargando...'),
         ),
@@ -318,7 +318,14 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Widget _buildHeader() {
     return Container(
       decoration: const BoxDecoration(
-        color: Color(0xFF6366F1),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF047857), // Verde Emerald-700
+            Color(0xFF14B8A6), // Teal-500
+          ],
+        ),
       ),
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -660,7 +667,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             _buildActionButton(
               'Editar Usuario',
               Icons.edit_outlined,
-              const Color(0xFF6366F1),
+              const Color(0xFF059669),
               () => context.push('/usuarios/edit/${widget.userId}'),
             ),
           if (_usuario!.tipo == UserRole.acudiente &&
@@ -829,7 +836,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
   Widget _buildEditFAB() {
     return FloatingActionButton(
       onPressed: () => context.push('/usuarios/edit/${widget.userId}'),
-      backgroundColor: const Color(0xFF6366F1),
+      backgroundColor: const Color(0xFF059669),
       child: const Icon(Icons.edit, size: 20),
     );
   }

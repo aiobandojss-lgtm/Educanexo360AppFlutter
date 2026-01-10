@@ -133,7 +133,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         title: const Text('Gestionar Estudiantes'),
         actions: [
@@ -242,7 +242,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
             icon: const Icon(Icons.add),
             label: const Text('Agregar Estudiante'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
+              backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               shape: RoundedRectangleBorder(

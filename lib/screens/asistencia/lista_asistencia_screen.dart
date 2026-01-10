@@ -92,9 +92,21 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
       backgroundColor: Colors.grey[50],
       appBar: AppBar(
         title: const Text('Control de Asistencia'),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Color(0xFF047857), // Verde Emerald-700
+                Color(0xFF14B8A6), // Teal-500
+              ],
+            ),
+          ),
+        ),
+        foregroundColor: Colors.white,
       ),
       body: Column(
         children: [
@@ -138,7 +150,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
       floatingActionButton: PermissionService.canAccess('asistencia.registrar')
           ? FloatingActionButton.extended(
               onPressed: () => context.push('/asistencia/registrar'),
-              backgroundColor: Colors.indigo,
+              backgroundColor: const Color(0xFF059669),
               icon: const Icon(Icons.add),
               label: const Text('Registrar'),
             )
@@ -242,7 +254,8 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_today, size: 20, color: Colors.indigo[700]),
+            Icon(Icons.calendar_today,
+                size: 20, color: const Color(0xFF047857)),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -296,12 +309,12 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.indigo[50],
+                      color: const Color(0xFFF0FDF4),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       Icons.calendar_today,
-                      color: Colors.indigo[700],
+                      color: const Color(0xFF047857),
                       size: 24,
                     ),
                   ),
@@ -405,7 +418,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                     if (resumen.permisos > 0)
                       _buildEstadistica(
                         icon: Icons.shield,
-                        color: Colors.purple,
+                        color: const Color(0xFF059669),
                         label: 'Permisos',
                         valor: resumen.permisos,
                       ),
@@ -422,13 +435,14 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: Colors.indigo[50],
+                    color: const Color(0xFFF0FDF4),
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.indigo[100]!),
+                    border: Border.all(color: const Color(0xFFDCFCE7)),
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.book, size: 16, color: Colors.indigo[700]),
+                      Icon(Icons.book,
+                          size: 16, color: const Color(0xFF047857)),
                       const SizedBox(width: 6),
                       Text(
                         'Asignatura: ',
@@ -443,7 +457,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                           resumen.asignatura!.nombre,
                           style: TextStyle(
                             fontSize: 12,
-                            color: Colors.indigo[700],
+                            color: const Color(0xFF047857),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -629,7 +643,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                 icon: const Icon(Icons.add),
                 label: const Text('Registrar Asistencia'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.indigo,
+                  backgroundColor: const Color(0xFF059669),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(
                     horizontal: 24,

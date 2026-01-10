@@ -215,7 +215,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF8B5CF6),
+              primary: Color(0xFF059669),
             ),
           ),
           child: child!,
@@ -233,7 +233,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             return Theme(
               data: Theme.of(context).copyWith(
                 colorScheme: const ColorScheme.light(
-                  primary: Color(0xFF8B5CF6),
+                  primary: Color(0xFF059669),
                 ),
               ),
               child: child!,
@@ -433,7 +433,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF8B5CF6),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         elevation: 0,
         title: Text(esEdicion ? 'Editar Tarea' : 'Crear Nueva Tarea'),
@@ -528,7 +528,14 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
     return Container(
       width: double.infinity,
       decoration: const BoxDecoration(
-        color: Color(0xFF8B5CF6),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFF047857), // Verde Emerald-700
+            Color(0xFF14B8A6), // Teal-500
+          ],
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
       child: Column(
@@ -764,7 +771,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.calendar_today, color: Color(0xFF8B5CF6)),
+                const Icon(Icons.calendar_today, color: Color(0xFF059669)),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -908,13 +915,13 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
                     _tipo = value!;
                   });
                 },
-                activeColor: const Color(0xFF8B5CF6),
+                activeColor: const Color(0xFF059669),
                 tileColor: Colors.grey[50],
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
                     color: _tipo == TipoTarea.individual
-                        ? const Color(0xFF8B5CF6)
+                        ? const Color(0xFF059669)
                         : Colors.grey[300]!,
                     width: 2,
                   ),
@@ -932,13 +939,13 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
                     _tipo = value!;
                   });
                 },
-                activeColor: const Color(0xFF8B5CF6),
+                activeColor: const Color(0xFF059669),
                 tileColor: Colors.grey[50],
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                   side: BorderSide(
                     color: _tipo == TipoTarea.grupal
-                        ? const Color(0xFF8B5CF6)
+                        ? const Color(0xFF059669)
                         : Colors.grey[300]!,
                     width: 2,
                   ),
@@ -1025,7 +1032,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.timer_off, color: Color(0xFF8B5CF6)),
+          const Icon(Icons.timer_off, color: Color(0xFF059669)),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1056,7 +1063,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
                 _permiteTardias = value;
               });
             },
-            activeColor: const Color(0xFF8B5CF6),
+            activeColor: const Color(0xFF059669),
           ),
         ],
       ),
@@ -1162,7 +1169,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
           child: ElevatedButton(
             onPressed: _isSaving ? null : _guardar,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6),
+              backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
