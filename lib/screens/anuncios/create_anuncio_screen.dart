@@ -140,6 +140,10 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
           TextButton.icon(
             onPressed:
                 _isSubmitting ? null : () => _handleSave(publicar: false),
+            style: TextButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
             icon: const Icon(Icons.save, color: Colors.white, size: 20),
             label: const Text(
               'Borrador',
@@ -251,7 +255,7 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF10B981),
+            activeThumbColor: const Color(0xFF10B981),
           ),
         ],
       ),
@@ -339,7 +343,7 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
                 Switch(
                   value: _destacado,
                   onChanged: (value) => setState(() => _destacado = value),
-                  activeColor: const Color(0xFF10B981),
+                  activeThumbColor: const Color(0xFF10B981),
                 ),
               ],
             ),
@@ -358,21 +362,20 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
           children: [
             // HEADER CON TÍTULO Y BOTÓN
             Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  '📎 Documentos Adjuntos',
+                  'Documentos Adjuntos',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const Spacer(),
-                // ⭐ BOTÓN COMPACTO PARA EVITAR OVERFLOW
                 SizedBox(
-                  height: 32, // Altura fija
+                  height: 32,
                   child: ElevatedButton.icon(
                     onPressed: _isSubmitting ? null : _pickFiles,
-                    icon: const Icon(Icons.add, size: 16),
+                    icon: const Icon(Icons.attach_file, size: 16),
                     label: const Text(
                       'Adjuntar',
                       style: TextStyle(fontSize: 12),
@@ -453,7 +456,7 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
                     ],
                   ),
                 );
-              }).toList(),
+              }),
           ],
         ),
       ),

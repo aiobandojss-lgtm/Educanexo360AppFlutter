@@ -1,12 +1,12 @@
 // lib/screens/anuncios/anuncios_screen.dart
 // ✅ CORREGIDO: Header con color sólido + AppBar con navegación
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../services/permission_service.dart';
 
 class AnunciosScreen extends StatefulWidget {
@@ -19,6 +19,8 @@ class AnunciosScreen extends StatefulWidget {
 class _AnunciosScreenState extends State<AnunciosScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  Timer? _debounceTimer;
+  bool _vistaCompacta = false;
 
   // ✅ FILTROS SIN "BORRADORES" - Como React Native
   static const List<FiltroAnuncio> _filtros = [
@@ -38,21 +40,22 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   void _loadInitialData() {
+    final anuncioProvider = context.read<AnuncioProvider>();
+    if (anuncioProvider.anuncios.isEmpty) {
+      anuncioProvider.prepareLoading();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final anuncioProvider = context.read<AnuncioProvider>();
+      if (!mounted) return;
+      final provider = context.read<AnuncioProvider>();
       final canCreate = PermissionService.canAccess('anuncios.crear');
-
-      // Cargar con soloPublicados según permisos
-      anuncioProvider.loadAnuncios(
-        refresh: true,
-        soloPublicados: !canCreate,
-      );
+      provider.loadAnuncios(refresh: true, soloPublicados: !canCreate);
     });
   }
 
@@ -82,14 +85,17 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
   }
 
   void _onSearch(String query) {
-    final anuncioProvider = context.read<AnuncioProvider>();
-    final canCreate = PermissionService.canAccess('anuncios.crear');
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      final anuncioProvider = context.read<AnuncioProvider>();
+      final canCreate = PermissionService.canAccess('anuncios.crear');
 
-    if (query.isEmpty) {
-      anuncioProvider.clearSearch(soloPublicados: !canCreate);
-    } else {
-      anuncioProvider.search(query, soloPublicados: !canCreate);
-    }
+      if (query.isEmpty) {
+        anuncioProvider.clearSearch(soloPublicados: !canCreate);
+      } else {
+        anuncioProvider.search(query, soloPublicados: !canCreate);
+      }
+    });
   }
 
   @override
@@ -102,8 +108,17 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
         backgroundColor: const Color(0xFF10B981),
         foregroundColor: Colors.white,
         elevation: 0,
-        //title: const Text('Anuncios'),
-        automaticallyImplyLeading: false, // ⭐ ESTO QUITA LA FLECHA
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _vistaCompacta ? Icons.view_agenda : Icons.view_list,
+              color: Colors.white,
+            ),
+            tooltip: _vistaCompacta ? 'Vista completa' : 'Vista compacta',
+            onPressed: () => setState(() => _vistaCompacta = !_vistaCompacta),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -253,19 +268,20 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFE0F2FE),
+        color: const Color(0xFFECFDF5),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF6EE7B7)),
       ),
       child: const Row(
         children: [
-          Text('ℹ️', style: TextStyle(fontSize: 16)),
+          Icon(Icons.info_outline, size: 18, color: Color(0xFF047857)),
           SizedBox(width: 8),
           Expanded(
             child: Text(
               'Estás viendo todos los anuncios, incluyendo borradores y publicados.',
               style: TextStyle(
                 fontSize: 13,
-                color: Color(0xFF0277BD),
+                color: Color(0xFF047857),
               ),
             ),
           ),
@@ -303,7 +319,9 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
               }
 
               final anuncio = anuncios[index];
-              return _buildAnuncioCard(anuncio);
+              return _vistaCompacta
+                  ? _buildAnuncioCardCompacta(anuncio)
+                  : _buildAnuncioCard(anuncio);
             },
           ),
         );
@@ -321,7 +339,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
-                anuncio.destacado ? const Color(0xFFF59E0B) : Colors.grey[300]!,
+                anuncio.destacado ? const Color(0xFF047857) : Colors.grey[300]!,
             width: anuncio.destacado ? 2 : 1,
           ),
         ),
@@ -348,23 +366,28 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
                       Text(anuncio.audienceIcon,
                           style: const TextStyle(fontSize: 16)),
                       const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Color(anuncio.audienceColor),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          anuncio.audienceText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                      Flexible(
+                        fit: FlexFit.loose,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Color(anuncio.audienceColor),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            anuncio.audienceText,
+                            overflow: TextOverflow.ellipsis,
+                            maxLines: 1,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                       ),
-                      const Spacer(),
+                      const SizedBox(width: 8),
                       Text(
                         _formatDate(
                             anuncio.fechaPublicacion ?? anuncio.createdAt),
@@ -393,7 +416,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
                   // Contenido preview
                   Text(
                     anuncio.contenido,
-                    maxLines: 3,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
@@ -402,52 +425,26 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
                     ),
                   ),
 
-                  const SizedBox(height: 12),
-
-                  // Footer: creador + badge borrador
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Row(
-                          children: [
-                            Text(
-                              'Por: ',
-                              style: TextStyle(
-                                fontSize: 13,
-                                color: Colors.grey[600],
-                              ),
-                            ),
-                            Text(
-                              anuncio.creador.fullName,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
+                  // Badge borrador (solo si aplica)
+                  if (anuncio.isDraft) ...[
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF59E0B),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Text(
+                        'Borrador',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
-
-                      // Badge borrador
-                      if (anuncio.isDraft)
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF59E0B),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Text(
-                            'Borrador',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
+                    ),
+                  ],
 
                   // Adjuntos info
                   if (anuncio.hasAttachments) ...[
@@ -489,7 +486,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
       decoration: const BoxDecoration(
-        color: Color(0xFFF59E0B),
+        color: Color(0xFF047857),
         borderRadius: BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -540,11 +537,76 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
     );
   }
 
+  Widget _buildAnuncioCardCompacta(Anuncio anuncio) {
+    return GestureDetector(
+      onTap: () => context.push('/anuncios/${anuncio.id}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: anuncio.destacado
+                ? const Color(0xFF047857)
+                : Colors.grey[200]!,
+            width: anuncio.destacado ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Text(anuncio.audienceIcon, style: const TextStyle(fontSize: 18)),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                anuncio.titulo,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.black87,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(width: 8),
+            if (anuncio.isDraft)
+              Container(
+                margin: const EdgeInsets.only(right: 8),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF59E0B),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'Borrador',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            Text(
+              _formatDate(anuncio.fechaPublicacion ?? anuncio.createdAt),
+              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildFAB() {
-    return FloatingActionButton(
+    return FloatingActionButton.extended(
       onPressed: () => context.push('/anuncios/create'),
       backgroundColor: const Color(0xFF10B981),
-      child: const Icon(Icons.add, size: 28),
+      icon: const Icon(Icons.campaign, color: Colors.white),
+      label: const Text(
+        'Nuevo anuncio',
+        style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
     );
   }
 
@@ -555,8 +617,9 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
     if (difference.inDays == 0) return 'hoy';
     if (difference.inDays == 1) return 'ayer';
     if (difference.inDays < 7) return 'hace ${difference.inDays} días';
-    if (difference.inDays < 30)
+    if (difference.inDays < 30) {
       return 'hace ${(difference.inDays / 7).floor()} semanas';
+    }
     return 'hace ${(difference.inDays / 30).floor()} meses';
   }
 }
