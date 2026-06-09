@@ -28,7 +28,7 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
   void initState() {
     super.initState();
     _screens = [
-      const DashboardScreen(),
+      DashboardScreen(onNavigateToTab: _onTabTapped),
       const MessagesScreen(),
       const CalendarioScreen(),
       const AnunciosScreen(),
@@ -152,7 +152,7 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
                 Icon(
                   isSelected ? activeIcon : icon,
                   size: 24,
-                  color: isSelected ? color : Colors.grey.shade400,
+                  color: isSelected ? color : Colors.grey.shade600,
                 ),
                 const SizedBox(height: 4),
                 Text(
@@ -160,7 +160,7 @@ class _MainBottomNavigationState extends State<MainBottomNavigation> {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-                    color: isSelected ? color : Colors.grey.shade400,
+                    color: isSelected ? color : Colors.grey.shade600,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.clip,

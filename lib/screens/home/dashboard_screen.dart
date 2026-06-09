@@ -1,5 +1,6 @@
-// lib/screens/home/dashboard_screen.dart
+﻿// lib/screens/home/dashboard_screen.dart
 // ✅ VERSIÓN FINAL CORREGIDA
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -10,14 +11,17 @@ import '../../models/usuario.dart';
 import '../../models/ultimo_mensaje.dart';
 
 class DashboardScreen extends StatefulWidget {
-  const DashboardScreen({super.key});
+  final void Function(int)? onNavigateToTab;
+
+  const DashboardScreen({super.key, this.onNavigateToTab});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  bool _isLoading = true;
+  bool _isLoadingMessages = true;
+  bool _isLoadingStats = true;
   final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
       GlobalKey<RefreshIndicatorState>();
 
@@ -30,34 +34,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
   String _nombreEscuela = 'Cargando...';
   List<UltimoMensaje> _mensajes = [];
   int _totalMensajesSinLeer = 0;
+  ProximoEvento? _proximoEvento;
 
   @override
   void initState() {
     super.initState();
-    _loadDashboardData();
+    // Diferir la carga hasta después del primer frame para evitar el freeze
+    // durante la transición de navegación
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loadDashboardData();
+    });
   }
 
   Future<void> _loadDashboardData() async {
-    try {
-      setState(() => _isLoading = true);
-
-      final authProvider = context.read<AuthProvider>();
-      final user = authProvider.currentUser;
-
-      if (user == null) return;
-
-      await Future.wait([
-        _loadEscuelaInfo(user.escuelaId),
-        _loadStats(),
-        _loadMensajes(),
-      ]);
-    } catch (e) {
-      print('❌ Error cargando dashboard: $e');
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
+    if (mounted) {
+      setState(() {
+        _isLoadingMessages = true;
+        _isLoadingStats = true;
+      });
     }
+
+    final authProvider = context.read<AuthProvider>();
+    final user = authProvider.currentUser;
+    if (user == null) return;
+
+    await Future.wait([
+      _loadEscuelaInfo(user.escuelaId),
+      _loadStats(),
+      _loadMensajes(),
+    ]);
   }
 
   Future<void> _loadEscuelaInfo(String? escuelaId) async {
@@ -88,10 +93,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
             'anunciosRecientes': stats.anunciosRecientes,
           };
           _totalMensajesSinLeer = stats.mensajesSinLeer;
+          _proximoEvento = stats.proximoEvento;
+          _isLoadingStats = false;
         });
       }
     } catch (e) {
-      print('⚠️ Error cargando estadísticas: $e');
+      dlog('⚠️ Error cargando estadísticas: $e');
+      if (mounted) setState(() => _isLoadingStats = false);
     }
   }
 
@@ -101,12 +109,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       if (mounted) {
         setState(() {
           _mensajes = mensajes;
-          // ✅ Usar el contador de _stats (ya se cargó en _loadStats)
-          // No hacer llamada extra a getContadorMensajesSinLeer()
+          _isLoadingMessages = false;
         });
       }
     } catch (e) {
-      print('⚠️ Error cargando mensajes: $e');
+      dlog('⚠️ Error cargando mensajes: $e');
+      if (mounted) setState(() => _isLoadingMessages = false);
     }
   }
 
@@ -143,13 +151,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = context.watch<AuthProvider>();
-    final user = authProvider.currentUser;
+    // context.select solo rebuild cuando currentUser cambia, no ante cualquier
+    // cambio en AuthProvider (ej. isLoading)
+    final user = context.select<AuthProvider, Usuario?>((p) => p.currentUser);
 
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final authProvider = context.read<AuthProvider>();
     final userName = '${user.nombre} ${user.apellidos.split(' ')[0]}';
     final userRole = user.tipo.value;
     final roleIcon = _getRoleIcon(user.tipo);
@@ -157,6 +167,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
     return Scaffold(
       drawer: _buildDrawer(context, authProvider, user),
+      floatingActionButton: PermissionService.canAccess('mensajes.enviar')
+          ? FloatingActionButton(
+              onPressed: () => context.push('/mensajes/create'),
+              backgroundColor: const Color(0xFF059669),
+              tooltip: 'Nuevo Mensaje',
+              child: const Icon(Icons.edit_outlined, color: Colors.white),
+            )
+          : null,
       body: RefreshIndicator(
         key: _refreshIndicatorKey,
         onRefresh: _onRefresh,
@@ -167,18 +185,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               _buildHeader(userName, userRole, roleIcon, schoolName),
               Container(
-                color: const Color(0xFFF0FDF4),
+                color: Colors.white,
                 child: Padding(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       _buildStatsRow(),
-                      const SizedBox(height: 24),
-                      _buildMensajesCard(),
-                      const SizedBox(height: 24),
-                      _buildAccionesRapidas(context),
-                      const SizedBox(height: 80),
+                      const SizedBox(height: 16),
+                      _buildMensajeDestacado(),
+                      const SizedBox(height: 16),
+                      _buildProximoEvento(),
                     ],
                   ),
                 ),
@@ -282,7 +299,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       },
                     ),
                   // ASISTENCIA
-                  /*if (PermissionService.canAccess('asistencia.ver'))
+                  if (PermissionService.canAccess('asistencia.ver'))
                     _buildDrawerItem(
                       icon: Icons.fact_check_outlined,
                       title: 'Asistencia',
@@ -290,7 +307,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         Navigator.pop(context);
                         context.push('/asistencia');
                       },
-                    ),*/
+                    ),
                   const Divider(),
                   // PERFIL
                   _buildDrawerItem(
@@ -380,6 +397,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
               end: Alignment.bottomRight,
               colors: [Color(0xFF047857), Color(0xFF0D9488)],
             ),
+            borderRadius: BorderRadius.only(
+              bottomLeft: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
           ),
           child: SafeArea(
             bottom: false,
@@ -401,10 +422,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   Text(
                     userName,
                     style: const TextStyle(
-                        fontSize: 26,
+                        fontSize: 22,
                         color: Colors.white,
                         fontWeight: FontWeight.w700),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
@@ -415,7 +436,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         fontSize: 13,
                         color: Colors.white70,
                         fontWeight: FontWeight.w400),
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 20),
@@ -461,28 +482,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ==========================================
-  // STATS ROW - SIN LINKS (SOLO INFORMATIVO)
+  // STATS ROW
   // ==========================================
   Widget _buildStatsRow() {
     return Row(
       children: [
         Expanded(
           child: _buildStatCard(
-            value: _stats['proximosEventos'].toString(),
-            label: 'EVENTOS',
-            sublabel: '', //'próximos 30 días',
-            color: const Color(0xFFF59E0B),
-            icon: Icons.calendar_today_outlined,
+            value: _isLoadingStats ? '—' : _totalMensajesSinLeer.toString(),
+            label: 'MENSAJES',
+            sublabel: 'sin leer',
+            color: const Color(0xFF0D9488),
+            icon: Icons.mail_outline,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildStatCard(
-            value: _stats['anunciosRecientes'].toString(),
-            label: 'ANUNCIOS',
-            sublabel: '', //'últimos 7 días',
-            color: const Color(0xFF10B981),
-            icon: Icons.campaign_outlined,
+            value: _isLoadingStats ? '—' : _stats['proximosEventos'].toString(),
+            label: 'EVENTOS',
+            sublabel: 'próximos',
+            color: const Color(0xFFF59E0B),
+            icon: Icons.calendar_today_outlined,
           ),
         ),
       ],
@@ -501,10 +522,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -516,7 +537,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, color: color, size: 24),
+              Icon(icon, color: color, size: 22),
               Text(
                 value,
                 style: TextStyle(
@@ -529,12 +550,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
             label,
             style: TextStyle(
               color: Colors.grey.shade800,
-              fontSize: 13,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 1),
           Text(
             sublabel,
             style: TextStyle(color: Colors.grey.shade500, fontSize: 11),
@@ -545,16 +566,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ==========================================
-  // MENSAJES CARD
+  // MENSAJE DESTACADO (último recibido)
   // ==========================================
-  Widget _buildMensajesCard() {
+  Widget _buildMensajeDestacado() {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -563,138 +584,158 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 16, 12),
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 10),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    const Icon(Icons.mail_outline,
-                        color: Color(0xFF059669), size: 22),
-                    const SizedBox(width: 10),
-                    const Text(
-                      'Últimos Mensajes',
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF047857)),
-                    ),
-                    if (_totalMensajesSinLeer > 0) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF059669),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          _totalMensajesSinLeer.toString(),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700),
-                        ),
-                      ),
-                    ],
-                  ],
+                const Icon(Icons.mail_outline,
+                    color: Color(0xFF059669), size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'ÚLTIMO MENSAJE',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                    color: Color(0xFF059669),
+                  ),
                 ),
+                if (_totalMensajesSinLeer > 1) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF059669),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '+${_totalMensajesSinLeer - 1}',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ],
+                const Spacer(),
                 TextButton(
-                  onPressed: () => context.push('/mensajes'),
+                  onPressed: () {
+                    if (widget.onNavigateToTab != null) {
+                      widget.onNavigateToTab!(1);
+                    } else {
+                      context.push('/mensajes');
+                    }
+                  },
                   style: TextButton.styleFrom(
                     foregroundColor: const Color(0xFF059669),
                     padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Text('Ver todos',
                           style: TextStyle(
-                              fontSize: 13, fontWeight: FontWeight.w600)),
-                      SizedBox(width: 4),
-                      Icon(Icons.arrow_forward_ios, size: 12),
+                              fontSize: 12, fontWeight: FontWeight.w600)),
+                      SizedBox(width: 2),
+                      Icon(Icons.arrow_forward_ios, size: 11),
                     ],
                   ),
                 ),
               ],
             ),
           ),
-          Divider(height: 1, color: Colors.grey.shade200),
-          if (_isLoading)
+          Divider(height: 1, color: Colors.grey.shade100),
+
+          // Contenido
+          if (_isLoadingMessages)
             const Padding(
-              padding: EdgeInsets.all(32),
+              padding: EdgeInsets.symmetric(vertical: 28),
               child: Center(
-                  child: CircularProgressIndicator(
-                      color: Color(0xFF059669), strokeWidth: 2)),
+                child: CircularProgressIndicator(
+                    color: Color(0xFF059669), strokeWidth: 2),
+              ),
             )
           else if (_mensajes.isEmpty)
             Padding(
-              padding: const EdgeInsets.only(bottom: 32, top: 16),
-              child: Center(
-                child: Column(
-                  children: [
-                    Icon(Icons.mail_outline,
-                        size: 56, color: Colors.grey.shade300),
-                    const SizedBox(height: 12),
-                    Text('No hay mensajes nuevos',
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFF0FDF4),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.check_circle_outline,
+                        color: Color(0xFF059669), size: 26),
+                  ),
+                  const SizedBox(width: 14),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Todo al día',
                         style: TextStyle(
-                            color: Colors.grey.shade500, fontSize: 14)),
-                  ],
-                ),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF1F2937)),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'No tienes mensajes pendientes',
+                        style: TextStyle(
+                            fontSize: 13, color: Colors.grey.shade500),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             )
           else
-            Column(
-              children: _mensajes.asMap().entries.map((entry) {
-                final index = entry.key;
-                final mensaje = entry.value;
-                final avatarColors = [
-                  const Color(0xFF0D9488),
-                  const Color(0xFF059669),
-                  const Color(0xFF047857),
-                ];
-                return Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0FDF4),
-                    border: Border(
-                      top: index == 0
-                          ? BorderSide.none
-                          : BorderSide(color: Colors.grey.shade200, width: 0.5),
+            InkWell(
+              onTap: () => context.push('/mensajes/${_mensajes.first.id}'),
+              borderRadius: const BorderRadius.only(
+                bottomLeft: Radius.circular(16),
+                bottomRight: Radius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 46,
+                      height: 46,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF0D9488),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Center(
+                        child: Text(
+                          _mensajes.first.remitente.iniciales,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ),
                     ),
-                  ),
-                  child: InkWell(
-                    onTap: () => context.push('/mensajes/${mensaje.id}'),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 16),
-                      child: Row(
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Container(
-                            width: 44,
-                            height: 44,
-                            decoration: BoxDecoration(
-                                color: avatarColors[index % 3],
-                                shape: BoxShape.circle),
-                            child: Center(
-                              child: Text(
-                                mensaje.remitente.iniciales,
-                                style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  mensaje.remitente.nombreCompleto,
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Flexible(
+                                child: Text(
+                                  _mensajes.first.remitente.nombreCompleto,
                                   style: const TextStyle(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700,
@@ -702,33 +743,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '"${mensaje.preview}"',
-                                  style: TextStyle(
-                                      fontSize: 13,
-                                      color: Colors.grey.shade700,
-                                      fontStyle: FontStyle.italic),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  mensaje.tiempoRelativo,
-                                  style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Color(0xFF059669),
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                _mensajes.first.tiempoRelativo,
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey.shade500),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            _mensajes.first.preview,
+                            style: TextStyle(
+                                fontSize: 13,
+                                color: Colors.grey.shade600,
+                                height: 1.3),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                );
-              }).toList(),
+                    const SizedBox(width: 8),
+                    Icon(Icons.chevron_right,
+                        color: Colors.grey.shade300, size: 20),
+                  ],
+                ),
+              ),
             ),
         ],
       ),
@@ -736,46 +779,122 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   // ==========================================
-  // ACCIONES RÁPIDAS
+  // PRÓXIMO EVENTO
   // ==========================================
-  Widget _buildAccionesRapidas(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Acciones Rápidas',
-          style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF047857)),
+  Widget _buildProximoEvento() {
+    if (_isLoadingStats) {
+      return Container(
+        height: 72,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.2)),
         ),
-        const SizedBox(height: 16),
-        if (PermissionService.canAccess('mensajes.enviar'))
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () => context.push('/mensajes/create'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF059669),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.edit, size: 20),
-              label: const Text('Nuevo Mensaje',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+        child: const Center(
+          child: SizedBox(
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+                color: Color(0xFFF59E0B), strokeWidth: 2),
+          ),
+        ),
+      );
+    }
+
+    if (_proximoEvento == null) return const SizedBox.shrink();
+
+    return InkWell(
+      onTap: () {
+        if (widget.onNavigateToTab != null) {
+          widget.onNavigateToTab!(2);
+        } else {
+          context.push('/calendario');
+        }
+      },
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.3)),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFF59E0B).withValues(alpha: 0.08),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
             ),
-          ),
-        const SizedBox(height: 24),
-        Center(
-          child: Text(
-            'EducaNexo360 v1.0 • 2025',
-            style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
-          ),
+          ],
         ),
-      ],
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Icon(Icons.event_outlined,
+                  color: Color(0xFFF59E0B), size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'PRÓXIMO EVENTO',
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.1,
+                      color: Colors.grey.shade400,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    _proximoEvento!.titulo,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF1F2937)),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Text(
+                    _formatEventDate(_proximoEvento!.fecha),
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: Color(0xFFF59E0B),
+                        fontWeight: FontWeight.w600),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: Colors.grey.shade300, size: 20),
+          ],
+        ),
+      ),
     );
+  }
+
+  String _formatEventDate(DateTime fecha) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDay = DateTime(fecha.year, fecha.month, fecha.day);
+    final diff = eventDay.difference(today).inDays;
+
+    if (diff == 0) return 'Hoy';
+    if (diff == 1) return 'Mañana';
+    if (diff < 7) return 'En $diff días';
+
+    const meses = [
+      'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+      'jul', 'ago', 'sep', 'oct', 'nov', 'dic'
+    ];
+    return '${fecha.day} ${meses[fecha.month - 1]}';
   }
 }

@@ -1,5 +1,7 @@
-// lib/screens/messages/messages_screen.dart
+﻿// lib/screens/messages/messages_screen.dart
 
+import '../../utils/logger.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -23,6 +25,7 @@ class MessagesScreen extends StatefulWidget {
 class _MessagesScreenState extends State<MessagesScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -33,6 +36,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -43,34 +47,26 @@ class _MessagesScreenState extends State<MessagesScreen> {
   // ========================================
 
   void _loadInitialMessages() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final messageProvider = context.read<MessageProvider>();
+    final messageProvider = context.read<MessageProvider>();
+    if (messageProvider.currentMessages.isEmpty) {
+      messageProvider.prepareLoading();
+    }
 
-      // 🔐 VALIDAR QUE LA BANDEJA ACTUAL SEA ACCESIBLE
-      final bandejaActual = messageProvider.currentBandeja;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final provider = context.read<MessageProvider>();
+
+      final bandejaActual = provider.currentBandeja;
       final canSendMasive =
           PermissionService.canAccess('mensajes.enviar_masivo');
 
-      // Si es ESTUDIANTE/ACUDIENTE y está en una bandeja no permitida
-      if (!canSendMasive) {
-        final bandejaPermitidas = [
-          Bandeja.recibidos,
-          Bandeja.enviados,
-          Bandeja.archivados, // ← AGREGAR
-          Bandeja.eliminados, // ← AGREGAR
-        ];
-
-        // Solo bloquear BORRADORES para ESTUDIANTES/ACUDIENTES
-        if (bandejaActual == Bandeja.borradores) {
-          print('⚠️ Usuario sin permiso para ver borradores');
-          print('✅ Cambiando a bandeja "Recibidos"');
-          messageProvider.changeBandeja(Bandeja.recibidos);
-          return;
-        }
+      if (!canSendMasive && bandejaActual == Bandeja.borradores) {
+        dlog('⚠️ Usuario sin permiso para borradores → Recibidos');
+        provider.changeBandeja(Bandeja.recibidos);
+        return;
       }
 
-      // Cargar mensajes de la bandeja actual
-      messageProvider.loadMessages(bandejaActual);
+      provider.loadMessages(bandejaActual, refresh: true);
     });
   }
 
@@ -132,18 +128,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   void _onSearch(String query) {
-    final messageProvider = context.read<MessageProvider>();
-    if (query.isEmpty) {
-      messageProvider.clearSearch();
-    } else {
-      messageProvider.search(query);
-    }
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      final messageProvider = context.read<MessageProvider>();
+      if (query.isEmpty) {
+        messageProvider.clearSearch();
+      } else {
+        messageProvider.search(query);
+      }
+    });
   }
 
   void _onMessageTap(Message message) {
     if (message.isDraft) {
       // ✅ Navegar a editar borrador
-      print('✏️ Editar borrador: ${message.id}');
+      dlog('✏️ Editar borrador: ${message.id}');
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -154,14 +153,20 @@ class _MessagesScreenState extends State<MessagesScreen> {
         ),
       );
     } else {
-      // Navegar a detalle de mensaje
-      context.push('/mensajes/${message.id}');
+      // Al volver del detalle, refrescar bandeja en silencio para mostrar cambios
+      context.push('/mensajes/${message.id}').then((_) {
+        if (mounted) {
+          final provider = context.read<MessageProvider>();
+          provider.loadMessages(provider.currentBandeja,
+              refresh: true, silent: true);
+        }
+      });
     }
   }
 
   void _onCreateMessage() {
     context.push('/mensajes/create');
-    //print('🔧 TODO: Navegar a crear mensaje');
+    //dlog('🔧 TODO: Navegar a crear mensaje');
     // Navigator.pushNamed(context, '/messages/create');
   }
 
@@ -172,8 +177,12 @@ class _MessagesScreenState extends State<MessagesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('Mensajes'),
+        backgroundColor: const Color(0xFF047857),
+        foregroundColor: Colors.white,
+        elevation: 0,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(60),
           child: Consumer<MessageProvider>(
@@ -269,9 +278,14 @@ class _MessagesScreenState extends State<MessagesScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: _onCreateMessage,
-        child: const Icon(Icons.edit),
+        backgroundColor: const Color(0xFF059669),
+        icon: const Icon(Icons.edit, color: Colors.white),
+        label: const Text(
+          'Nuevo mensaje',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
       ),
     );
   }

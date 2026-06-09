@@ -1,6 +1,7 @@
-// lib/screens/auth/login_screen.dart
+﻿// lib/screens/auth/login_screen.dart
 // ✅ REESCRITURA COMPLETA - Basado en estructura React Native que funcionaba
 
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -25,6 +26,129 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  Future<void> _handleForgotPassword() async {
+    final emailController = TextEditingController(
+      text: _emailController.text.trim(),
+    );
+    bool isLoading = false;
+
+    final submitted = await showDialog<bool>(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (ctx, setDialogState) {
+            return AlertDialog(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              title: const Row(
+                children: [
+                  Icon(Icons.lock_reset, color: Color(0xFF059669)),
+                  SizedBox(width: 10),
+                  Text('Recuperar contraseña'),
+                ],
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Ingresa tu correo institucional y te enviaremos las instrucciones para restablecer tu contraseña.',
+                    style: TextStyle(fontSize: 14, color: Colors.black54),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Correo electrónico',
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    autofocus: true,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed:
+                      isLoading ? null : () => Navigator.of(ctx).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                ElevatedButton(
+                  onPressed: isLoading
+                      ? null
+                      : () async {
+                          final email = emailController.text.trim();
+                          if (email.isEmpty || !email.contains('@')) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Ingresa un correo válido'),
+                                behavior: SnackBarBehavior.floating,
+                              ),
+                            );
+                            return;
+                          }
+                          setDialogState(() => isLoading = true);
+                          final authProvider = context.read<AuthProvider>();
+                          final ok =
+                              await authProvider.forgotPassword(email);
+                          if (ctx.mounted) Navigator.of(ctx).pop(ok);
+                        },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF059669),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text('Enviar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    if (!mounted) return;
+
+    if (submitted == true) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              '✅ Revisa tu correo. Te enviamos las instrucciones para restablecer tu contraseña.'),
+          backgroundColor: Color(0xFF059669),
+          behavior: SnackBarBehavior.floating,
+          duration: Duration(seconds: 5),
+        ),
+      );
+    } else if (submitted == false) {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage!),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
+  }
+
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -39,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!mounted) return;
 
     if (success) {
-      debugPrint('✅ Login exitoso');
+      dlog('✅ Login exitoso');
     } else {
       final error = authProvider.errorMessage ?? 'Error desconocido';
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,44 +214,12 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       children: [
         // Logo
-        Container(
-          width: 100,
-          height: 100,
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.2),
-                blurRadius: 15,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: const Center(
-            child: Text(
-              'E360',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: Color(0xFF059669), // Emerald-600
-              ),
-            ),
-          ),
+        Image.asset(
+          'assets/images/EDUCANEXO360-LOGO-BLANCO.png',
+          width: 260,
+          fit: BoxFit.contain,
         ),
-        const SizedBox(height: 16),
-
-        // App Name
-        const Text(
-          'EDUCANEXO360',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w800,
-            color: Colors.white,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 12),
 
         // Tagline
         const Text(
@@ -288,12 +380,7 @@ class _LoginScreenState extends State<LoginScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: TextButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text('Próximamente: Recuperar contraseña')),
-                  );
-                },
+                onPressed: _handleForgotPassword,
                 child: Text(
                   '¿Olvidaste tu contraseña?',
                   style: TextStyle(

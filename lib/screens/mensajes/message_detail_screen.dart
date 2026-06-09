@@ -1,5 +1,7 @@
-// lib/screens/messages/message_detail_screen.dart
+﻿// lib/screens/messages/message_detail_screen.dart
 
+import '../../utils/logger.dart';
+import '../../utils/file_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -7,7 +9,6 @@ import '../../models/message.dart';
 import '../../providers/message_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/message_service.dart';
-import 'package:go_router/go_router.dart';
 import '../mensajes/create_message_screen.dart';
 
 /// ðŸ“– PANTALLA DE DETALLE DE MENSAJE
@@ -29,6 +30,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   Message? _message;
   bool _loading = true;
   String? _error;
+  bool _verTodosDestinatarios = false;
 
   @override
   void initState() {
@@ -64,7 +66,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
         _error = null;
       });
 
-      print('📥 Cargando mensaje: ${widget.messageId}');
+      dlog('📥 Cargando mensaje: ${widget.messageId}');
 
       final message = await _messageService.getMessageById(widget.messageId);
 
@@ -81,7 +83,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
             message.destinatarios.any((d) => d.id == currentUserId);
 
         if (isRecipient) {
-          print('👁 Marcando mensaje como leído...');
+          dlog('👁 Marcando mensaje como leído...');
           await _messageService.markAsRead(widget.messageId);
         }
       }
@@ -91,7 +93,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
         _loading = false;
       });
     } catch (e) {
-      print('❌ Error cargando mensaje: $e');
+      dlog('❌ Error cargando mensaje: $e');
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -142,7 +144,19 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Detalle del Mensaje'),
+        title: const Text('Mensaje'),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        flexibleSpace: Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
+            ),
+          ),
+        ),
         actions: [
           // Archivar
           if (message.archivado != true)
@@ -280,6 +294,12 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   }
 
   Widget _buildRecipientsSection(Message message) {
+    const limite = 4;
+    final total = message.destinatarios.length;
+    final mostrar = _verTodosDestinatarios
+        ? message.destinatarios
+        : message.destinatarios.take(limite).toList();
+
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.white,
@@ -291,7 +311,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
               Icon(Icons.people_outline, size: 18, color: Colors.grey[600]),
               const SizedBox(width: 8),
               Text(
-                'Para: ${message.destinatarios.length} destinatario(s)',
+                'Para: $total destinatario${total != 1 ? 's' : ''}',
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
@@ -301,7 +321,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
             ],
           ),
           const SizedBox(height: 12),
-          ...message.destinatarios.map((dest) => Padding(
+          ...mostrar.map((dest) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
@@ -342,6 +362,24 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                   ],
                 ),
               )),
+          if (total > limite)
+            GestureDetector(
+              onTap: () => setState(
+                  () => _verTodosDestinatarios = !_verTodosDestinatarios),
+              child: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  _verTodosDestinatarios
+                      ? 'Ver menos ▲'
+                      : '+${total - limite} más ▼',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF059669),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -464,7 +502,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: Color(0xFFDCFCE7),
+            color: const Color(0xFFDCFCE7),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Center(
@@ -519,9 +557,9 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   void _handleReply() {
     if (_message == null) return;
 
-    print('📧 Respondiendo mensaje: ${_message!.id}');
-    print('   Remitente: ${_message!.remitente.fullName}');
-    print('   Asunto: ${_message!.asunto}');
+    dlog('📧 Respondiendo mensaje: ${_message!.id}');
+    dlog('   Remitente: ${_message!.remitente.fullName}');
+    dlog('   Asunto: ${_message!.asunto}');
 
     // Navegar a crear mensaje en modo REPLY
     Navigator.push(
@@ -593,87 +631,10 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   }
 
   Future<void> _handleDownloadAttachment(Adjunto attachment) async {
-    try {
-      // Mostrar diÃ¡logo de progreso
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const Center(
-          child: Card(
-            child: Padding(
-              padding: EdgeInsets.all(20),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Descargando archivo...'),
-                ],
-              ),
-            ),
-          ),
-        ),
-      );
-
-      // â­ GUARDAR el resultado (esto faltaba)
-      final result = await _messageService.downloadAttachment(
-        widget.messageId,
-        attachment.fileId,
-        attachment.nombre,
-      );
-
-      // Cerrar diÃ¡logo de progreso
-      if (mounted) Navigator.pop(context);
-
-      // Mostrar resultado
-      if (mounted) {
-        if (result['success'] == true) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('✅ Descargado: ${attachment.nombre}'),
-              backgroundColor: Colors.green,
-              duration: const Duration(seconds: 3),
-              action: SnackBarAction(
-                label: 'Ver ubicación',
-                textColor: Colors.white,
-                onPressed: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Archivo guardado'),
-                      content: Text('Ubicación:\n${result['path']}'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-            ),
-          );
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('❌ ${result['message']}'),
-              backgroundColor: Colors.red,
-              duration: const Duration(seconds: 3),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) {
-        Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
+    await FileHelper.downloadAndOpen(
+      context,
+      '/mensajes/${widget.messageId}/adjuntos/${attachment.fileId}',
+      attachment.nombre,
+    );
   }
 }

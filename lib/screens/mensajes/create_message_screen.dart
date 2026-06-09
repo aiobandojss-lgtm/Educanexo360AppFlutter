@@ -1,11 +1,12 @@
-// lib/screens/messages/create_message_screen.dart
+﻿// lib/screens/messages/create_message_screen.dart
 // Ã¢Å“â€¦ VERSIÃƒâ€œN FINAL - ESTRUCTURA ANTI-OVERFLOW + FUNCIONALIDAD COMPLETA
 
+import '../../utils/logger.dart';
+import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../models/message.dart';
 import '../../providers/message_provider.dart';
 import '../../services/permission_service.dart';
@@ -34,7 +35,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
   List<User> _selectedRecipients = [];
   Course? _selectedCourse;
   Prioridad _prioridad = Prioridad.normal;
-  List<File> _attachments = [];
+  final List<File> _attachments = [];
   bool _loading = false;
   bool _hasUnsavedChanges = false;
 
@@ -119,84 +120,36 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
   }
 
   // Ã°Å¸â€œÅ½ ADJUNTAR DOCUMENTO
-  Future<void> _handleAttachDocument() async {
+  Future<void> _handleAttachFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt'],
+        allowedExtensions: [
+          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
+          'jpg', 'jpeg', 'png', 'gif', 'webp',
+        ],
         allowMultiple: true,
       );
-
       if (result != null) {
-        final newFiles = result.paths
-            .where((path) => path != null)
-            .map((path) => File(path!))
-            .toList();
-
+        final newFiles = result.paths.where((p) => p != null).map((p) => File(p!)).toList();
         final allAttachments = [..._attachments, ...newFiles];
         if (_validateFileSize(allAttachments)) {
-          setState(() {
-            _attachments.addAll(newFiles);
-            _hasUnsavedChanges = true;
-          });
-
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('📎 ${newFiles.length} documento(s) agregado(s)'),
-              duration: const Duration(seconds: 2),
-            ),
-          );
-        }
-      }
-    } catch (e) {
-      debugPrint('❌ Error seleccionando documento: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Error al seleccionar el documento'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
-  }
-
-  // Ã°Å¸â€“Â¼Ã¯Â¸Â ADJUNTAR IMAGEN
-  // Ã°Å¸â€“Â¼Ã¯Â¸Â ADJUNTAR IMAGEN
-  Future<void> _handleAttachImage() async {
-    try {
-      final ImagePicker picker = ImagePicker();
-      final List<XFile> images = await picker.pickMultiImage(
-        imageQuality: 70,
-      );
-
-      if (images.isNotEmpty) {
-        final newFiles = images.map((xfile) => File(xfile.path)).toList();
-
-        final allAttachments = [..._attachments, ...newFiles];
-        if (_validateFileSize(allAttachments)) {
-          setState(() {
-            _attachments.addAll(newFiles);
-            _hasUnsavedChanges = true;
-          });
-
+          setState(() { _attachments.addAll(newFiles); _hasUnsavedChanges = true; });
           if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('🖼️ ${newFiles.length} imagen(es) agregada(s)'),
-                duration: const Duration(seconds: 2),
-              ),
-            );
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Archivo(s) agregado(s): ' + newFiles.length.toString()),
+              duration: const Duration(seconds: 2),
+            ));
           }
         }
       }
     } catch (e) {
-      debugPrint('❌ Error seleccionando imagen: $e');
+      dlog('Error seleccionando archivo: ' + e.toString());
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Error al seleccionar la imagen'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('Error al seleccionar el archivo'),
+          backgroundColor: Colors.red,
+        ));
       }
     }
   }
@@ -238,10 +191,10 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
 
       final messageProvider = context.read<MessageProvider>();
 
-      debugPrint('📤 Enviando mensaje...');
-      debugPrint('📋 Destinatarios: ${_selectedRecipients.length}');
-      debugPrint('🏫 Curso: ${_selectedCourse?.nombre ?? "Ninguno"}');
-      debugPrint('📎 Adjuntos: ${_attachments.length}');
+      dlog('📤 Enviando mensaje...');
+      dlog('📋 Destinatarios: ${_selectedRecipients.length}');
+      dlog('🏫 Curso: ${_selectedCourse?.nombre ?? "Ninguno"}');
+      dlog('📎 Adjuntos: ${_attachments.length}');
 
       if (widget.isDraftEdit && widget.originalMessage != null) {
         await messageProvider.sendDraft(widget.originalMessage!.id);
@@ -270,7 +223,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      debugPrint('❌ Error enviando mensaje: $e');
+      dlog('❌ Error enviando mensaje: $e');
       if (mounted) {
         String errorMessage = 'No se pudo enviar el mensaje';
         if (e.toString().contains('message')) {
@@ -311,7 +264,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
 
       final messageProvider = context.read<MessageProvider>();
 
-      debugPrint('💾 Guardando borrador...');
+      dlog('💾 Guardando borrador...');
 
       await messageProvider.saveDraft(
         destinatarios: _selectedRecipients.map((u) => u.id).toList(),
@@ -319,7 +272,9 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         asunto: _asuntoController.text.trim().isEmpty
             ? '(Sin asunto)'
             : _asuntoController.text.trim(),
-        contenido: _contenidoController.text.trim(),
+        contenido: _contenidoController.text.trim().isEmpty
+            ? ' '
+            : _contenidoController.text.trim(),
         prioridad: _prioridad,
         adjuntos: _attachments,
       );
@@ -331,7 +286,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      debugPrint('❌ Error guardando borrador: $e');
+      dlog('❌ Error guardando borrador: $e');
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -428,9 +383,15 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     if (widget.isReply) title = 'Responder';
     if (widget.isDraftEdit) title = 'Editar Borrador';
 
-    return WillPopScope(
-      onWillPop: _onWillPop,
+    return PopScope(
+      canPop: !_hasUnsavedChanges,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final shouldPop = await _onWillPop();
+        if (shouldPop && context.mounted) Navigator.pop(context);
+      },
       child: Scaffold(
+        backgroundColor: Colors.white,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           foregroundColor: Colors.white,
@@ -534,9 +495,9 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       padding: const EdgeInsets.all(12),
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Color(0xFFDCFCE7),
+        color: const Color(0xFFDCFCE7),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Color(0xFF10B981)!),
+        border: Border.all(color: const Color(0xFF10B981)),
       ),
       child: Row(
         children: [
@@ -644,7 +605,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                 label: const Text('Agregar destinatarios'),
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 44),
-                  backgroundColor: Color(0xFF059669),
+                  backgroundColor: const Color(0xFF059669),
                 ),
               ),
             ],
@@ -663,17 +624,16 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.school_outlined,
-                    size: 22, color: Colors.green),
-                const SizedBox(width: 8),
-                const Text(
+                Icon(Icons.school_outlined, size: 22, color: Color(0xFF059669)),
+                SizedBox(width: 8),
+                Text(
                   'Envío masivo a curso',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                    color: Color(0xFF059669),
                   ),
                 ),
               ],
@@ -692,7 +652,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
             else
               Chip(
                 avatar: const CircleAvatar(
-                  backgroundColor: Colors.green,
+                  backgroundColor: Color(0xFF059669),
                   child: Icon(Icons.school, size: 18, color: Colors.white),
                 ),
                 label: Text(_selectedCourse!.fullDescription),
@@ -711,7 +671,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
               label: const Text('Seleccionar curso'),
               style: ElevatedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 44),
-                backgroundColor: Colors.green,
+                backgroundColor: const Color(0xFF059669),
               ),
             ),
           ],
@@ -781,11 +741,11 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
+            const Row(
               children: [
-                const Icon(Icons.flag_outlined, size: 22, color: Colors.orange),
-                const SizedBox(width: 8),
-                const Text(
+                Icon(Icons.flag_outlined, size: 22, color: Colors.orange),
+                SizedBox(width: 8),
+                Text(
                   'Prioridad',
                   style: TextStyle(
                     fontSize: 16,
@@ -823,7 +783,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         });
       },
       style: OutlinedButton.styleFrom(
-        backgroundColor: isSelected ? color.withOpacity(0.15) : null,
+        backgroundColor: isSelected ? color.withValues(alpha: 0.15) : null,
         side: BorderSide(
           color: isSelected ? color : Colors.grey[300]!,
           width: isSelected ? 2 : 1,
@@ -876,33 +836,15 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
             ),
             const SizedBox(height: 12),
 
-            // BOTONES DE ADJUNTAR
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _handleAttachDocument,
-                    icon: const Text('📎', style: TextStyle(fontSize: 18)),
-                    label: const Text('Documento'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF0D9488),
-                      minimumSize: const Size(double.infinity, 44),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _handleAttachImage,
-                    icon: const Text('🖼️', style: TextStyle(fontSize: 18)),
-                    label: const Text('Imagen'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green[700],
-                      minimumSize: const Size(double.infinity, 44),
-                    ),
-                  ),
-                ),
-              ],
+            // BOTÓN ÚNICO DE ADJUNTAR
+            ElevatedButton.icon(
+              onPressed: _handleAttachFile,
+              icon: const Icon(Icons.attach_file, size: 20),
+              label: const Text('Adjuntar archivo'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF059669),
+                minimumSize: const Size(double.infinity, 44),
+              ),
             ),
             const SizedBox(height: 12),
 
@@ -933,16 +875,16 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                     margin: const EdgeInsets.only(bottom: 8),
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: Color(0xFFF0FDF4),
+                      color: const Color(0xFFF0FDF4),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Color(0xFF10B981)!),
+                      border: Border.all(color: const Color(0xFF10B981)),
                     ),
                     child: Row(
                       children: [
                         Icon(
                           _getFileIcon(fileName),
                           size: 28,
-                          color: Color(0xFF059669),
+                          color: const Color(0xFF059669),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -1045,11 +987,18 @@ class _RecipientSelectorDialog extends StatefulWidget {
 class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
   late List<User> _selected;
   String _searchQuery = '';
+  Timer? _debounceTimer;
 
   @override
   void initState() {
     super.initState();
     _selected = List.from(widget.selectedRecipients);
+  }
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
   }
 
   List<User> get _filteredRecipients {
@@ -1074,9 +1023,9 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
             // HEADER
             Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Color(0xFF059669),
-                borderRadius: const BorderRadius.only(
+                borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
                 ),
@@ -1108,7 +1057,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
               padding: const EdgeInsets.all(16),
               child: TextField(
                 decoration: InputDecoration(
-                  hintText: '🔍 Buscar por nombre, email o rol...',
+                  hintText: 'Buscar por nombre, email o rol...',
                   prefixIcon: const Icon(Icons.search),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -1116,7 +1065,12 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                   filled: true,
                   fillColor: Colors.grey[100],
                 ),
-                onChanged: (value) => setState(() => _searchQuery = value),
+                onChanged: (value) {
+                  _debounceTimer?.cancel();
+                  _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+                    setState(() => _searchQuery = value);
+                  });
+                },
               ),
             ),
 
@@ -1125,17 +1079,20 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Color(0xFFDCFCE7),
+                color: const Color(0xFFDCFCE7),
                 child: Row(
                   children: [
-                    Icon(Icons.check_circle,
+                    const Icon(Icons.check_circle,
                         color: Color(0xFF047857), size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      '${_selected.length} destinatario(s) seleccionado(s)',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF047857),
+                    Flexible(
+                      child: Text(
+                        '${_selected.length} destinatario(s) seleccionado(s)',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF047857),
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
@@ -1176,6 +1133,8 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                             '${user.tipo} • ${user.email}',
                             style: TextStyle(
                                 fontSize: 12, color: Colors.grey[600]),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
                           secondary: CircleAvatar(
                             backgroundColor: Color(user.avatarColor),
@@ -1187,7 +1146,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                               ),
                             ),
                           ),
-                          activeColor: Color(0xFF059669),
+                          activeColor: const Color(0xFF059669),
                           onChanged: (checked) {
                             setState(() {
                               if (checked == true) {
@@ -1231,7 +1190,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                       icon: const Icon(Icons.check),
                       label: Text('Seleccionar (${_selected.length})'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF059669),
+                        backgroundColor: const Color(0xFF059669),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -1268,7 +1227,7 @@ class _CourseSelectorDialog extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: const BoxDecoration(
-                color: Colors.green,
+                color: Color(0xFF059669),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(16),
                   topRight: Radius.circular(16),
@@ -1321,18 +1280,19 @@ class _CourseSelectorDialog extends StatelessWidget {
                         return Card(
                           margin: const EdgeInsets.symmetric(vertical: 4),
                           child: ListTile(
-                            leading: CircleAvatar(
-                              backgroundColor: Colors.green[700],
-                              child:
-                                  const Icon(Icons.class_, color: Colors.white),
+                            leading: const CircleAvatar(
+                              backgroundColor: Color(0xFF047857),
+                              child: Icon(Icons.class_, color: Colors.white),
                             ),
                             title: Text(
                               course.fullDescription,
                               style:
                                   const TextStyle(fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                             subtitle: Text(
-                              '👥 ${course.cantidadEstudiantes} estudiantes',
+                              '${course.cantidadEstudiantes} estudiantes',
                               style: TextStyle(
                                   fontSize: 13, color: Colors.grey[600]),
                             ),
