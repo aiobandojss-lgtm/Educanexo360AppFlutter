@@ -314,12 +314,19 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
                     child: OutlinedButton(
                       onPressed:
                           _enviando || _success ? null : () => context.pop(),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF059669),
+                        side: const BorderSide(color: Color(0xFF059669)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                       child: const Text('Cancelar'),
                     ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
-                    flex: 2,
                     child: ElevatedButton.icon(
                       onPressed: _enviando ||
                               _success ||
@@ -341,7 +348,11 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
                           Text(_enviando ? 'Entregando...' : 'Entregar Tarea'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF059669),
+                        foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
                       ),
                     ),
                   ),
