@@ -389,13 +389,13 @@ extension EventTypeExtension on EventType {
   String get colorHex {
     switch (this) {
       case EventType.academico:
-        return '#8b5cf6'; // Morado
+        return '#059669'; // Verde Emerald-600
       case EventType.institucional:
         return '#f59e0b'; // Naranja
       case EventType.cultural:
-        return '#ec4899'; // Rosa
+        return '#0D9488'; // Teal-600
       case EventType.deportivo:
-        return '#10b981'; // Verde
+        return '#10b981'; // Verde Emerald-500
       case EventType.otro:
         return '#6b7280'; // Gris
     }

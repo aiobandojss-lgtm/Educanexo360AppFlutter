@@ -3,20 +3,19 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../models/evento.dart';
 import '../../providers/calendario_provider.dart';
 import '../../services/permission_service.dart';
-import '../../services/calendario_service.dart';
+import '../../utils/file_helper.dart';
 import 'create_evento_screen.dart';
 
 class EventoDetailScreen extends StatefulWidget {
   final String eventoId;
 
   const EventoDetailScreen({
-    Key? key,
+    super.key,
     required this.eventoId,
-  }) : super(key: key);
+  });
 
   @override
   State<EventoDetailScreen> createState() => _EventoDetailScreenState();
@@ -25,7 +24,7 @@ class EventoDetailScreen extends StatefulWidget {
 class _EventoDetailScreenState extends State<EventoDetailScreen> {
   bool _isLoading = true;
   Evento? _evento;
-  final CalendarioService _calendarioService = CalendarioService();
+  bool _verTodosInvitados = false;
 
   @override
   void initState() {
@@ -177,7 +176,7 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
     final color = _getEventTypeColor(evento.tipo);
 
     return SliverAppBar(
-      expandedHeight: 200,
+      expandedHeight: 185,
       pinned: true,
       backgroundColor: color,
       flexibleSpace: FlexibleSpaceBar(
@@ -191,7 +190,7 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
           ),
           child: SafeArea(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(60, 50, 20, 20),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
@@ -277,13 +276,15 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
             ),
           ],
 
-          const Divider(height: 32),
-          _buildInfoRow(
-            icon: Icons.person,
-            iconColor: const Color(0xFF10b981),
-            title: 'Creado por',
-            subtitle: evento.creador.fullName,
-          ),
+          if (evento.creador.id.isNotEmpty && evento.creador.nombre != 'Desconocido') ...[
+            const Divider(height: 32),
+            _buildInfoRow(
+              icon: Icons.person,
+              iconColor: const Color(0xFF10b981),
+              title: 'Creado por',
+              subtitle: evento.creador.fullName,
+            ),
+          ],
         ],
       ),
     );
@@ -502,37 +503,58 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
   Widget _buildInvitadosSection(Evento evento) {
     final confirmados = evento.confirmadosCount;
     final total = evento.invitados.length;
+    final mostrar = _verTodosInvitados
+        ? evento.invitados
+        : evento.invitados.take(5).toList();
 
     return _buildSection(
       icon: Icons.people,
       title: 'Invitados ($confirmados/$total confirmados)',
       child: Column(
-        children: evento.invitados.take(5).map((invitado) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Row(
-              children: [
-                Icon(
-                  invitado.confirmado
-                      ? Icons.check_circle
-                      : Icons.circle_outlined,
-                  size: 20,
-                  color: invitado.confirmado
-                      ? const Color(0xFF10b981)
-                      : Colors.grey[400],
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  invitado.usuarioId,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[700],
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ...mostrar.map((invitado) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Icon(
+                    invitado.confirmado
+                        ? Icons.check_circle
+                        : Icons.circle_outlined,
+                    size: 20,
+                    color: invitado.confirmado
+                        ? const Color(0xFF10b981)
+                        : Colors.grey[400],
                   ),
+                  const SizedBox(width: 12),
+                  Text(
+                    invitado.usuarioId,
+                    style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                  ),
+                ],
+              ),
+            );
+          }),
+          if (total > 5)
+            TextButton(
+              onPressed: () =>
+                  setState(() => _verTodosInvitados = !_verTodosInvitados),
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFF059669),
+                padding: EdgeInsets.zero,
+              ),
+              child: Text(
+                _verTodosInvitados
+                    ? 'Ver menos ▲'
+                    : '+${total - 5} más ▼',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
+              ),
             ),
-          );
-        }).toList(),
+        ],
       ),
     );
   }
@@ -691,18 +713,12 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
   }
 
   Future<void> _downloadAttachment(String eventoId) async {
-    try {
-      final url = _calendarioService.getAdjuntoUrl(eventoId);
-      final uri = Uri.parse(url);
-
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        _showError('No se puede abrir el archivo');
-      }
-    } catch (e) {
-      _showError('Error al descargar archivo');
-    }
+    final fileName = _evento?.archivoAdjunto?.nombre ?? 'adjunto_evento';
+    await FileHelper.downloadAndOpen(
+      context,
+      '/calendario/$eventoId/adjunto',
+      fileName,
+    );
   }
 
   // ==========================================

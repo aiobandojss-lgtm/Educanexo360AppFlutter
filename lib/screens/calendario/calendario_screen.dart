@@ -1,6 +1,7 @@
-// lib/screens/calendario/calendario_screen.dart
+﻿// lib/screens/calendario/calendario_screen.dart
 // ✅ MIGRACIÓN A VERDE/TEAL - 10 CAMBIOS APLICADOS
 
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
@@ -13,7 +14,7 @@ import 'evento_detail_screen.dart';
 import 'create_evento_screen.dart';
 
 class CalendarioScreen extends StatefulWidget {
-  const CalendarioScreen({Key? key}) : super(key: key);
+  const CalendarioScreen({super.key});
 
   @override
   State<CalendarioScreen> createState() => _CalendarioScreenState();
@@ -22,15 +23,20 @@ class CalendarioScreen extends StatefulWidget {
 class _CalendarioScreenState extends State<CalendarioScreen> {
   DateTime _focusedDay = DateTime.now();
   DateTime? _selectedDay;
-  CalendarFormat _calendarFormat = CalendarFormat.month;
+  CalendarFormat _calendarFormat = CalendarFormat.week;
 
   @override
   void initState() {
     super.initState();
     _selectedDay = _focusedDay;
 
+    final provider = context.read<CalendarioProvider>();
+    if (provider.eventos.isEmpty) {
+      provider.prepareLoading();
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CalendarioProvider>().loadEventos();
+      if (mounted) context.read<CalendarioProvider>().loadEventos(refresh: true);
     });
   }
 
@@ -40,7 +46,6 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       backgroundColor: Colors.grey[50],
       body: Consumer2<CalendarioProvider, AuthProvider>(
         builder: (context, calendarProvider, authProvider, child) {
-          final canEditEvents = PermissionService.canAccess('calendario.crear');
           final tipoUsuario = authProvider.currentUser?.tipo.value;
 
           return RefreshIndicator(
@@ -107,13 +112,13 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   Widget _buildHeader(CalendarioProvider provider) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            const Color(0xFF047857), // ← VERDE OSCURO (cambio 2/10)
-            const Color(0xFF14B8A6), // ← TEAL (cambio 3/10)
+            Color(0xFF047857), // ← VERDE OSCURO (cambio 2/10)
+            Color(0xFF14B8A6), // ← TEAL (cambio 3/10)
           ],
         ),
       ),
@@ -221,9 +226,9 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
               final eventos = provider.getEventosDelDia(
                   selectedDay, authProvider.currentUser?.tipo.value);
 
-              print(
+              dlog(
                   '📅 Día seleccionado: ${selectedDay.day}/${selectedDay.month}');
-              print('🔍 Eventos encontrados: ${eventos.length}');
+              dlog('🔍 Eventos encontrados: ${eventos.length}');
 
               // Solo mostrar diálogo si NO hay eventos y puede crear
               if (eventos.isEmpty &&
@@ -254,27 +259,54 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     final nombreMes = DateFormat.yMMMM('es_ES').format(mesActual);
 
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
             icon: const Icon(Icons.chevron_left),
             onPressed: () => provider.mesAnterior(),
-            color: const Color(0xFF059669), // ← VERDE (cambio 6/10)
+            color: const Color(0xFF059669),
           ),
-          Text(
-            nombreMes.toUpperCase(),
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF059669), // ← VERDE (cambio 7/10)
+          Expanded(
+            child: Text(
+              nombreMes.toUpperCase(),
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF059669),
+              ),
             ),
           ),
           IconButton(
             icon: const Icon(Icons.chevron_right),
             onPressed: () => provider.mesSiguiente(),
-            color: const Color(0xFF059669), // ← VERDE (cambio 8/10)
+            color: const Color(0xFF059669),
+          ),
+          // Toggle semana / mes
+          GestureDetector(
+            onTap: () => setState(() {
+              _calendarFormat = _calendarFormat == CalendarFormat.week
+                  ? CalendarFormat.month
+                  : CalendarFormat.week;
+            }),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFF6EE7B7)),
+              ),
+              child: Text(
+                _calendarFormat == CalendarFormat.week ? 'Mes' : 'Semana',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF059669),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -306,10 +338,10 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             : Icons.event_available;
 
     final Color color = mostrarEventosDelDia
-        ? Colors.purple[700]!
+        ? const Color(0xFF047857)
         : _selectedDay != null
             ? Colors.orange[700]!
-            : Colors.blue[700]!;
+            : const Color(0xFF0D9488);
 
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -358,13 +390,13 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
 
     if (_selectedDay != null) {
       eventosAMostrar = provider.getEventosDelDia(_selectedDay!, tipoUsuario);
-      print(
+      dlog(
           '📅 Mostrando eventos del día ${_selectedDay!.day}/${_selectedDay!.month}');
-      print('🔢 Total: ${eventosAMostrar.length}');
+      dlog('🔢 Total: ${eventosAMostrar.length}');
     } else {
       eventosAMostrar = provider.proximosEventos;
-      print('📋 Mostrando próximos eventos');
-      print('🔢 Total: ${eventosAMostrar.length}');
+      dlog('📋 Mostrando próximos eventos');
+      dlog('🔢 Total: ${eventosAMostrar.length}');
     }
 
     if (eventosAMostrar.isEmpty) {
@@ -386,7 +418,6 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
 
   Widget _buildEventCard(Evento evento) {
     final color = _getEventTypeColor(evento.tipo);
-    final statusColor = _getStatusColor(evento.estado);
 
     return GestureDetector(
       onTap: () => _navigateToEventDetail(evento),
@@ -421,119 +452,82 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
             // CONTENIDO
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // TÍTULO
-                    Text(
-                      evento.titulo,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1f2937),
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    // TÍTULO + TIPO
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            evento.titulo,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF1f2937),
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            evento.tipo.icon,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
 
                     // FECHA
                     Row(
                       children: [
-                        Icon(Icons.calendar_today,
-                            size: 14, color: Colors.grey[600]),
+                        Icon(Icons.access_time,
+                            size: 13, color: Colors.grey[500]),
                         const SizedBox(width: 4),
                         Text(
-                          DateFormat('d MMM yyyy, HH:mm', 'es_ES')
+                          DateFormat('d MMM, HH:mm', 'es_ES')
                               .format(evento.fechaInicio),
                           style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey[600],
-                          ),
+                              fontSize: 12, color: Colors.grey[600]),
                         ),
+                        if (evento.lugar != null) ...[
+                          const SizedBox(width: 10),
+                          Icon(Icons.location_on,
+                              size: 13, color: Colors.grey[500]),
+                          const SizedBox(width: 2),
+                          Expanded(
+                            child: Text(
+                              evento.lugar!,
+                              style: TextStyle(
+                                  fontSize: 12, color: Colors.grey[600]),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 5),
 
-                    // DESCRIPCIÓN
+                    // DESCRIPCIÓN (1 línea)
                     Text(
                       evento.descripcion,
                       style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[700],
-                        height: 1.4,
-                      ),
-                      maxLines: 2,
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          height: 1.3),
+                      maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-
-                    // META INFO
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 4,
-                      children: [
-                        // CHIP DE TIPO
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: color.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            evento.tipo.displayName,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: color,
-                            ),
-                          ),
-                        ),
-
-                        // CHIP DE ESTADO
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: statusColor.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            evento.estado.displayName,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              color: statusColor,
-                            ),
-                          ),
-                        ),
-
-                        // LUGAR
-                        if (evento.lugar != null)
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.location_on,
-                                  size: 12, color: Colors.grey[500]),
-                              const SizedBox(width: 2),
-                              Text(
-                                evento.lugar!,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: Colors.grey[600],
-                                ),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ],
-                          ),
-                      ],
                     ),
                   ],
                 ),
@@ -591,13 +585,17 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   // ==========================================
 
   Widget _buildEmptyState() {
-    return Center(
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text(
-            '📅',
-            style: TextStyle(fontSize: 80, color: Colors.grey[300]),
+          Icon(
+            _selectedDay != null
+                ? Icons.event_busy_outlined
+                : Icons.event_available_outlined,
+            size: 80,
+            color: Colors.grey[300],
           ),
           const SizedBox(height: 16),
           Text(
@@ -613,31 +611,11 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           const SizedBox(height: 8),
           Text(
             _selectedDay != null
-                ? 'Selecciona otro día o crea un nuevo evento'
+                ? 'Selecciona otro día o usa el botón para crear uno'
                 : 'Los eventos que se creen aparecerán aquí',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
-          if (_selectedDay != null &&
-              PermissionService.canAccess('calendario.crear')) ...[
-            const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () =>
-                  _navigateToCreateEvento(fechaInicial: _selectedDay),
-              icon: const Icon(Icons.add),
-              label: const Text('Crear evento para este día'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    const Color(0xFF059669), // ← VERDE (cambio 10/10)
-                foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-              ),
-            ),
-          ],
         ],
       ),
     );
@@ -675,9 +653,4 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
     );
   }
 
-  Color _getStatusColor(EventStatus status) {
-    return Color(
-      int.parse(status.colorHex.substring(1), radix: 16) + 0xFF000000,
-    );
-  }
 }
