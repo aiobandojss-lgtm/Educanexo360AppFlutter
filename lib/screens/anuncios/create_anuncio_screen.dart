@@ -488,8 +488,10 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
   }
 
   Widget _buildBottomBar(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
+    return SafeArea(
+      top: false,
+      child: Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -525,6 +527,7 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
+      ),
       ),
     );
   }
