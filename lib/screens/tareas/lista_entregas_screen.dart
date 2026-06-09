@@ -27,6 +27,9 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
   EstadoEntrega? _filtroEstado;
   String _ordenamiento = 'nombre'; // nombre, fecha, calificacion
 
+  // Estadísticas memoizadas: se calculan solo cuando _entregas cambia
+  Map<String, int>? _estadisticasCache;
+
   @override
   void initState() {
     super.initState();
@@ -70,6 +73,8 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
   }
 
   void _aplicarFiltrosYOrdenamiento() {
+    // Invalidar cache de estadísticas al cambiar la lista
+    _estadisticasCache = null;
     List<EntregaTarea> entregasFiltradas = List.from(_entregas);
 
     // Aplicar filtro de estado
@@ -113,14 +118,18 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
   }
 
   Map<String, int> _calcularEstadisticas() {
+    // Retornar cache si ya fue calculado para esta lista
+    if (_estadisticasCache != null) return _estadisticasCache!;
+
     if (_tarea == null) {
-      return {
+      _estadisticasCache = {
         'total': 0,
         'entregadas': 0,
         'calificadas': 0,
         'pendientes': 0,
         'atrasadas': 0,
       };
+      return _estadisticasCache!;
     }
 
     final total = _tarea!.estudiantesIds.length;
@@ -137,13 +146,14 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     final atrasadas =
         _entregas.where((e) => e.estado == EstadoEntrega.atrasada).length;
 
-    return {
+    _estadisticasCache = {
       'total': total,
       'entregadas': entregadas,
       'calificadas': calificadas,
       'pendientes': pendientes,
       'atrasadas': atrasadas,
     };
+    return _estadisticasCache!;
   }
 
   @override
@@ -240,13 +250,19 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '📊 Entregas de la Tarea',
-            style: TextStyle(
-              fontSize: 20,
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          const Row(
+            children: [
+              Icon(Icons.assignment_turned_in, color: Colors.white, size: 24),
+              SizedBox(width: 8),
+              Text(
+                'Entregas de la Tarea',
+                style: TextStyle(
+                  fontSize: 20,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -487,7 +503,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
                 },
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );
@@ -749,7 +765,13 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('📭', style: TextStyle(fontSize: 64)),
+          Icon(
+            _filtroEstado != null
+                ? Icons.filter_list_off_outlined
+                : Icons.inbox_outlined,
+            size: 80,
+            color: Colors.grey[300],
+          ),
           const SizedBox(height: 16),
           Text(
             _filtroEstado != null

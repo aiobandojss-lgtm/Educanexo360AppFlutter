@@ -1,6 +1,7 @@
-// lib/screens/tareas/formulario_tarea_screen.dart
+﻿// lib/screens/tareas/formulario_tarea_screen.dart
 // 📝 FORMULARIO DE TAREA - CREAR/EDITAR
 
+import '../../utils/logger.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +40,8 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
   bool _isLoading = false;
   bool _isSaving = false;
   Tarea? _tareaOriginal;
+  bool _configExpanded = false;
+  bool _archivosExpanded = false;
 
   // Datos de formulario
   String? _cursoSeleccionado;
@@ -103,21 +106,26 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
     try {
       final apiService = ApiService();
 
-      // Cargar cursos
-      final cursosResponse = await apiService.get('/cursos');
+      // Paralelizar las dos llamadas independientes
+      final results = await Future.wait([
+        apiService.get('/cursos'),
+        apiService.get('/asignaturas'),
+      ]);
+
+      final cursosResponse = results[0];
+      final asignaturasResponse = results[1];
+
       if (cursosResponse['success'] == true) {
         _cursos = List<Map<String, dynamic>>.from(cursosResponse['data']);
       }
 
-      // Cargar asignaturas
-      final asignaturasResponse = await apiService.get('/asignaturas');
       if (asignaturasResponse['success'] == true) {
         _asignaturas =
             List<Map<String, dynamic>>.from(asignaturasResponse['data']);
         _asignaturasFiltradas = _asignaturas;
       }
     } catch (e) {
-      print('Error cargando cursos y asignaturas: $e');
+      dlog('Error cargando cursos y asignaturas: $e');
       rethrow;
     }
   }
@@ -148,14 +156,14 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         _filtrarAsignaturasPorCurso(_cursoSeleccionado!);
       }
     } catch (e) {
-      print('Error cargando tarea: $e');
+      dlog('Error cargando tarea: $e');
       rethrow;
     }
   }
 
   void _filtrarAsignaturasPorCurso(String cursoId) {
-    print('🔍 FILTRAR ASIGNATURAS - Curso ID: $cursoId');
-    print('   Total asignaturas disponibles: ${_asignaturas.length}');
+    dlog('🔍 FILTRAR ASIGNATURAS - Curso ID: $cursoId');
+    dlog('   Total asignaturas disponibles: ${_asignaturas.length}');
 
     // Filtrar asignaturas que tienen este cursoId
     final asignaturasFiltradas = _asignaturas.where((asignatura) {
@@ -176,14 +184,14 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
       final coincide = cursoIdDeAsignatura == cursoId;
 
       if (coincide) {
-        print(
+        dlog(
             '   ✅ ${asignatura['nombre']} - INCLUIDA (cursoId: $cursoIdDeAsignatura)');
       }
 
       return coincide;
     }).toList();
 
-    print('   Asignaturas filtradas: ${asignaturasFiltradas.length}');
+    dlog('   Asignaturas filtradas: ${asignaturasFiltradas.length}');
 
     setState(() {
       _asignaturasFiltradas = asignaturasFiltradas;
@@ -194,14 +202,14 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         );
 
         if (!asignaturaEstaEnCurso) {
-          print(
+          dlog(
               '   ⚠️ Asignatura previamente seleccionada no está en este curso');
           _asignaturaSeleccionada = null;
         }
       }
     });
 
-    print('   _asignaturasFiltradas final: ${_asignaturasFiltradas.length}');
+    dlog('   _asignaturasFiltradas final: ${_asignaturasFiltradas.length}');
   }
 
   Future<void> _seleccionarFechaLimite() async {
@@ -458,55 +466,64 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // Título
+                              // ── SECCIÓN 1: LO ESENCIAL (siempre visible) ──
+                              _buildSeccionHeader(
+                                'Lo esencial',
+                                Icons.edit_note,
+                                null,
+                                null,
+                              ),
+                              const SizedBox(height: 16),
                               _buildTituloField(),
-                              const SizedBox(height: 20),
-
-                              // Descripción
+                              const SizedBox(height: 16),
                               _buildDescripcionField(),
-                              const SizedBox(height: 20),
-
-                              // Curso
+                              const SizedBox(height: 16),
                               _buildCursoDropdown(),
-                              const SizedBox(height: 20),
-
-                              // Asignatura
+                              const SizedBox(height: 16),
                               _buildAsignaturaDropdown(),
-                              const SizedBox(height: 20),
-
-                              // Fecha límite
+                              const SizedBox(height: 16),
                               _buildFechaLimiteSelector(),
-                              const SizedBox(height: 20),
 
-                              // Calificación máxima
-                              _buildCalificacionField(),
-                              const SizedBox(height: 20),
+                              // ── SECCIÓN 2: CONFIGURACIÓN (colapsable) ──
+                              const SizedBox(height: 24),
+                              _buildSeccionHeader(
+                                'Configuración',
+                                Icons.tune,
+                                _configExpanded,
+                                () => setState(
+                                    () => _configExpanded = !_configExpanded),
+                              ),
+                              if (_configExpanded) ...[
+                                const SizedBox(height: 16),
+                                _buildCalificacionField(),
+                                const SizedBox(height: 16),
+                                _buildPesoEvaluacionField(),
+                                const SizedBox(height: 16),
+                                _buildTipoTareaSelector(),
+                                const SizedBox(height: 16),
+                                _buildPrioridadSelector(),
+                                const SizedBox(height: 16),
+                                _buildPermiteTardiasSwitch(),
+                              ],
 
-                              // Peso en evaluación (opcional)
-                              _buildPesoEvaluacionField(),
-                              const SizedBox(height: 20),
+                              // ── SECCIÓN 3: ARCHIVOS (colapsable) ──
+                              const SizedBox(height: 24),
+                              _buildSeccionHeader(
+                                'Archivos de referencia',
+                                Icons.attach_file,
+                                _archivosExpanded,
+                                () => setState(
+                                    () => _archivosExpanded = !_archivosExpanded),
+                              ),
+                              if (_archivosExpanded) ...[
+                                const SizedBox(height: 16),
+                                if (esEdicion && _archivosExistentes.isNotEmpty)
+                                  _buildArchivosExistentes(),
+                                _buildFileUploader(),
+                              ],
 
-                              // Tipo de tarea
-                              _buildTipoTareaSelector(),
-                              const SizedBox(height: 20),
-
-                              // Prioridad
-                              _buildPrioridadSelector(),
-                              const SizedBox(height: 20),
-
-                              // Permite tardías
-                              _buildPermiteTardiasSwitch(),
+                              // ── BOTONES ──
                               const SizedBox(height: 30),
-
-                              // Archivos existentes (solo en modo edición)
-                              if (esEdicion && _archivosExistentes.isNotEmpty)
-                                _buildArchivosExistentes(),
-
-                              // Nuevos archivos
-                              _buildFileUploader(),
-                              const SizedBox(height: 30),
-
-                              // Botones de acción
                               _buildActionButtons(),
                             ],
                           ),
@@ -541,13 +558,23 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            esEdicion ? '📝 Editar Tarea' : '✏️ Nueva Tarea',
-            style: const TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          Row(
+            children: [
+              Icon(
+                esEdicion ? Icons.edit : Icons.edit_outlined,
+                color: Colors.white,
+                size: 28,
+              ),
+              const SizedBox(width: 10),
+              Text(
+                esEdicion ? 'Editar Tarea' : 'Nueva Tarea',
+                style: const TextStyle(
+                  fontSize: 24,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 6),
           Text(
@@ -561,6 +588,59 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ========================================
+  // 🗂️ ENCABEZADO DE SECCIÓN
+  // ========================================
+
+  Widget _buildSeccionHeader(
+    String titulo,
+    IconData icono,
+    bool? expandido,
+    VoidCallback? onTap,
+  ) {
+    final colapsable = onTap != null;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 2),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.grey[200]!),
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFECFDF5),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icono, color: const Color(0xFF059669), size: 18),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                titulo,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ),
+            if (colapsable)
+              Icon(
+                expandido! ? Icons.expand_less : Icons.expand_more,
+                color: const Color(0xFF059669),
+                size: 22,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -655,7 +735,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _cursoSeleccionado,
+          initialValue: _cursoSeleccionado,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -672,10 +752,10 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             );
           }).toList(),
           onChanged: (value) {
-            print('📌 CURSO SELECCIONADO: $value');
+            dlog('📌 CURSO SELECCIONADO: $value');
             setState(() {
               _cursoSeleccionado = value;
-              print('   _cursoSeleccionado ahora es: $_cursoSeleccionado');
+              dlog('   _cursoSeleccionado ahora es: $_cursoSeleccionado');
               _asignaturaSeleccionada = null; // Resetear asignatura
               if (value != null) {
                 _filtrarAsignaturasPorCurso(value);
@@ -694,9 +774,9 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
   }
 
   Widget _buildAsignaturaDropdown() {
-    print(
+    dlog(
         '🎨 BUILD Dropdown Asignaturas - _cursoSeleccionado: $_cursoSeleccionado');
-    print('   _asignaturasFiltradas length: ${_asignaturasFiltradas.length}');
+    dlog('   _asignaturasFiltradas length: ${_asignaturasFiltradas.length}');
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -710,7 +790,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
-          value: _asignaturaSeleccionada,
+          initialValue: _asignaturaSeleccionada,
           decoration: InputDecoration(
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -907,7 +987,10 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
           children: [
             Expanded(
               child: RadioListTile<TipoTarea>(
-                title: const Text('Individual'),
+                title: const Text(
+                  'Individual',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
                 value: TipoTarea.individual,
                 groupValue: _tipo,
                 onChanged: (value) {
@@ -915,6 +998,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
                     _tipo = value!;
                   });
                 },
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                 activeColor: const Color(0xFF059669),
                 tileColor: Colors.grey[50],
                 shape: RoundedRectangleBorder(
@@ -931,7 +1015,10 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             const SizedBox(width: 12),
             Expanded(
               child: RadioListTile<TipoTarea>(
-                title: const Text('Grupal'),
+                title: const Text(
+                  'Grupal',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                ),
                 value: TipoTarea.grupal,
                 groupValue: _tipo,
                 onChanged: (value) {
@@ -939,6 +1026,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
                     _tipo = value!;
                   });
                 },
+                contentPadding: const EdgeInsets.symmetric(horizontal: 4),
                 activeColor: const Color(0xFF059669),
                 tileColor: Colors.grey[50],
                 shape: RoundedRectangleBorder(
@@ -1063,7 +1151,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
                 _permiteTardias = value;
               });
             },
-            activeColor: const Color(0xFF059669),
+            activeThumbColor: const Color(0xFF059669),
           ),
         ],
       ),
@@ -1094,7 +1182,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
               onDelete: () => _eliminarArchivoExistente(archivo),
             ),
           );
-        }).toList(),
+        }),
         const SizedBox(height: 20),
       ],
     );
@@ -1131,7 +1219,6 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
           },
           maxArchivos: 5,
           maxTamanoMB: 10,
-          titulo: 'Arrastra archivos aquí',
           descripcion: 'PDF, Word, Excel, PowerPoint',
         ),
       ],

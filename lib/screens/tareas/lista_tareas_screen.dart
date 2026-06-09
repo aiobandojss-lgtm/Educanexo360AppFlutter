@@ -2,6 +2,7 @@
 // 📋 LISTA DE TAREAS - DOCENTES/ADMIN
 // ✅ CORREGIDO: Verificación correcta de roles
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -20,9 +21,9 @@ class ListaTareasScreen extends StatefulWidget {
 class _ListaTareasScreenState extends State<ListaTareasScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  Timer? _debounceTimer;
 
-  // Estados de filtros expandidos
-  bool _filtrosExpandidos = false;
+  // (filtros se muestran en BottomSheet, no inline)
 
   @override
   void initState() {
@@ -33,15 +34,19 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     _scrollController.dispose();
     super.dispose();
   }
 
   void _loadInitialData() {
+    final tareaProvider = context.read<TareaProvider>();
+    if (tareaProvider.tareas.isEmpty) {
+      tareaProvider.prepareLoading();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final tareaProvider = context.read<TareaProvider>();
-      tareaProvider.listarTareas(refresh: true);
+      if (mounted) tareaProvider.listarTareas(refresh: true);
     });
   }
 
@@ -63,12 +68,15 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
   }
 
   void _onSearch(String query) {
-    final tareaProvider = context.read<TareaProvider>();
-    if (query.isEmpty) {
-      tareaProvider.buscar('');
-    } else {
-      tareaProvider.buscar(query);
-    }
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      final tareaProvider = context.read<TareaProvider>();
+      if (query.isEmpty) {
+        tareaProvider.buscar('');
+      } else {
+        tareaProvider.buscar(query);
+      }
+    });
   }
 
   @override
@@ -77,12 +85,13 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
     final authProvider = context.watch<AuthProvider>();
     final usuario = authProvider.currentUser;
 
-    // Convertir enum UserRole a String en mayúsculas
-    final tipoUsuario = usuario?.tipo.toString().split('.').last.toUpperCase();
+    // ✅ CORRECTO: usar .value en lugar de .toString().split('.').last
+    final tipoUsuario = usuario?.tipo.value;
 
-    final canCreate = tipoUsuario == 'ADMIN' ||
+    // RECTOR puede ver tareas pero NO crear (solo supervisión)
+    final canCreate = tipoUsuario == 'SUPER_ADMIN' ||
+        tipoUsuario == 'ADMIN' ||
         tipoUsuario == 'DOCENTE' ||
-        tipoUsuario == 'RECTOR' ||
         tipoUsuario == 'COORDINADOR';
 
     return Scaffold(
@@ -93,16 +102,48 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
         title: const Text('Mis Tareas'),
         automaticallyImplyLeading: false,
         actions: [
-          // Botón para mostrar/ocultar filtros
-          IconButton(
-            icon: Icon(
-                _filtrosExpandidos ? Icons.filter_list_off : Icons.filter_list),
-            onPressed: () {
-              setState(() {
-                _filtrosExpandidos = !_filtrosExpandidos;
-              });
+          Consumer<TareaProvider>(
+            builder: (context, provider, _) {
+              final cantFiltros = [
+                provider.estadoFilter,
+                provider.prioridadFilter,
+                provider.cursoFilter,
+                provider.asignaturaFilter,
+              ].where((f) => f != null).length;
+
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: _mostrarFiltros,
+                    tooltip: 'Filtros',
+                  ),
+                  if (cantFiltros > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$cantFiltros',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
             },
-            tooltip: 'Filtros',
           ),
         ],
       ),
@@ -113,9 +154,6 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
 
           // Barra de búsqueda
           _buildSearchBar(),
-
-          // Panel de filtros (expandible)
-          if (_filtrosExpandidos) _buildFiltrosPanel(),
 
           // Filtros activos (chips)
           _buildFiltrosActivos(),
@@ -160,13 +198,19 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '📚 Gestión de Tareas',
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
+          const Row(
+            children: [
+              Icon(Icons.assignment, color: Colors.white, size: 28),
+              SizedBox(width: 10),
+              Text(
+                'Gestión de Tareas',
+                style: TextStyle(
+                  fontSize: 24,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(
@@ -291,115 +335,145 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
   }
 
   // ========================================
-  // 🎛️ PANEL DE FILTROS
+  // 🎛️ FILTROS — BOTTOM SHEET
   // ========================================
 
-  Widget _buildFiltrosPanel() {
-    final tareaProvider = context.watch<TareaProvider>();
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[200]!),
-        ),
+  void _mostrarFiltros() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Filtros',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
+      builder: (ctx) => Consumer<TareaProvider>(
+        builder: (ctx, provider, _) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
             ),
-          ),
-          const SizedBox(height: 12),
-
-          // Filtro por estado
-          const Text(
-            'Estado',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildFiltroChip(
-                label: '✅ Activa',
-                isActive: tareaProvider.estadoFilter == EstadoTarea.activa,
-                onTap: () =>
-                    tareaProvider.aplicarFiltroEstado(EstadoTarea.activa),
-              ),
-              const SizedBox(width: 8),
-              _buildFiltroChip(
-                label: '🔒 Cerrada',
-                isActive: tareaProvider.estadoFilter == EstadoTarea.cerrada,
-                onTap: () =>
-                    tareaProvider.aplicarFiltroEstado(EstadoTarea.cerrada),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Filtro por prioridad
-          const Text(
-            'Prioridad',
-            style: TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              _buildFiltroChip(
-                label: '🔴 Alta',
-                isActive: tareaProvider.prioridadFilter == PrioridadTarea.alta,
-                onTap: () =>
-                    tareaProvider.aplicarFiltroPrioridad(PrioridadTarea.alta),
-              ),
-              const SizedBox(width: 8),
-              _buildFiltroChip(
-                label: '🟡 Media',
-                isActive: tareaProvider.prioridadFilter == PrioridadTarea.media,
-                onTap: () =>
-                    tareaProvider.aplicarFiltroPrioridad(PrioridadTarea.media),
-              ),
-              const SizedBox(width: 8),
-              _buildFiltroChip(
-                label: '🟢 Baja',
-                isActive: tareaProvider.prioridadFilter == PrioridadTarea.baja,
-                onTap: () =>
-                    tareaProvider.aplicarFiltroPrioridad(PrioridadTarea.baja),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 16),
-
-          // Botón limpiar filtros
-          if (tareaProvider.estadoFilter != null ||
-              tareaProvider.prioridadFilter != null ||
-              tareaProvider.cursoFilter != null ||
-              tareaProvider.asignaturaFilter != null)
-            Center(
-              child: TextButton.icon(
-                onPressed: () => tareaProvider.limpiarFiltros(),
-                icon: const Icon(Icons.clear_all),
-                label: const Text('Limpiar todos los filtros'),
-                style: TextButton.styleFrom(
-                  foregroundColor: Colors.red,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
                 ),
-              ),
+                const SizedBox(height: 16),
+
+                // Título + limpiar
+                Row(
+                  children: [
+                    const Text(
+                      'Filtros',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (provider.estadoFilter != null ||
+                        provider.prioridadFilter != null ||
+                        provider.cursoFilter != null ||
+                        provider.asignaturaFilter != null)
+                      TextButton.icon(
+                        onPressed: () {
+                          provider.limpiarFiltros();
+                          Navigator.pop(ctx);
+                        },
+                        icon: const Icon(Icons.clear_all, size: 18),
+                        label: const Text('Limpiar'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Estado
+                const Text(
+                  'Estado',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildFiltroChip(
+                      label: '✅ Activa',
+                      isActive:
+                          provider.estadoFilter == EstadoTarea.activa,
+                      onTap: () => provider
+                          .aplicarFiltroEstado(EstadoTarea.activa),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFiltroChip(
+                      label: '🔒 Cerrada',
+                      isActive:
+                          provider.estadoFilter == EstadoTarea.cerrada,
+                      onTap: () => provider
+                          .aplicarFiltroEstado(EstadoTarea.cerrada),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+
+                // Prioridad
+                const Text(
+                  'Prioridad',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    _buildFiltroChip(
+                      label: '🔴 Alta',
+                      isActive: provider.prioridadFilter ==
+                          PrioridadTarea.alta,
+                      onTap: () => provider
+                          .aplicarFiltroPrioridad(PrioridadTarea.alta),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFiltroChip(
+                      label: '🟡 Media',
+                      isActive: provider.prioridadFilter ==
+                          PrioridadTarea.media,
+                      onTap: () => provider
+                          .aplicarFiltroPrioridad(PrioridadTarea.media),
+                    ),
+                    const SizedBox(width: 8),
+                    _buildFiltroChip(
+                      label: '🟢 Baja',
+                      isActive: provider.prioridadFilter ==
+                          PrioridadTarea.baja,
+                      onTap: () => provider
+                          .aplicarFiltroPrioridad(PrioridadTarea.baja),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
             ),
-        ],
+          );
+        },
       ),
     );
   }
@@ -574,7 +648,13 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Text('📚', style: TextStyle(fontSize: 64)),
+            Icon(
+              hayFiltros
+                  ? Icons.search_off_outlined
+                  : Icons.assignment_outlined,
+              size: 80,
+              color: Colors.grey[300],
+            ),
             const SizedBox(height: 16),
             Text(
               hayFiltros

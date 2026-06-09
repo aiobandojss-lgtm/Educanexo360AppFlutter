@@ -2,6 +2,7 @@
 
 /// 📚 MODELO DE TAREA COMPLETO
 /// Basado en la estructura del backend y React Native
+library;
 
 // ========================================
 // 🏷️ ENUMS
@@ -195,7 +196,7 @@ extension EstadoEntregaExtension on EstadoEntrega {
       case EstadoEntrega.pendiente:
         return 0xFF9E9E9E; // Gris
       case EstadoEntrega.vista:
-        return 0xFF2196F3; // Azul
+        return 0xFF0D9488; // Teal-600
       case EstadoEntrega.entregada:
         return 0xFF4CAF50; // Verde
       case EstadoEntrega.atrasada:

@@ -1,5 +1,6 @@
-// lib/widgets/tareas/file_uploader_widget.dart
+﻿// lib/widgets/tareas/file_uploader_widget.dart
 
+import '../../utils/logger.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -100,7 +101,7 @@ class _FileUploaderState extends State<FileUploader> {
             : 'Agregar más archivos',
       ),
       style: ElevatedButton.styleFrom(
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         shape: RoundedRectangleBorder(
@@ -233,29 +234,29 @@ class _FileUploaderState extends State<FileUploader> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: const Color(0xFFECFDF5),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue[200]!),
+        border: Border.all(color: const Color(0xFF6EE7B7)),
       ),
       child: Row(
         children: [
-          Icon(Icons.info_outline, size: 16, color: Colors.blue[700]),
+          const Icon(Icons.info_outline, size: 16, color: Color(0xFF047857)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               'Máximo ${widget.maxArchivos} archivos de ${widget.maxTamanoMB} MB c/u',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 12,
-                color: Colors.blue[900],
+                color: Color(0xFF065F46),
               ),
             ),
           ),
           Text(
             '${widget.archivosSeleccionados.length}/${widget.maxArchivos}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Colors.blue[900],
+              color: Color(0xFF065F46),
             ),
           ),
         ],
@@ -328,7 +329,7 @@ class _FileUploaderState extends State<FileUploader> {
         }
       }
     } catch (e) {
-      print('Error seleccionando archivos: $e');
+      dlog('Error seleccionando archivos: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -405,7 +406,7 @@ class _FileUploaderState extends State<FileUploader> {
       case 'jpeg':
       case 'png':
       case 'gif':
-        return Colors.purple;
+        return const Color(0xFF0D9488);
       case 'zip':
       case 'rar':
         return Colors.amber;
