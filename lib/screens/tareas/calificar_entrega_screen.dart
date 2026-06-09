@@ -166,7 +166,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
                     // Contenido scrollable
                     Expanded(
                       child: SingleChildScrollView(
-                        padding: const EdgeInsets.all(20),
+                        padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).viewPadding.bottom),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
@@ -229,13 +229,19 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '👤 Estudiante',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
+          const Row(
+            children: [
+              Icon(Icons.person, size: 16, color: Colors.white),
+              SizedBox(width: 6),
+              Text(
+                'Estudiante',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -268,23 +274,23 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.blue.withOpacity(0.1),
+        color: const Color(0xFFECFDF5),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.blue.withOpacity(0.3)),
+        border: Border.all(color: const Color(0xFF6EE7B7)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Row(
             children: [
-              Icon(Icons.assignment, color: Colors.blue, size: 20),
+              Icon(Icons.assignment, color: Color(0xFF047857), size: 20),
               SizedBox(width: 8),
               Text(
                 'Información de la Tarea',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: Colors.blue,
+                  color: Color(0xFF047857),
                 ),
               ),
             ],
@@ -375,9 +381,10 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
         children: [
           Row(
             children: [
-              Text(
-                _entrega!.estado.icon,
-                style: const TextStyle(fontSize: 20),
+              Icon(
+                _estadoEntregaIconData(_entrega!.estado),
+                size: 20,
+                color: estadoColor,
               ),
               const SizedBox(width: 8),
               Text(
@@ -448,7 +455,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
               onDelete: null, // No permitir eliminar archivos del estudiante
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -527,9 +534,9 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
           const SizedBox(height: 20),
 
           // Campo de calificación
-          Text(
+          const Text(
             'Calificación *',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
@@ -575,9 +582,9 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
           const SizedBox(height: 20),
 
           // Campo de retroalimentación
-          Text(
+          const Text(
             'Retroalimentación (opcional)',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w700,
             ),
@@ -620,7 +627,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
     if (porcentaje >= 0.9) {
       colorIndicador = Colors.green;
     } else if (porcentaje >= 0.7) {
-      colorIndicador = Colors.blue;
+      colorIndicador = const Color(0xFF0D9488);
     } else if (porcentaje >= 0.5) {
       colorIndicador = Colors.orange;
     } else {
@@ -749,5 +756,20 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
     } else {
       return '${fecha.day}/${fecha.month}/${fecha.year}';
     }
+  }
+}
+
+IconData _estadoEntregaIconData(EstadoEntrega estado) {
+  switch (estado) {
+    case EstadoEntrega.pendiente:
+      return Icons.hourglass_empty;
+    case EstadoEntrega.vista:
+      return Icons.visibility;
+    case EstadoEntrega.entregada:
+      return Icons.check_circle_outline;
+    case EstadoEntrega.atrasada:
+      return Icons.warning_amber_rounded;
+    case EstadoEntrega.calificada:
+      return Icons.star;
   }
 }

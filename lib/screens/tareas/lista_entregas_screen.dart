@@ -373,7 +373,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
                   icon: Icons.people,
                   label: 'Total',
                   value: stats['total'].toString(),
-                  color: Colors.blue,
+                  color: const Color(0xFF0D9488),
                 ),
               ),
               const SizedBox(width: 12),
@@ -492,7 +492,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
               padding: const EdgeInsets.only(right: 8),
               child: _buildFiltroChip(
                 label: estado.displayName,
-                icon: estado.icon,
+                iconData: _estadoEntregaIconData(estado),
                 color: Color(estado.color),
                 isActive: _filtroEstado == estado,
                 onTap: () {
@@ -511,7 +511,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
 
   Widget _buildFiltroChip({
     required String label,
-    String? icon,
+    IconData? iconData,
     Color? color,
     required bool isActive,
     required VoidCallback onTap,
@@ -523,8 +523,8 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
       label: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[
-            Text(icon, style: const TextStyle(fontSize: 14)),
+          if (iconData != null) ...[
+            Icon(iconData, size: 14, color: isActive ? Colors.white : chipColor),
             const SizedBox(width: 4),
           ],
           Text(label),
@@ -595,15 +595,15 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
               Row(
                 children: [
                   Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.blue.withOpacity(0.1),
+                      color: const Color(0xFFECFDF5),
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: const Text(
-                      '👤',
-                      style: TextStyle(fontSize: 16),
+                    child: const Icon(
+                      Icons.person,
+                      size: 16,
+                      color: Color(0xFF047857),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -815,5 +815,20 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     } else {
       return '${fecha.day}/${fecha.month}/${fecha.year}';
     }
+  }
+}
+
+IconData _estadoEntregaIconData(EstadoEntrega estado) {
+  switch (estado) {
+    case EstadoEntrega.pendiente:
+      return Icons.hourglass_empty;
+    case EstadoEntrega.vista:
+      return Icons.visibility;
+    case EstadoEntrega.entregada:
+      return Icons.check_circle_outline;
+    case EstadoEntrega.atrasada:
+      return Icons.warning_amber_rounded;
+    case EstadoEntrega.calificada:
+      return Icons.star;
   }
 }
