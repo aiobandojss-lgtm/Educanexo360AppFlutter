@@ -30,6 +30,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
   bool _enviando = false;
   bool _success = false;
   String? _error;
+  bool _descripcionExpandida = false;
 
   @override
   void initState() {
@@ -192,7 +193,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(20),
+          padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).viewPadding.bottom),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -354,6 +355,9 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
   }
 
   Widget _buildTareaInfo() {
+    final descripcion = _tarea!.descripcion;
+    final esLarga = descripcion.length > 120;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -373,9 +377,28 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            _tarea!.descripcion,
+            descripcion,
             style: const TextStyle(fontSize: 15, height: 1.5),
+            maxLines: _descripcionExpandida ? null : 3,
+            overflow: _descripcionExpandida
+                ? TextOverflow.visible
+                : TextOverflow.ellipsis,
           ),
+          if (esLarga) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: () => setState(
+                  () => _descripcionExpandida = !_descripcionExpandida),
+              child: Text(
+                _descripcionExpandida ? 'Ver menos ▲' : 'Ver más ▼',
+                style: const TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFF059669),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );

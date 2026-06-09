@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
-import '../../providers/auth_provider.dart';
 import '../../widgets/tareas/tarea_card.dart';
 
 class MisTareasScreen extends StatefulWidget {
@@ -38,11 +37,14 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   }
 
   void _loadInitialData() {
+    final tareaProvider = context.read<TareaProvider>();
+    if (tareaProvider.misTareas.isEmpty) {
+      tareaProvider.prepareLoadingMisTareas();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // âœ… CORREGIDO: Eliminar validaciÃ³n de estudiante que mostraba mensaje rojo
-      // Cargar tareas del estudiante
-      final tareaProvider = context.read<TareaProvider>();
-      tareaProvider.cargarMisTareas(filtro: FiltroTareaEstudiante.pendientes);
+      if (mounted) {
+        tareaProvider.cargarMisTareas(filtro: FiltroTareaEstudiante.pendientes);
+      }
     });
   }
 
@@ -146,8 +148,6 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   }
 
   Widget _buildTabs() {
-    final tareaProvider = context.watch<TareaProvider>();
-
     return ClipRect(
       child: Container(
         color: Colors.white,
@@ -222,26 +222,23 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   }
 
   Widget _buildEmptyState(FiltroTareaEstudiante filtro) {
-    //Emoji para "No hay tareas"
-    String emoji = '📚';
+    IconData iconData = Icons.assignment_outlined;
     String titulo = 'No hay tareas';
     String mensaje = '';
 
     switch (filtro) {
       case FiltroTareaEstudiante.pendientes:
-        //Emoji para "No tienes tareas pendientes"
-        emoji = '✅';
+        iconData = Icons.check_circle_outline;
         titulo = 'No tienes tareas pendientes';
         mensaje = 'Estás al día con tus entregas!';
         break;
       case FiltroTareaEstudiante.entregadas:
-        //Emoji para "No tienes tareas entregadas"
-        emoji = '📤';
+        iconData = Icons.upload_file_outlined;
         titulo = 'No tienes tareas entregadas';
         mensaje = 'Las tareas entregadas aparecerán aquí';
         break;
       case FiltroTareaEstudiante.calificadas:
-        emoji = '⭐';
+        iconData = Icons.grade_outlined;
         titulo = 'No tienes tareas calificadas aún';
         mensaje = 'Tus calificaciones aparecerán aquí';
         break;
@@ -255,7 +252,7 @@ class _MisTareasScreenState extends State<MisTareasScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 64)),
+            Icon(iconData, size: 80, color: Colors.grey[300]),
             const SizedBox(height: 16),
             Text(
               titulo,

@@ -40,9 +40,10 @@ class EstadoBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (mostrarIcono) ...[
-            Text(
-              estado.icon,
-              style: TextStyle(fontSize: compacto ? 12 : 14),
+            Icon(
+              _estadoIconData(estado),
+              size: compacto ? 12 : 14,
+              color: Colors.white,
             ),
             SizedBox(width: compacto ? 4 : 6),
           ],
@@ -89,7 +90,7 @@ class EstadoBadgeOutlined extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(estado.icon, style: TextStyle(fontSize: compacto ? 12 : 14)),
+          Icon(_estadoIconData(estado), size: compacto ? 12 : 14, color: color),
           SizedBox(width: compacto ? 4 : 6),
           Text(
             estado.displayName,
@@ -137,10 +138,7 @@ class EstadoBadgeDetailed extends StatelessWidget {
               color: color,
               shape: BoxShape.circle,
             ),
-            child: Text(
-              estado.icon,
-              style: const TextStyle(fontSize: 20),
-            ),
+            child: Icon(_estadoIconData(estado), size: 20, color: Colors.white),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -171,5 +169,20 @@ class EstadoBadgeDetailed extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+IconData _estadoIconData(EstadoEntrega estado) {
+  switch (estado) {
+    case EstadoEntrega.pendiente:
+      return Icons.hourglass_empty;
+    case EstadoEntrega.vista:
+      return Icons.visibility;
+    case EstadoEntrega.entregada:
+      return Icons.check_circle_outline;
+    case EstadoEntrega.atrasada:
+      return Icons.warning_amber_rounded;
+    case EstadoEntrega.calificada:
+      return Icons.star;
   }
 }

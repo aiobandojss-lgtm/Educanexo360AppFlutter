@@ -134,7 +134,7 @@ class TareaCard extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(tarea.prioridad.icon, style: const TextStyle(fontSize: 12)),
+              Icon(_prioridadIconData(tarea.prioridad), size: 12, color: Colors.white),
               const SizedBox(width: 4),
               Text(
                 tarea.prioridad.displayName,
@@ -223,7 +223,7 @@ class TareaCard extends StatelessWidget {
         _buildInfoChip(
           icon: Icons.book_outlined,
           label: tarea.asignatura.nombre,
-          color: Colors.blue,
+          color: const Color(0xFF0D9488),
         ),
 
         // Curso
@@ -238,7 +238,7 @@ class TareaCard extends StatelessWidget {
           _buildInfoChip(
             icon: Icons.person_outline,
             label: tarea.docente.nombreCompleto,
-            color: Colors.purple,
+            color: const Color(0xFF0D9488),
           ),
 
         // CalificaciÃ³n mÃ¡xima
@@ -303,10 +303,7 @@ class TareaCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(
-                entrega.estado.icon,
-                style: const TextStyle(fontSize: 16),
-              ),
+              Icon(_estadoEntregaIconData(entrega.estado), size: 16, color: estadoColor),
               const SizedBox(width: 8),
               Text(
                 'Estado: ${entrega.estado.displayName}',
@@ -392,21 +389,21 @@ class TareaCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.blue[50],
+        color: const Color(0xFFECFDF5),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue[200]!),
+        border: Border.all(color: const Color(0xFF6EE7B7)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('📎', style: TextStyle(fontSize: 14)),
+          const Icon(Icons.attach_file, size: 14, color: Color(0xFF047857)),
           const SizedBox(width: 6),
           Text(
             '${tarea.cantidadArchivosReferencia} archivo${tarea.cantidadArchivosReferencia > 1 ? 's' : ''} de referencia',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w600,
-              color: Colors.blue[700],
+              color: Color(0xFF047857),
             ),
           ),
         ],
@@ -429,7 +426,7 @@ class TareaCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('📤', style: TextStyle(fontSize: 14)),
+          Icon(Icons.upload_file, size: 14, color: Colors.green[700]),
           const SizedBox(width: 6),
           Text(
             '${miEntrega!.archivos.length} archivo${miEntrega!.archivos.length > 1 ? 's' : ''} entregado${miEntrega!.archivos.length > 1 ? 's' : ''}',
@@ -488,9 +485,35 @@ class TareaCard extends StatelessWidget {
     } else if (diff.inDays == 1) {
       return 'Ayer';
     } else if (diff.inDays < 7) {
-      return 'Hace ${diff.inDays} dÃ­as';
+      return 'Hace ${diff.inDays} días';
     } else {
       return '${fecha.day}/${fecha.month}/${fecha.year}';
     }
+  }
+}
+
+IconData _prioridadIconData(PrioridadTarea prioridad) {
+  switch (prioridad) {
+    case PrioridadTarea.alta:
+      return Icons.priority_high;
+    case PrioridadTarea.media:
+      return Icons.horizontal_rule;
+    case PrioridadTarea.baja:
+      return Icons.arrow_downward;
+  }
+}
+
+IconData _estadoEntregaIconData(EstadoEntrega estado) {
+  switch (estado) {
+    case EstadoEntrega.pendiente:
+      return Icons.hourglass_empty;
+    case EstadoEntrega.vista:
+      return Icons.visibility;
+    case EstadoEntrega.entregada:
+      return Icons.check_circle_outline;
+    case EstadoEntrega.atrasada:
+      return Icons.warning_amber_rounded;
+    case EstadoEntrega.calificada:
+      return Icons.star;
   }
 }

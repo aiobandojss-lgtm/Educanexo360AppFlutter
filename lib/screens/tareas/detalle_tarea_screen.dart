@@ -1,6 +1,8 @@
-// lib/screens/tareas/detalle_tarea_screen.dart
+﻿// lib/screens/tareas/detalle_tarea_screen.dart
 // ✅ CORREGIDO: Roles y visualización de calificación
 
+import '../../utils/logger.dart';
+import '../../utils/file_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -72,7 +74,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
         try {
           await tareaProvider.marcarVista(widget.tareaId);
         } catch (e) {
-          print('Ya estaba marcada como vista');
+          dlog('Ya estaba marcada como vista');
         }
 
         try {
@@ -83,7 +85,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
             _miEntrega = entrega;
           });
         } catch (e) {
-          print('No hay entrega aún');
+          dlog('No hay entrega aún');
         }
       }
 
@@ -96,7 +98,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
             _miEntrega = entrega;
           });
         } catch (e) {
-          print('No hay entrega del estudiante');
+          dlog('No hay entrega del estudiante');
         }
       }
 
@@ -108,7 +110,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
             _entregas = entregas;
           });
         } catch (e) {
-          print('No se pudieron cargar entregas');
+          dlog('No se pudieron cargar entregas');
         }
       }
 
@@ -124,35 +126,11 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
   }
 
   Future<void> _handleDescargarArchivo(ArchivoTarea archivo) async {
-    try {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Descargando archivo...'),
-          duration: Duration(seconds: 1),
-        ),
-      );
-
-      // TODO: Implementar descarga real del archivo
-      await Future.delayed(const Duration(seconds: 1));
-
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Archivo ${archivo.nombre} descargado'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    } catch (e) {
-      if (!mounted) return;
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error al descargar: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    await FileHelper.downloadAndOpen(
+      context,
+      '/tareas/${widget.tareaId}/archivos/${archivo.fileId}',
+      archivo.nombre,
+    );
   }
 
   Future<void> _handleEliminar() async {
@@ -342,6 +320,9 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
         ],
       ),
       body: SingleChildScrollView(
+        padding: EdgeInsets.only(
+          bottom: (puedeEntregar ? 80 : 0) + MediaQuery.of(context).viewPadding.bottom,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -393,10 +374,10 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
               PrioridadBadge(prioridad: _tarea!.prioridad),
               if (_miEntrega != null) EstadoBadge(estado: _miEntrega!.estado),
               if (_tarea!.estado == EstadoTarea.cerrada)
-                Chip(
-                  label: const Text('Cerrada'),
+                const Chip(
+                  label: Text('Cerrada'),
                   backgroundColor: Colors.grey,
-                  labelStyle: const TextStyle(color: Colors.white),
+                  labelStyle: TextStyle(color: Colors.white),
                 ),
               Chip(
                 label: Text(_tarea!.tipo == TipoTarea.individual
@@ -519,13 +500,20 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text(
-                                '⭐ Calificación:',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF059669),
-                                ),
+                              const Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.star, size: 18, color: Color(0xFF059669)),
+                                  SizedBox(width: 6),
+                                  Text(
+                                    'Calificación:',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF059669),
+                                    ),
+                                  ),
+                                ],
                               ),
                               Text(
                                 '${_miEntrega!.calificacion?.toStringAsFixed(1) ?? '0.0'} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
@@ -552,13 +540,20 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text(
-                                    '💬 Retroalimentación del docente:',
-                                    style: TextStyle(
-                                      color: Color(0xFF059669),
-                                      fontSize: 13,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(Icons.chat_bubble_outline, size: 14, color: Color(0xFF059669)),
+                                      SizedBox(width: 6),
+                                      Text(
+                                        'Retroalimentación del docente:',
+                                        style: TextStyle(
+                                          color: Color(0xFF059669),
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
@@ -602,6 +597,13 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
   }
 
   Widget _buildEntregasDocente() {
+    final sinCalificar = _entregas!
+        .where((e) =>
+            e.fueEntregada &&
+            e.estado != EstadoEntrega.calificada)
+        .length;
+    final todasCalificadas = sinCalificar == 0 && _entregas!.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -609,11 +611,71 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
         children: [
           const Divider(),
           const SizedBox(height: 16),
-          Text(
-            'Entregas (${_entregas!.length})',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
+          Row(
+            children: [
+              Text(
+                'Entregas (${_entregas!.length})',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+              ),
+              const SizedBox(width: 12),
+              // Badge de estado de calificación
+              if (sinCalificar > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: const Color(0xFFFCA5A5)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.pending_actions,
+                          size: 14, color: Color(0xFFEF4444)),
+                      const SizedBox(width: 4),
+                      Text(
+                        '$sinCalificar sin calificar',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFFEF4444),
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              else if (todasCalificadas)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFECFDF5),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                        color: const Color(0xFF6EE7B7)),
+                  ),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.check_circle,
+                          size: 14, color: Color(0xFF059669)),
+                      SizedBox(width: 4),
+                      Text(
+                        'Todo calificado',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF059669),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+            ],
           ),
           const SizedBox(height: 12),
           SizedBox(
