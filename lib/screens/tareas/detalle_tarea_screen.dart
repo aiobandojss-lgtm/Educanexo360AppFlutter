@@ -515,12 +515,15 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                                   ),
                                 ],
                               ),
-                              Text(
-                                '${_miEntrega!.calificacion?.toStringAsFixed(1) ?? '0.0'} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 24,
-                                  color: Color(0xFF059669),
+                              Flexible(
+                                child: Text(
+                                  '${_miEntrega!.calificacion?.toStringAsFixed(1) ?? '0.0'} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 22,
+                                    color: Color(0xFF059669),
+                                  ),
+                                  textAlign: TextAlign.right,
                                 ),
                               ),
                             ],

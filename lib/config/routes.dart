@@ -154,7 +154,7 @@ class AppRoutes {
           path: calificaciones,
           name: 'calificaciones',
           builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Calificaciones - PrÃ³ximamente')),
+            body: Center(child: Text('Calificaciones - Próximamente')),
           ),
         ),
 
@@ -412,7 +412,7 @@ class AppRoutes {
               ),
               const SizedBox(height: 16),
               const Text(
-                'PÃ¡gina no encontrada',
+                'Página no encontrada',
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),

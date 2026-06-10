@@ -338,7 +338,7 @@ class TareaCard extends StatelessWidget {
           if (entrega.estaCalificada && entrega.comentarioDocente != null) ...[
             const SizedBox(height: 8),
             Text(
-              'RetroalimentaciÃ³n:',
+              'Retroalimentación:',
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
