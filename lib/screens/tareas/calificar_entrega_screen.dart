@@ -729,8 +729,8 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
                 : const Text(
                     'Guardar Calificación',
                     style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
           ),
