@@ -1,7 +1,8 @@
-// lib/screens/usuarios/user_detail_screen.dart
+﻿// lib/screens/usuarios/user_detail_screen.dart
 // 👤 PANTALLA DE DETALLE DE USUARIO
 // Basada en UserDetailScreen.tsx - DISEÑO FIEL AL ORIGINAL
 
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -30,27 +31,52 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   // 🎨 COLORES POR ROL
   static const Map<UserRole, Color> _roleColors = {
-    UserRole.superAdmin: Color(0xFF7C3AED),
+    UserRole.superAdmin: Color(0xFF0F766E),
     UserRole.admin: Color(0xFF059669),
     UserRole.rector: Color(0xFF0284C7),
     UserRole.coordinador: Color(0xFF0891B2),
     UserRole.administrativo: Color(0xFF10B981),
     UserRole.docente: Color(0xFFF59E0B),
-    UserRole.estudiante: Color(0xFFEC4899),
+    UserRole.estudiante: Color(0xFF2563EB),
     UserRole.acudiente: Color(0xFFEF4444),
   };
 
   // 🎨 ICONOS POR ROL
-  static const Map<UserRole, String> _roleIcons = {
-    UserRole.superAdmin: '⚡',
-    UserRole.admin: '⚙️',
-    UserRole.rector: '🏛️',
-    UserRole.coordinador: '📊',
-    UserRole.administrativo: '📋',
-    UserRole.docente: '👩‍🏫',
-    UserRole.estudiante: '🎓',
-    UserRole.acudiente: '👨‍👩‍👧‍👦',
+  static const Map<UserRole, IconData> _roleIconData = {
+    UserRole.superAdmin: Icons.bolt,
+    UserRole.admin: Icons.settings,
+    UserRole.rector: Icons.account_balance,
+    UserRole.coordinador: Icons.bar_chart,
+    UserRole.administrativo: Icons.assignment,
+    UserRole.docente: Icons.school,
+    UserRole.estudiante: Icons.person_outline,
+    UserRole.acudiente: Icons.group,
   };
+
+  bool _hasAcademicInfo() {
+    final info = _usuario?.infoAcademica;
+    if (info == null) return false;
+    final hasGrado = info.grado != null && info.grado!.isNotEmpty;
+    final hasCursos = info.cursos != null && info.cursos!.isNotEmpty;
+    return hasGrado || hasCursos;
+  }
+
+  Widget _buildSectionTitle(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.black87),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
 
   @override
   void initState() {
@@ -87,7 +113,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       final estudiantes = await provider.getEstudiantesAsociados(widget.userId);
       setState(() => _estudiantesAsociados = estudiantes);
     } catch (e) {
-      print('Error cargando estudiantes asociados: $e');
+      dlog('Error cargando estudiantes asociados: $e');
     }
   }
 
@@ -288,9 +314,9 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
                     const SizedBox(height: 12),
                     _buildContactSection(),
                     const SizedBox(height: 12),
-                    if (_usuario!.infoAcademica != null)
+                    if (_hasAcademicInfo())
                       _buildAcademicSection(),
-                    if (_usuario!.infoAcademica != null)
+                    if (_hasAcademicInfo())
                       const SizedBox(height: 12),
                     if (_usuario!.tipo == UserRole.acudiente)
                       _buildEstudiantesSection(),
@@ -368,7 +394,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Widget _buildProfileSection() {
     final roleColor = _roleColors[_usuario!.tipo]!;
-    final roleIcon = _roleIcons[_usuario!.tipo]!;
+    final roleIcon = _roleIconData[_usuario!.tipo]!;
 
     return Container(
       width: double.infinity,
@@ -415,7 +441,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(roleIcon, style: const TextStyle(fontSize: 16)),
+                Icon(roleIcon, size: 18, color: roleColor),
                 const SizedBox(width: 6),
                 Text(
                   _usuario!.tipo.displayName,
@@ -481,14 +507,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '📞 Información de Contacto',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-            ),
-          ),
+          _buildSectionTitle(Icons.phone, 'Información de Contacto'),
           const SizedBox(height: 16),
           _buildInfoRow('Email', _usuario!.email,
               onTap: () => _launchEmail(_usuario!.email)),
@@ -519,14 +538,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '🎓 Información Académica',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-            ),
-          ),
+          _buildSectionTitle(Icons.school, 'Información Académica'),
           const SizedBox(height: 16),
           if (_usuario!.infoAcademica?.grado != null)
             _buildInfoRow('Grado', _usuario!.infoAcademica!.grado!),
@@ -552,14 +564,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '👥 Estudiantes Asociados',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-            ),
-          ),
+          _buildSectionTitle(Icons.group, 'Estudiantes Asociados'),
           const SizedBox(height: 16),
           if (_estudiantesAsociados.isEmpty)
             const Text(
@@ -573,7 +578,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           else
             ..._estudiantesAsociados.map((estudiante) {
               return _buildEstudianteItem(estudiante);
-            }).toList(),
+            }),
         ],
       ),
     );
@@ -654,14 +659,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '⚙️ Acciones',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-            ),
-          ),
+          _buildSectionTitle(Icons.settings, 'Acciones'),
           const SizedBox(height: 16),
           if (_canEdit())
             _buildActionButton(
@@ -754,14 +752,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '⚙️ Información del Sistema',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Colors.black87,
-            ),
-          ),
+          _buildSectionTitle(Icons.info_outline, 'Información del Sistema'),
           const SizedBox(height: 16),
           if (_usuario!.createdAt != null)
             _buildInfoRow(
@@ -790,6 +781,34 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
 
   Widget _buildInfoRow(String label, String value,
       {bool mono = false, VoidCallback? onTap}) {
+    if (mono) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '$label:',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 4),
+            SelectableText(
+              value,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.black87,
+                fontWeight: FontWeight.w600,
+                fontFamily: 'monospace',
+              ),
+            ),
+          ],
+        ),
+      );
+    }
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: InkWell(
@@ -813,11 +832,10 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
               Expanded(
                 child: Text(
                   value,
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 14,
                     color: Colors.black87,
                     fontWeight: FontWeight.w600,
-                    fontFamily: mono ? 'monospace' : null,
                   ),
                   textAlign: TextAlign.right,
                 ),

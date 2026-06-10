@@ -247,8 +247,9 @@ class Adjunto {
     if (isPdf) return '📄';
     if (tipo.contains('word')) return '📝';
     if (tipo.contains('excel') || tipo.contains('spreadsheet')) return '📊';
-    if (tipo.contains('powerpoint') || tipo.contains('presentation'))
+    if (tipo.contains('powerpoint') || tipo.contains('presentation')) {
       return '📊';
+    }
     return '📎';
   }
 }
@@ -341,7 +342,7 @@ class User {
   int get avatarColor {
     switch (tipo.toUpperCase()) {
       case 'ADMIN':
-        return 0xFF7C3AED; // Morado
+        return 0xFF0F766E; // Teal-700
       case 'DOCENTE':
         return 0xFF2563EB; // Azul
       case 'ESTUDIANTE':

@@ -1,5 +1,6 @@
-// lib/services/calendario_service.dart
+﻿// lib/services/calendario_service.dart
 
+import '../utils/logger.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import '../config/app_config.dart';
@@ -24,7 +25,7 @@ class CalendarioService {
     EventStatus? estado,
   }) async {
     try {
-      print('🔍 Obteniendo eventos con filtros...');
+      dlog('🔍 Obteniendo eventos con filtros...');
 
       // Construir query parameters
       Map<String, dynamic> queryParams = {};
@@ -45,7 +46,7 @@ class CalendarioService {
         queryParams['estado'] = estado.value;
       }
 
-      print('📊 Query params: $queryParams');
+      dlog('📊 Query params: $queryParams');
 
       final response = await _apiService.get(
         '/calendario',
@@ -58,14 +59,14 @@ class CalendarioService {
             .map((json) => Evento.fromJson(json as Map<String, dynamic>))
             .toList();
 
-        print('✅ ${eventos.length} eventos obtenidos');
+        dlog('✅ ${eventos.length} eventos obtenidos');
         return eventos;
       }
 
-      print('⚠️ Respuesta sin datos');
+      dlog('⚠️ Respuesta sin datos');
       return [];
     } catch (e) {
-      print('❌ Error obteniendo eventos: $e');
+      dlog('❌ Error obteniendo eventos: $e');
       rethrow;
     }
   }
@@ -73,20 +74,20 @@ class CalendarioService {
   /// Obtener un evento por ID
   Future<Evento> obtenerEventoPorId(String id) async {
     try {
-      print('🔍 Obteniendo evento con ID: $id');
+      dlog('🔍 Obteniendo evento con ID: $id');
 
       final response = await _apiService.get('/calendario/$id');
 
       if (response['success'] == true && response['data'] != null) {
         final evento =
             Evento.fromJson(response['data'] as Map<String, dynamic>);
-        print('✅ Evento obtenido: ${evento.titulo}');
+        dlog('✅ Evento obtenido: ${evento.titulo}');
         return evento;
       }
 
       throw Exception('No se encontró el evento');
     } catch (e) {
-      print('❌ Error obteniendo evento: $e');
+      dlog('❌ Error obteniendo evento: $e');
       rethrow;
     }
   }
@@ -106,7 +107,7 @@ class CalendarioService {
     File? archivoAdjunto,
   }) async {
     try {
-      print('📝 Creando nuevo evento: $titulo');
+      dlog('📝 Creando nuevo evento: $titulo');
 
       // Si hay archivo adjunto, usar FormData
       if (archivoAdjunto != null) {
@@ -145,13 +146,13 @@ class CalendarioService {
         // El backend puede devolver data.data o data directamente
         final eventoData = response['data']['data'] ?? response['data'];
         final evento = Evento.fromJson(eventoData as Map<String, dynamic>);
-        print('✅ Evento creado exitosamente: ${evento.id}');
+        dlog('✅ Evento creado exitosamente: ${evento.id}');
         return evento;
       }
 
       throw Exception('Error al crear evento');
     } catch (e) {
-      print('❌ Error creando evento: $e');
+      dlog('❌ Error creando evento: $e');
       rethrow;
     }
   }
@@ -171,7 +172,7 @@ class CalendarioService {
     required File archivo,
   }) async {
     try {
-      print('📎 Creando evento con archivo adjunto...');
+      dlog('📎 Creando evento con archivo adjunto...');
 
       final formData = FormData.fromMap({
         'titulo': titulo,
@@ -195,13 +196,13 @@ class CalendarioService {
       if (response['success'] == true) {
         final eventoData = response['data']['data'] ?? response['data'];
         final evento = Evento.fromJson(eventoData as Map<String, dynamic>);
-        print('✅ Evento con archivo creado: ${evento.id}');
+        dlog('✅ Evento con archivo creado: ${evento.id}');
         return evento;
       }
 
       throw Exception('Error al crear evento con archivo');
     } catch (e) {
-      print('❌ Error creando evento con archivo: $e');
+      dlog('❌ Error creando evento con archivo: $e');
       rethrow;
     }
   }
@@ -222,7 +223,7 @@ class CalendarioService {
     File? archivoAdjunto,
   }) async {
     try {
-      print('✏️ Actualizando evento: $id');
+      dlog('✏️ Actualizando evento: $id');
 
       // Si hay archivo adjunto, usar FormData
       if (archivoAdjunto != null) {
@@ -246,8 +247,9 @@ class CalendarioService {
       final data = <String, dynamic>{};
       if (titulo != null) data['titulo'] = titulo;
       if (descripcion != null) data['descripcion'] = descripcion;
-      if (fechaInicio != null)
+      if (fechaInicio != null) {
         data['fechaInicio'] = fechaInicio.toIso8601String();
+      }
       if (fechaFin != null) data['fechaFin'] = fechaFin.toIso8601String();
       if (todoElDia != null) data['todoElDia'] = todoElDia;
       if (lugar != null) data['lugar'] = lugar;
@@ -261,13 +263,13 @@ class CalendarioService {
       if (response['success'] == true) {
         final eventoData = response['data']['data'] ?? response['data'];
         final evento = Evento.fromJson(eventoData as Map<String, dynamic>);
-        print('✅ Evento actualizado: ${evento.id}');
+        dlog('✅ Evento actualizado: ${evento.id}');
         return evento;
       }
 
       throw Exception('Error al actualizar evento');
     } catch (e) {
-      print('❌ Error actualizando evento: $e');
+      dlog('❌ Error actualizando evento: $e');
       rethrow;
     }
   }
@@ -288,7 +290,7 @@ class CalendarioService {
     required File archivo,
   }) async {
     try {
-      print('📎 Actualizando evento con archivo adjunto...');
+      dlog('📎 Actualizando evento con archivo adjunto...');
 
       final Map<String, dynamic> fields = {};
       if (titulo != null) fields['titulo'] = titulo;
@@ -319,13 +321,13 @@ class CalendarioService {
       if (response['success'] == true) {
         final eventoData = response['data']['data'] ?? response['data'];
         final evento = Evento.fromJson(eventoData as Map<String, dynamic>);
-        print('✅ Evento con archivo actualizado: ${evento.id}');
+        dlog('✅ Evento con archivo actualizado: ${evento.id}');
         return evento;
       }
 
       throw Exception('Error al actualizar evento con archivo');
     } catch (e) {
-      print('❌ Error actualizando evento con archivo: $e');
+      dlog('❌ Error actualizando evento con archivo: $e');
       rethrow;
     }
   }
@@ -333,18 +335,18 @@ class CalendarioService {
   /// Eliminar un evento
   Future<void> eliminarEvento(String id) async {
     try {
-      print('🗑️ Eliminando evento: $id');
+      dlog('🗑️ Eliminando evento: $id');
 
       final response = await _apiService.delete('/calendario/$id');
 
       if (response['success'] == true) {
-        print('✅ Evento eliminado exitosamente');
+        dlog('✅ Evento eliminado exitosamente');
         return;
       }
 
       throw Exception('Error al eliminar evento');
     } catch (e) {
-      print('❌ Error eliminando evento: $e');
+      dlog('❌ Error eliminando evento: $e');
       rethrow;
     }
   }
@@ -356,7 +358,7 @@ class CalendarioService {
   /// Obtener URL del adjunto de un evento
   String getAdjuntoUrl(String eventoId) {
     final url = '${AppConfig.baseUrl}/calendario/$eventoId/adjunto';
-    print('📎 URL adjunto: $url');
+    dlog('📎 URL adjunto: $url');
     return url;
   }
 
@@ -375,7 +377,7 @@ class CalendarioService {
   /// Obtener próximos eventos
   Future<List<Evento>> obtenerProximosEventos({int limite = 10}) async {
     try {
-      print('📅 Obteniendo próximos $limite eventos...');
+      dlog('📅 Obteniendo próximos $limite eventos...');
 
       final inicio = DateTime.now();
       final fin = DateTime.now().add(const Duration(days: 90));
@@ -390,10 +392,10 @@ class CalendarioService {
       eventos.sort((a, b) => a.fechaInicio.compareTo(b.fechaInicio));
       final eventosFiltrados = eventos.take(limite).toList();
 
-      print('✅ ${eventosFiltrados.length} próximos eventos');
+      dlog('✅ ${eventosFiltrados.length} próximos eventos');
       return eventosFiltrados;
     } catch (e) {
-      print('❌ Error obteniendo próximos eventos: $e');
+      dlog('❌ Error obteniendo próximos eventos: $e');
       rethrow;
     }
   }

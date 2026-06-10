@@ -1,6 +1,7 @@
-// lib/providers/usuario_provider.dart
+﻿// lib/providers/usuario_provider.dart
 // 👥 PROVIDER DE USUARIOS - Siguiendo patrón de anuncio_provider.dart
 
+import '../utils/logger.dart';
 import 'package:flutter/material.dart';
 import '../models/usuario.dart';
 import '../services/usuario_service.dart';
@@ -40,6 +41,14 @@ class UsuarioProvider with ChangeNotifier {
   int get totalUsuarios => _todosLosUsuarios.length;
 
   // ========================================
+  // ⚡ PREPARAR ESTADO DE CARGA (para initState)
+  // ========================================
+
+  void prepareLoading() {
+    _isLoading = true;
+  }
+
+  // ========================================
   // 📋 CARGAR USUARIOS
   // ========================================
 
@@ -53,7 +62,7 @@ class UsuarioProvider with ChangeNotifier {
         notifyListeners();
       }
 
-      print('🔥 Cargando usuarios... (refresh: $refresh, silent: $silent)');
+      dlog('🔥 Cargando usuarios... (refresh: $refresh, silent: $silent)');
 
       final usuarios = await _usuarioService.getUsers(
         tipo: _currentFilter,
@@ -66,11 +75,11 @@ class UsuarioProvider with ChangeNotifier {
 
       _isLoading = false;
 
-      print(
+      dlog(
           '✅ Usuarios cargados: ${_usuarios.length} (total: ${_todosLosUsuarios.length})');
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando usuarios: $e');
+      dlog('❌ Error cargando usuarios: $e');
       _isLoading = false;
       notifyListeners();
       rethrow;
@@ -84,7 +93,7 @@ class UsuarioProvider with ChangeNotifier {
   Future<void> changeFilter(UserRole? newFilter) async {
     if (_currentFilter == newFilter) return;
 
-    print('🔄 Cambiando filtro: ${newFilter?.displayName ?? "Todos"}');
+    dlog('🔄 Cambiando filtro: ${newFilter?.displayName ?? "Todos"}');
 
     _currentFilter = newFilter;
     _searchQuery = ''; // Limpiar búsqueda al cambiar filtro
@@ -98,7 +107,7 @@ class UsuarioProvider with ChangeNotifier {
   // ========================================
 
   Future<void> search(String query) async {
-    print('🔍 Buscando: $query');
+    dlog('🔍 Buscando: $query');
     _searchQuery = query;
     notifyListeners();
     await loadUsuarios(refresh: true);
@@ -106,7 +115,7 @@ class UsuarioProvider with ChangeNotifier {
 
   void clearSearch() {
     if (_searchQuery.isNotEmpty) {
-      print('🧹 Limpiando búsqueda');
+      dlog('🧹 Limpiando búsqueda');
       _searchQuery = '';
       loadUsuarios(refresh: true);
     }
@@ -126,7 +135,7 @@ class UsuarioProvider with ChangeNotifier {
     required String escuelaId,
   }) async {
     try {
-      print('➕ Creando usuario: $email');
+      dlog('➕ Creando usuario: $email');
 
       final usuario = await _usuarioService.createUser(
         nombre: nombre,
@@ -138,14 +147,14 @@ class UsuarioProvider with ChangeNotifier {
         escuelaId: escuelaId,
       );
 
-      print('✅ Usuario creado con ID: ${usuario.id}');
+      dlog('✅ Usuario creado con ID: ${usuario.id}');
 
       // Refrescar lista
       await loadUsuarios(refresh: true, silent: false);
 
       return usuario;
     } catch (e) {
-      print('❌ Error creando usuario: $e');
+      dlog('❌ Error creando usuario: $e');
       rethrow;
     }
   }
@@ -163,7 +172,7 @@ class UsuarioProvider with ChangeNotifier {
     UserStatus? estado,
   }) async {
     try {
-      print('✏️ Actualizando usuario: $id');
+      dlog('✏️ Actualizando usuario: $id');
 
       final usuario = await _usuarioService.updateUser(
         id,
@@ -180,12 +189,12 @@ class UsuarioProvider with ChangeNotifier {
         _usuarios[index] = usuario;
       }
 
-      print('✅ Usuario actualizado');
+      dlog('✅ Usuario actualizado');
       notifyListeners();
 
       return usuario;
     } catch (e) {
-      print('❌ Error actualizando usuario: $e');
+      dlog('❌ Error actualizando usuario: $e');
       rethrow;
     }
   }
@@ -196,7 +205,7 @@ class UsuarioProvider with ChangeNotifier {
 
   Future<void> deleteUsuario(String id) async {
     try {
-      print('🗑️ Eliminando usuario: $id');
+      dlog('🗑️ Eliminando usuario: $id');
 
       // Optimistic update
       _usuarios.removeWhere((u) => u.id == id);
@@ -204,9 +213,9 @@ class UsuarioProvider with ChangeNotifier {
 
       await _usuarioService.deactivateUser(id);
 
-      print('✅ Usuario eliminado');
+      dlog('✅ Usuario eliminado');
     } catch (e) {
-      print('❌ Error eliminando usuario: $e');
+      dlog('❌ Error eliminando usuario: $e');
       // Recargar en caso de error
       await loadUsuarios(refresh: true);
       rethrow;
@@ -223,7 +232,7 @@ class UsuarioProvider with ChangeNotifier {
     required String newPassword,
   }) async {
     try {
-      print('🔑 Cambiando contraseña...');
+      dlog('🔑 Cambiando contraseña...');
 
       if (currentPassword != null) {
         await _usuarioService.changePassword(
@@ -235,9 +244,9 @@ class UsuarioProvider with ChangeNotifier {
         throw Exception('Se requiere la contraseña actual');
       }
 
-      print('✅ Contraseña cambiada');
+      dlog('✅ Contraseña cambiada');
     } catch (e) {
-      print('❌ Error cambiando contraseña: $e');
+      dlog('❌ Error cambiando contraseña: $e');
       rethrow;
     }
   }
@@ -248,23 +257,23 @@ class UsuarioProvider with ChangeNotifier {
 
   Future<Usuario?> getUsuarioById(String id) async {
     try {
-      print('🔍 Obteniendo usuario: $id');
+      dlog('🔍 Obteniendo usuario: $id');
 
       // Buscar en cache local
       final localUsuario = _usuarios.where((u) => u.id == id).firstOrNull;
       if (localUsuario != null) {
-        print('✅ Usuario encontrado en cache');
+        dlog('✅ Usuario encontrado en cache');
         return localUsuario;
       }
 
       // Obtener del servidor
-      print('📡 Obteniendo del servidor...');
+      dlog('📡 Obteniendo del servidor...');
       final usuario =
           await _usuarioService.getUserById(id); // ✅ Correcto: getUserById
-      print('✅ Usuario obtenido del servidor');
+      dlog('✅ Usuario obtenido del servidor');
       return usuario;
     } catch (e) {
-      print('❌ Error obteniendo usuario: $e');
+      dlog('❌ Error obteniendo usuario: $e');
       rethrow;
     }
   }
@@ -275,10 +284,10 @@ class UsuarioProvider with ChangeNotifier {
 
   Future<List<Usuario>> getEstudiantesAsociados(String acudienteId) async {
     try {
-      print('🎓 Obteniendo estudiantes asociados...');
+      dlog('🎓 Obteniendo estudiantes asociados...');
       return await _usuarioService.getAssociatedStudents(acudienteId);
     } catch (e) {
-      print('❌ Error obteniendo estudiantes asociados: $e');
+      dlog('❌ Error obteniendo estudiantes asociados: $e');
       return [];
     }
   }
@@ -291,7 +300,7 @@ class UsuarioProvider with ChangeNotifier {
     String? query,
   }) async {
     try {
-      print('🔍 Buscando estudiantes para asociar...');
+      dlog('🔍 Buscando estudiantes para asociar...');
 
       // Obtener escuelaId del usuario actual
       final currentUser = PermissionService.getCurrentUser();
@@ -304,7 +313,7 @@ class UsuarioProvider with ChangeNotifier {
         query: query,
       );
     } catch (e) {
-      print('❌ Error buscando estudiantes: $e');
+      dlog('❌ Error buscando estudiantes: $e');
       rethrow;
     }
   }
@@ -318,16 +327,16 @@ class UsuarioProvider with ChangeNotifier {
     required String estudianteId,
   }) async {
     try {
-      print('➕ Asociando estudiante: $estudianteId a acudiente: $acudienteId');
+      dlog('➕ Asociando estudiante: $estudianteId a acudiente: $acudienteId');
 
       await _usuarioService.asociarEstudiante(
         acudienteId: acudienteId,
         estudianteId: estudianteId,
       );
 
-      print('✅ Estudiante asociado correctamente');
+      dlog('✅ Estudiante asociado correctamente');
     } catch (e) {
-      print('❌ Error asociando estudiante: $e');
+      dlog('❌ Error asociando estudiante: $e');
       rethrow;
     }
   }
@@ -341,7 +350,7 @@ class UsuarioProvider with ChangeNotifier {
     required String estudianteId,
   }) async {
     try {
-      print(
+      dlog(
           '➖ Desasociando estudiante: $estudianteId de acudiente: $acudienteId');
 
       await _usuarioService.desasociarEstudiante(
@@ -349,9 +358,9 @@ class UsuarioProvider with ChangeNotifier {
         estudianteId: estudianteId,
       );
 
-      print('✅ Estudiante desasociado correctamente');
+      dlog('✅ Estudiante desasociado correctamente');
     } catch (e) {
-      print('❌ Error desasociando estudiante: $e');
+      dlog('❌ Error desasociando estudiante: $e');
       rethrow;
     }
   }
@@ -361,7 +370,7 @@ class UsuarioProvider with ChangeNotifier {
   // ========================================
 
   Future<void> refresh() async {
-    print('🔄 Refrescando lista...');
+    dlog('🔄 Refrescando lista...');
     await loadUsuarios(refresh: true);
   }
 
@@ -370,7 +379,7 @@ class UsuarioProvider with ChangeNotifier {
   // ========================================
 
   void clearState() {
-    print('🧹 Limpiando estado del provider');
+    dlog('🧹 Limpiando estado del provider');
     _usuarios = [];
     _currentFilter = null;
     _searchQuery = '';

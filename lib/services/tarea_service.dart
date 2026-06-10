@@ -1,4 +1,5 @@
-// lib/services/tarea_service.dart
+﻿// lib/services/tarea_service.dart
+import '../utils/logger.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import '../models/tarea.dart';
@@ -26,7 +27,7 @@ class TareaService {
     String? busqueda,
   }) async {
     try {
-      print('📋 Listando tareas... (página $page)');
+      dlog('📋 Listando tareas... (página $page)');
 
       final queryParams = <String, dynamic>{
         'page': page,
@@ -64,7 +65,7 @@ class TareaService {
 
       throw Exception(response['message'] ?? 'Error al listar tareas');
     } catch (e) {
-      print('❌ Error en listarTareas: $e');
+      dlog('❌ Error en listarTareas: $e');
       rethrow;
     }
   }
@@ -72,7 +73,7 @@ class TareaService {
   /// Obtener mis tareas (para estudiantes)
   Future<List<Tarea>> misTareas({FiltroTareaEstudiante? filtro}) async {
     try {
-      print('📚 Obteniendo mis tareas...');
+      dlog('📚 Obteniendo mis tareas...');
 
       final queryParams = <String, dynamic>{};
       if (filtro != null) {
@@ -91,7 +92,7 @@ class TareaService {
 
       throw Exception(response['message'] ?? 'Error al obtener mis tareas');
     } catch (e) {
-      print('❌ Error en misTareas: $e');
+      dlog('❌ Error en misTareas: $e');
       rethrow;
     }
   }
@@ -99,7 +100,7 @@ class TareaService {
   /// Obtener detalle de una tarea
   Future<Tarea?> obtenerTarea(String id) async {
     try {
-      print('📄 Obteniendo tarea $id...');
+      dlog('📄 Obteniendo tarea $id...');
 
       final response = await _apiService.get(AppConfig.tareaDetail(id));
 
@@ -109,7 +110,7 @@ class TareaService {
 
       throw Exception(response['message'] ?? 'Error al obtener tarea');
     } catch (e) {
-      print('❌ Error en obtenerTarea: $e');
+      dlog('❌ Error en obtenerTarea: $e');
       rethrow;
     }
   }
@@ -130,14 +131,14 @@ class TareaService {
     List<File>? archivosReferencia,
   }) async {
     try {
-      print('\n📦 ========== CREAR TAREA ==========');
-      print('📝 Título: $titulo');
-      print('📚 Asignatura: $asignaturaId');
-      print('👥 Curso: $cursoId');
-      print('====================================\n');
+      dlog('\n📦 ========== CREAR TAREA ==========');
+      dlog('📝 Título: $titulo');
+      dlog('📚 Asignatura: $asignaturaId');
+      dlog('👥 Curso: $cursoId');
+      dlog('====================================\n');
 
       // ✅ PASO 1: Crear la tarea con JSON puro (sin archivos)
-      print('📦 PASO 1: Creando tarea...');
+      dlog('📦 PASO 1: Creando tarea...');
 
       final requestBody = {
         'titulo': titulo.trim(),
@@ -160,13 +161,13 @@ class TareaService {
       }
 
       // Logs de debug
-      print('🌐 ========== POST DEBUG ==========');
-      print('📍 BaseURL: ${AppConfig.baseUrl}');
-      print('📍 Endpoint: ${AppConfig.tareas}');
-      print('📍 URL Final: ${AppConfig.baseUrl}${AppConfig.tareas}');
-      print('📦 Data type: ${requestBody.runtimeType}');
-      print('📦 Data keys: ${requestBody.keys.join(', ')}');
-      print('==================================\n');
+      dlog('🌐 ========== POST DEBUG ==========');
+      dlog('📍 BaseURL: ${AppConfig.baseUrl}');
+      dlog('📍 Endpoint: ${AppConfig.tareas}');
+      dlog('📍 URL Final: ${AppConfig.baseUrl}${AppConfig.tareas}');
+      dlog('📦 Data type: ${requestBody.runtimeType}');
+      dlog('📦 Data keys: ${requestBody.keys.join(', ')}');
+      dlog('==================================\n');
 
       final response = await _apiService.post(
         AppConfig.tareas,
@@ -178,25 +179,25 @@ class TareaService {
       }
 
       final tareaCreada = Tarea.fromJson(response['data']);
-      print('✅ Tarea creada con ID: ${tareaCreada.id}');
+      dlog('✅ Tarea creada con ID: ${tareaCreada.id}');
 
       // ✅ PASO 2: Si hay archivos, subirlos usando el endpoint correcto
       if (archivosReferencia != null && archivosReferencia.isNotEmpty) {
-        print('\n📦 PASO 2: Subiendo archivos a la tarea...');
+        dlog('\n📦 PASO 2: Subiendo archivos a la tarea...');
         await _subirArchivos(tareaCreada.id, archivosReferencia);
-        print('✅ Archivos subidos exitosamente\n');
+        dlog('✅ Archivos subidos exitosamente\n');
       }
 
-      print('✅ ========== TAREA CREADA EXITOSAMENTE ==========\n');
+      dlog('✅ ========== TAREA CREADA EXITOSAMENTE ==========\n');
 
       // Obtener la tarea completa con los archivos
       return await obtenerTarea(tareaCreada.id) ?? tareaCreada;
     } catch (e) {
-      print('❌ =============================================');
-      print('❌ ERROR CREANDO TAREA');
-      print('=============================================');
-      print('Error: $e');
-      print('=============================================');
+      dlog('❌ =============================================');
+      dlog('❌ ERROR CREANDO TAREA');
+      dlog('=============================================');
+      dlog('Error: $e');
+      dlog('=============================================');
       rethrow;
     }
   }
@@ -210,7 +211,7 @@ class TareaService {
 
       for (var i = 0; i < archivos.length; i++) {
         final archivo = archivos[i];
-        print('📎 Archivo ${i + 1}: ${archivo.path.split('/').last}');
+        dlog('📎 Archivo ${i + 1}: ${archivo.path.split('/').last}');
 
         formData.files.add(MapEntry(
           'archivos',
@@ -221,13 +222,13 @@ class TareaService {
         ));
       }
 
-      print('🌐 ========== POST DEBUG ==========');
-      print('📍 BaseURL: ${AppConfig.baseUrl}');
-      print('📍 Endpoint: ${AppConfig.tareaArchivos(tareaId)}');
-      print(
+      dlog('🌐 ========== POST DEBUG ==========');
+      dlog('📍 BaseURL: ${AppConfig.baseUrl}');
+      dlog('📍 Endpoint: ${AppConfig.tareaArchivos(tareaId)}');
+      dlog(
           '📍 URL Final: ${AppConfig.baseUrl}${AppConfig.tareaArchivos(tareaId)}');
-      print('📦 Data type: FormData');
-      print('==================================\n');
+      dlog('📦 Data type: FormData');
+      dlog('==================================\n');
 
       final response = await _apiService.postFormData(
         AppConfig.tareaArchivos(tareaId),
@@ -239,9 +240,9 @@ class TareaService {
             response['message'] ?? 'Error al subir archivos de referencia');
       }
 
-      print('✅ Archivos de referencia subidos exitosamente');
+      dlog('✅ Archivos de referencia subidos exitosamente');
     } catch (e) {
-      print('❌ Error subiendo archivos de referencia: $e');
+      dlog('❌ Error subiendo archivos de referencia: $e');
       rethrow;
     }
   }
@@ -252,7 +253,7 @@ class TareaService {
     required List<File> archivos,
   }) async {
     try {
-      print('📎 Subiendo archivos de referencia a tarea: $tareaId');
+      dlog('📎 Subiendo archivos de referencia a tarea: $tareaId');
       await _subirArchivos(tareaId, archivos);
 
       // Retornar la tarea actualizada
@@ -262,7 +263,7 @@ class TareaService {
       }
       return tarea;
     } catch (e) {
-      print('❌ Error en subirArchivosReferencia: $e');
+      dlog('❌ Error en subirArchivosReferencia: $e');
       rethrow;
     }
   }
@@ -280,7 +281,7 @@ class TareaService {
     double? pesoEvaluacion,
   }) async {
     try {
-      print('✏️ Actualizando tarea $tareaId...');
+      dlog('✏️ Actualizando tarea $tareaId...');
 
       final requestBody = {
         'titulo': titulo.trim(),
@@ -291,8 +292,9 @@ class TareaService {
 
       if (tipo != null) requestBody['tipo'] = tipo.value;
       if (prioridad != null) requestBody['prioridad'] = prioridad.value;
-      if (permiteTardias != null)
+      if (permiteTardias != null) {
         requestBody['permiteTardias'] = permiteTardias;
+      }
       if (pesoEvaluacion != null) {
         requestBody['pesoEvaluacion'] = pesoEvaluacion.toInt();
       }
@@ -303,13 +305,13 @@ class TareaService {
       );
 
       if (response['success'] == true) {
-        print('✅ Tarea actualizada exitosamente');
+        dlog('✅ Tarea actualizada exitosamente');
         return Tarea.fromJson(response['data']);
       }
 
       throw Exception(response['message'] ?? 'Error al actualizar tarea');
     } catch (e) {
-      print('❌ Error en actualizarTarea: $e');
+      dlog('❌ Error en actualizarTarea: $e');
       rethrow;
     }
   }
@@ -317,7 +319,7 @@ class TareaService {
   /// Eliminar una tarea
   Future<void> eliminarTarea(String tareaId) async {
     try {
-      print('🗑️ Eliminando tarea $tareaId...');
+      dlog('🗑️ Eliminando tarea $tareaId...');
 
       final response = await _apiService.delete(
         AppConfig.tareaDelete(tareaId),
@@ -327,9 +329,9 @@ class TareaService {
         throw Exception(response['message'] ?? 'Error al eliminar tarea');
       }
 
-      print('✅ Tarea eliminada exitosamente');
+      dlog('✅ Tarea eliminada exitosamente');
     } catch (e) {
-      print('❌ Error en eliminarTarea: $e');
+      dlog('❌ Error en eliminarTarea: $e');
       rethrow;
     }
   }
@@ -337,18 +339,18 @@ class TareaService {
   /// Cerrar una tarea (no permite más entregas)
   Future<Tarea> cerrarTarea(String tareaId) async {
     try {
-      print('🔒 Cerrando tarea $tareaId...');
+      dlog('🔒 Cerrando tarea $tareaId...');
 
       final response = await _apiService.put(AppConfig.tareaCerrar(tareaId));
 
       if (response['success'] == true) {
-        print('✅ Tarea cerrada exitosamente');
+        dlog('✅ Tarea cerrada exitosamente');
         return Tarea.fromJson(response['data']);
       }
 
       throw Exception(response['message'] ?? 'Error al cerrar tarea');
     } catch (e) {
-      print('❌ Error en cerrarTarea: $e');
+      dlog('❌ Error en cerrarTarea: $e');
       rethrow;
     }
   }
@@ -363,14 +365,14 @@ class TareaService {
     required String archivoId,
   }) async {
     try {
-      print('🗑️ Eliminando archivo de referencia...');
+      dlog('🗑️ Eliminando archivo de referencia...');
 
       final response = await _apiService.delete(
         AppConfig.tareaArchivoDelete(tareaId, archivoId),
       );
 
       if (response['success'] == true) {
-        print('✅ Archivo de referencia eliminado');
+        dlog('✅ Archivo de referencia eliminado');
 
         // 🔧 FIX: Si el backend no retorna data, obtener la tarea actualizada
         if (response['data'] != null) {
@@ -388,7 +390,7 @@ class TareaService {
       throw Exception(
           response['message'] ?? 'Error al eliminar archivo de referencia');
     } catch (e) {
-      print('❌ Error eliminando archivo de referencia: $e');
+      dlog('❌ Error eliminando archivo de referencia: $e');
       rethrow;
     }
   }
@@ -400,17 +402,17 @@ class TareaService {
     String savePath,
   ) async {
     try {
-      print('⬇️ Descargando archivo de referencia...');
+      dlog('⬇️ Descargando archivo de referencia...');
 
       await _apiService.download(
         AppConfig.tareaArchivoDownload(tareaId, archivoId),
         savePath,
       );
 
-      print('✅ Archivo descargado en: $savePath');
+      dlog('✅ Archivo descargado en: $savePath');
       return savePath;
     } catch (e) {
-      print('❌ Error descargando archivo: $e');
+      dlog('❌ Error descargando archivo: $e');
       rethrow;
     }
   }
@@ -422,7 +424,7 @@ class TareaService {
   /// Marcar tarea como vista (estudiante)
   Future<void> marcarVista(String tareaId) async {
     try {
-      print('👁️ Marcando tarea como vista...');
+      dlog('👁️ Marcando tarea como vista...');
 
       final response = await _apiService.post(
         AppConfig.tareaMarcarVista(tareaId),
@@ -432,9 +434,9 @@ class TareaService {
         throw Exception(response['message'] ?? 'Error al marcar como vista');
       }
 
-      print('✅ Tarea marcada como vista');
+      dlog('✅ Tarea marcada como vista');
     } catch (e) {
-      print('❌ Error marcando como vista: $e');
+      dlog('❌ Error marcando como vista: $e');
       rethrow;
     }
   }
@@ -446,10 +448,10 @@ class TareaService {
     String? comentarioEstudiante,
   }) async {
     try {
-      print('\n📤 ========== ENTREGAR TAREA ==========');
-      print('📋 Tarea ID: $tareaId');
-      print('📎 Archivos: ${archivos.length}');
-      print('=======================================\n');
+      dlog('\n📤 ========== ENTREGAR TAREA ==========');
+      dlog('📋 Tarea ID: $tareaId');
+      dlog('📎 Archivos: ${archivos.length}');
+      dlog('=======================================\n');
 
       final formData = FormData();
 
@@ -461,7 +463,7 @@ class TareaService {
 
       for (var i = 0; i < archivos.length; i++) {
         final archivo = archivos[i];
-        print('📎 Archivo ${i + 1}: ${archivo.path.split('/').last}');
+        dlog('📎 Archivo ${i + 1}: ${archivo.path.split('/').last}');
 
         formData.files.add(MapEntry(
           'archivos',
@@ -478,13 +480,13 @@ class TareaService {
       );
 
       if (response['success'] == true) {
-        print('✅ Tarea entregada exitosamente\n');
+        dlog('✅ Tarea entregada exitosamente\n');
         return EntregaTarea.fromJson(response['data']);
       }
 
       throw Exception(response['message'] ?? 'Error al entregar tarea');
     } catch (e) {
-      print('❌ Error entregando tarea: $e');
+      dlog('❌ Error entregando tarea: $e');
       rethrow;
     }
   }
@@ -492,7 +494,7 @@ class TareaService {
   /// Ver mi entrega (estudiante/acudiente)
   Future<EntregaTarea?> verMiEntrega(String tareaId) async {
     try {
-      print('📝 Obteniendo mi entrega...');
+      dlog('📝 Obteniendo mi entrega...');
 
       final response = await _apiService.get(
         AppConfig.tareaMiEntrega(tareaId),
@@ -507,7 +509,7 @@ class TareaService {
       if (e is ApiException && e.statusCode == 404) {
         return null;
       }
-      print('❌ Error obteniendo mi entrega: $e');
+      dlog('❌ Error obteniendo mi entrega: $e');
       rethrow;
     }
   }
@@ -515,7 +517,7 @@ class TareaService {
   /// Ver todas las entregas de una tarea (docente)
   Future<List<EntregaTarea>> verEntregas(String tareaId) async {
     try {
-      print('📋 Obteniendo entregas de la tarea...');
+      dlog('📋 Obteniendo entregas de la tarea...');
 
       final response = await _apiService.get(
         AppConfig.tareaEntregas(tareaId),
@@ -528,7 +530,7 @@ class TareaService {
 
       throw Exception(response['message'] ?? 'Error al obtener entregas');
     } catch (e) {
-      print('❌ Error obteniendo entregas: $e');
+      dlog('❌ Error obteniendo entregas: $e');
       rethrow;
     }
   }
@@ -541,7 +543,7 @@ class TareaService {
     String? comentarioDocente,
   }) async {
     try {
-      print('✍️ Calificando entrega...');
+      dlog('✍️ Calificando entrega...');
 
       final requestBody = {
         'calificacion': calificacion,
@@ -555,13 +557,13 @@ class TareaService {
       );
 
       if (response['success'] == true) {
-        print('✅ Entrega calificada exitosamente');
+        dlog('✅ Entrega calificada exitosamente');
         return EntregaTarea.fromJson(response['data']);
       }
 
       throw Exception(response['message'] ?? 'Error al calificar entrega');
     } catch (e) {
-      print('❌ Error calificando entrega: $e');
+      dlog('❌ Error calificando entrega: $e');
       rethrow;
     }
   }
@@ -571,7 +573,7 @@ class TareaService {
     required String estudianteId,
   }) async {
     try {
-      print('📥 Obteniendo tareas del estudiante: $estudianteId');
+      dlog('📥 Obteniendo tareas del estudiante: $estudianteId');
 
       final response = await _apiService.get(
         '/tareas/especial/estudiante/$estudianteId',
@@ -590,14 +592,14 @@ class TareaService {
           return Tarea.fromJson(json);
         }).toList();
 
-        print('✅ Tareas del estudiante obtenidas: ${tareas.length}');
+        dlog('✅ Tareas del estudiante obtenidas: ${tareas.length}');
         return tareas;
       }
 
       throw Exception(
           response['message'] ?? 'Error al obtener tareas del estudiante');
     } catch (e) {
-      print('❌ Error en tareasEstudiante: $e');
+      dlog('❌ Error en tareasEstudiante: $e');
       rethrow;
     }
   }
@@ -606,7 +608,7 @@ class TareaService {
   Future<Map<String, dynamic>> obtenerInfoEstudiante(
       String estudianteId) async {
     try {
-      print('📥 Obteniendo info del estudiante: $estudianteId');
+      dlog('📥 Obteniendo info del estudiante: $estudianteId');
 
       final response = await _apiService.get(
         '/usuarios/$estudianteId',
@@ -618,7 +620,7 @@ class TareaService {
 
       throw Exception('Error al obtener información del estudiante');
     } catch (e) {
-      print('❌ Error en obtenerInfoEstudiante: $e');
+      dlog('❌ Error en obtenerInfoEstudiante: $e');
       rethrow;
     }
   }

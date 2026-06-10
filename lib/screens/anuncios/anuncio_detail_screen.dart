@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
 import '../../services/permission_service.dart';
+import '../../utils/file_helper.dart';
 
 class AnuncioDetailScreen extends StatefulWidget {
   final String anuncioId;
@@ -260,19 +261,19 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
                 children: [
                   const Text('⚠️', style: TextStyle(fontSize: 20)),
                   const SizedBox(width: 12),
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Anuncio en Borrador',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
                             color: Color(0xFFF59E0B),
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        const Text(
+                        SizedBox(height: 4),
+                        Text(
                           'Este anuncio aún no ha sido publicado',
                           style: TextStyle(
                             fontSize: 12,
@@ -354,45 +355,61 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
           ),
           const SizedBox(height: 16),
           ...(_anuncio!.archivosAdjuntos.map((adjunto) {
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF5F5F5),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Row(
-                children: [
-                  Text(adjunto.icon, style: const TextStyle(fontSize: 24)),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          adjunto.nombre,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          adjunto.formattedSize,
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                      ],
+            return GestureDetector(
+              onTap: () => _downloadAttachment(adjunto),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBBF7D0)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                            color: const Color(0xFFBBF7D0)),
+                      ),
+                      child: Center(
+                        child: Text(adjunto.icon,
+                            style: const TextStyle(fontSize: 20)),
+                      ),
                     ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.download, color: Color(0xFF10B981)),
-                    onPressed: () => _downloadAttachment(adjunto),
-                  ),
-                ],
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            adjunto.nombre,
+                            style: const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.black87),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            adjunto.formattedSize,
+                            style: TextStyle(
+                                fontSize: 12, color: Colors.grey[500]),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.download_rounded,
+                        color: Color(0xFF059669), size: 22),
+                  ],
+                ),
               ),
             );
           }).toList()),
@@ -560,10 +577,11 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
     }
   }
 
-  void _downloadAttachment(ArchivoAdjunto adjunto) {
-    // TODO: Implementar descarga según plataforma
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Descargando ${adjunto.nombre}...')),
+  Future<void> _downloadAttachment(ArchivoAdjunto adjunto) async {
+    await FileHelper.downloadAndOpen(
+      context,
+      '/anuncios/${widget.anuncioId}/adjunto/${adjunto.fileId}',
+      adjunto.nombre,
     );
   }
 }

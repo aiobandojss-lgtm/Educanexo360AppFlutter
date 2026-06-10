@@ -1,6 +1,7 @@
-// lib/screens/tareas/selector_hijo_screen.dart
+﻿// lib/screens/tareas/selector_hijo_screen.dart
 // ✅ VERSIÓN DEBUG MEJORADA - Para diagnosticar problema del campo grado
 
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -44,42 +45,42 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
 
       final authProvider = context.read<AuthProvider>();
 
-      print('\n╔════════════════════════════════════════');
-      print('🔍 DEBUG COMPLETO - SELECTOR HIJO');
-      print('╚════════════════════════════════════════');
-      print('👤 Usuario completo:');
-      print('   Nombre: ${authProvider.currentUser?.nombreCompleto}');
-      print('   Tipo: ${authProvider.currentUser?.tipo}');
-      print('   ID: ${authProvider.currentUser?.id}');
-      print('\n📊 Info Académica:');
-      print(
+      dlog('\n╔════════════════════════════════════════');
+      dlog('🔍 DEBUG COMPLETO - SELECTOR HIJO');
+      dlog('╚════════════════════════════════════════');
+      dlog('👤 Usuario completo:');
+      dlog('   Nombre: ${authProvider.currentUser?.nombreCompleto}');
+      dlog('   Tipo: ${authProvider.currentUser?.tipo}');
+      dlog('   ID: ${authProvider.currentUser?.id}');
+      dlog('\n📊 Info Académica:');
+      dlog(
           '   infoAcademica != null: ${authProvider.currentUser?.infoAcademica != null}');
       if (authProvider.currentUser?.infoAcademica != null) {
-        print('   grado: ${authProvider.currentUser?.infoAcademica?.grado}');
-        print('   cursos: ${authProvider.currentUser?.infoAcademica?.cursos}');
-        print(
+        dlog('   grado: ${authProvider.currentUser?.infoAcademica?.grado}');
+        dlog('   cursos: ${authProvider.currentUser?.infoAcademica?.cursos}');
+        dlog(
             '   asignaturas: ${authProvider.currentUser?.infoAcademica?.asignaturas}');
-        print(
+        dlog(
             '   estudiantesAsociados: ${authProvider.currentUser?.infoAcademica?.estudiantesAsociados}');
-        print(
+        dlog(
             '   estudiantesAsociados length: ${authProvider.currentUser?.infoAcademica?.estudiantesAsociados?.length ?? 0}');
       } else {
-        print('   ⚠️ infoAcademica es NULL - Este es el problema');
+        dlog('   ⚠️ infoAcademica es NULL - Este es el problema');
       }
-      print('╚════════════════════════════════════════\n');
+      dlog('╚════════════════════════════════════════\n');
 
       final estudiantesIds =
           authProvider.currentUser?.infoAcademica?.estudiantesAsociados ?? [];
 
-      print('📚 SELECTOR HIJO - CARGANDO ESTUDIANTES');
-      print('👤 Acudiente: ${authProvider.currentUser?.nombreCompleto}');
-      print('📋 IDs de estudiantes asociados: ${estudiantesIds.length}');
-      print('   IDs: $estudiantesIds');
-      print('🔧 isMainTab: ${widget.isMainTab}');
-      print('─────────────────────────────────────────');
+      dlog('📚 SELECTOR HIJO - CARGANDO ESTUDIANTES');
+      dlog('👤 Acudiente: ${authProvider.currentUser?.nombreCompleto}');
+      dlog('📋 IDs de estudiantes asociados: ${estudiantesIds.length}');
+      dlog('   IDs: $estudiantesIds');
+      dlog('🔧 isMainTab: ${widget.isMainTab}');
+      dlog('─────────────────────────────────────────');
 
       if (estudiantesIds.isEmpty) {
-        print('⚠️ No hay estudiantes asociados');
+        dlog('⚠️ No hay estudiantes asociados');
         setState(() {
           _isLoading = false;
           _error = null;
@@ -95,39 +96,38 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
       for (final estudianteId in estudiantesIds) {
         contador++;
         try {
-          print(
+          dlog(
               '\n🔍 [$contador/${estudiantesIds.length}] Cargando: $estudianteId');
 
           final response = await _apiService.get('/usuarios/$estudianteId');
 
-          print('   📦 Respuesta recibida:');
-          print('      Keys: ${response.keys.toList()}');
-          print('      success: ${response['success']}');
-          print('      data != null: ${response['data'] != null}');
+          dlog('   📦 Respuesta recibida:');
+          dlog('      Keys: ${response.keys.toList()}');
+          dlog('      success: ${response['success']}');
+          dlog('      data != null: ${response['data'] != null}');
 
           // 🔍 DEBUG CRÍTICO: Ver contenido de info_academica
           final dataToCheck = response['data'] ?? response;
           if (dataToCheck['info_academica'] != null) {
-            print('   🎓 INFO_ACADEMICA encontrada:');
-            print('      Tipo: ${dataToCheck['info_academica'].runtimeType}');
-            print('      Contenido completo: ${dataToCheck['info_academica']}');
+            dlog('   🎓 INFO_ACADEMICA encontrada:');
+            dlog('      Tipo: ${dataToCheck['info_academica'].runtimeType}');
+            dlog('      Contenido completo: ${dataToCheck['info_academica']}');
             if (dataToCheck['info_academica']['grado'] != null) {
-              print('      📍 GRADO:');
-              print(
+              dlog('      📍 GRADO:');
+              dlog(
                   '         Tipo: ${dataToCheck['info_academica']['grado'].runtimeType}');
-              print(
-                  '         Valor: ${dataToCheck['info_academica']['grado']}');
+              dlog('         Valor: ${dataToCheck['info_academica']['grado']}');
               if (dataToCheck['info_academica']['grado'] is Map) {
-                print(
+                dlog(
                     '         Keys del objeto: ${(dataToCheck['info_academica']['grado'] as Map).keys.toList()}');
-                print(
+                dlog(
                     '         Nombre: ${dataToCheck['info_academica']['grado']['nombre']}');
               }
             } else {
-              print('      ⚠️ GRADO es NULL');
+              dlog('      ⚠️ GRADO es NULL');
             }
           } else {
-            print('   ⚠️ NO HAY info_academica en la respuesta');
+            dlog('   ⚠️ NO HAY info_academica en la respuesta');
           }
 
           // ✅ MEJORA: Manejar diferentes formatos de respuesta
@@ -135,56 +135,51 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
 
           if (response['success'] == true) {
             if (response['data'] != null) {
-              print('   ✅ Formato: { success: true, data: {...} }');
+              dlog('   ✅ Formato: { success: true, data: {...} }');
               estudiante = Usuario.fromJson(response['data']);
             } else {
-              print('   ✅ Formato: { success: true, ...campos directos }');
+              dlog('   ✅ Formato: { success: true, ...campos directos }');
               estudiante = Usuario.fromJson(response);
             }
           } else if (response['data'] != null) {
-            print('   ✅ Formato: { data: {...} }');
+            dlog('   ✅ Formato: { data: {...} }');
             estudiante = Usuario.fromJson(response['data']);
           } else {
-            print('   ✅ Formato: Datos directos');
+            dlog('   ✅ Formato: Datos directos');
             estudiante = Usuario.fromJson(response);
           }
 
-          if (estudiante != null) {
-            print('   ✅ Estudiante cargado:');
-            print('      Nombre: ${estudiante.nombre}');
-            print('      Apellidos: ${estudiante.apellidos}');
-            print('      Nombre completo: ${estudiante.nombreCompleto}');
-            print(
-                '      infoAcademica?.grado: ${estudiante.infoAcademica?.grado}');
-            print('      cursoDisplay: ${estudiante.cursoDisplay}');
+          dlog('   ✅ Estudiante cargado:');
+          dlog('      Nombre: ${estudiante.nombre}');
+          dlog('      Apellidos: ${estudiante.apellidos}');
+          dlog('      Nombre completo: ${estudiante.nombreCompleto}');
+          dlog(
+              '      infoAcademica?.grado: ${estudiante.infoAcademica?.grado}');
+          dlog('      cursoDisplay: ${estudiante.cursoDisplay}');
 
-            estudiantesTemp.add(estudiante);
-          } else {
-            print('   ❌ No se pudo parsear el estudiante');
-          }
+          estudiantesTemp.add(estudiante);
         } catch (e, stackTrace) {
-          print('   ❌ Error cargando estudiante $estudianteId:');
-          print('      Error: $e');
-          print(
+          dlog('   ❌ Error cargando estudiante $estudianteId:');
+          dlog('      Error: $e');
+          dlog(
               '      Stack: ${stackTrace.toString().split('\n').take(3).join('\n')}');
         }
       }
 
-      print('\n╔════════════════════════════════════════');
-      print('✅ CARGA COMPLETADA');
-      print(
+      dlog('\n╔════════════════════════════════════════');
+      dlog('✅ CARGA COMPLETADA');
+      dlog(
           '   Total estudiantes cargados: ${estudiantesTemp.length}/${estudiantesIds.length}');
-      print('╚════════════════════════════════════════\n');
+      dlog('╚════════════════════════════════════════\n');
 
       setState(() {
         _estudiantes = estudiantesTemp;
         _isLoading = false;
       });
     } catch (e, stackTrace) {
-      print('\n❌ ERROR GENERAL CARGANDO ESTUDIANTES');
-      print('   Error: $e');
-      print(
-          '   Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}');
+      dlog('\n❌ ERROR GENERAL CARGANDO ESTUDIANTES');
+      dlog('   Error: $e');
+      dlog('   Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}');
 
       setState(() {
         _error = 'Error al cargar estudiantes: $e';
@@ -363,9 +358,9 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () {
-          print('🔗 Navegando a tareas de: ${estudiante.nombreCompleto}');
-          print('   ID: ${estudiante.id}');
-          print('   Usando: context.push("/tareas/hijo/${estudiante.id}")');
+          dlog('🔗 Navegando a tareas de: ${estudiante.nombreCompleto}');
+          dlog('   ID: ${estudiante.id}');
+          dlog('   Usando: context.push("/tareas/hijo/${estudiante.id}")');
 
           // ✅ NAVEGACIÓN: Esto DEBE salir del tab y abrir pantalla completa
           context.push(

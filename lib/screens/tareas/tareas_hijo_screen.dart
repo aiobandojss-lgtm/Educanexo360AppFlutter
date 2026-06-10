@@ -140,17 +140,6 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
   }
 
   Widget _buildTabs() {
-    final tareaProvider = context.watch<TareaProvider>();
-    final pendientes = tareaProvider
-        .filtrarTareasPorEstado(FiltroTareaEstudiante.pendientes)
-        .length;
-    final entregadas = tareaProvider
-        .filtrarTareasPorEstado(FiltroTareaEstudiante.entregadas)
-        .length;
-    final calificadas = tareaProvider
-        .filtrarTareasPorEstado(FiltroTareaEstudiante.calificadas)
-        .length;
-
     return Container(
       color: Colors.white,
       child: TabBar(
@@ -160,10 +149,10 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
         unselectedLabelColor: Colors.grey,
         indicatorColor: const Color(0xFF059669),
         indicatorWeight: 3,
-        tabs: [
-          Tab(text: 'Pendientes ($pendientes)'),
-          Tab(text: 'Entregadas ($entregadas)'),
-          Tab(text: 'Calificadas ($calificadas)'),
+        tabs: const [
+          Tab(text: 'Pendientes'),
+          Tab(text: 'Entregadas'),
+          Tab(text: 'Calificadas'),
         ],
       ),
     );

@@ -1,8 +1,10 @@
-// lib/screens/perfil/editar_perfil_screen.dart
+﻿// lib/screens/perfil/editar_perfil_screen.dart
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/usuario_service.dart';
+import '../../services/perfil_rol_service.dart';
 import '../../models/usuario.dart';
 
 class EditarPerfilScreen extends StatefulWidget {
@@ -21,11 +23,13 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
   bool _loading = false;
   bool _canEditEmail = false;
+  String? _perfilNombre;
 
   @override
   void initState() {
     super.initState();
     _loadUserData();
+    _cargarNombrePerfil();
   }
 
   void _loadUserData() {
@@ -38,6 +42,15 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
 
       // Solo ADMIN puede editar email
       _canEditEmail = user.tipo.value == 'ADMIN';
+    }
+  }
+
+  Future<void> _cargarNombrePerfil() async {
+    final user = context.read<AuthProvider>().currentUser;
+    if (user?.perfilRolId == null) return;
+    final nombre = await PerfilRolService.getNombrePorId(user!.perfilRolId);
+    if (mounted && nombre != null) {
+      setState(() => _perfilNombre = nombre);
     }
   }
 
@@ -66,7 +79,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     setState(() => _loading = true);
 
     try {
-      print('📝 Actualizando perfil...');
+      dlog('📝 Actualizando perfil...');
 
       final updatedUser = await UsuarioService().updateUser(
         user.id,
@@ -76,7 +89,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
         telefono: _telefonoController.text.trim(),
       );
 
-      print('✅ Perfil actualizado correctamente');
+      dlog('✅ Perfil actualizado correctamente');
 
       // Actualizar el usuario en el AuthProvider
       await authProvider.refreshUser();
@@ -95,7 +108,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       // Volver a la pantalla anterior
       Navigator.pop(context);
     } catch (e) {
-      print('❌ Error actualizando perfil: $e');
+      dlog('❌ Error actualizando perfil: $e');
       _showError('Error al actualizar el perfil: ${e.toString()}');
     } finally {
       if (mounted) {
@@ -195,7 +208,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                   width: 80,
                   height: 80,
                   decoration: BoxDecoration(
-                    color: const Color(0xFF6366F1),
+                    color: const Color(0xFF059669),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Center(
@@ -211,7 +224,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
                 ),
                 const SizedBox(height: 12),
                 Text(
-                  user?.tipo.displayName ?? '',
+                  _perfilNombre ?? user?.tipo.displayName ?? '',
                   style: const TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,

@@ -20,7 +20,7 @@ class AppColors {
   static const Color onSurface = Color(0xFF1E293B); // #1e293b
   static const Color onSurfaceVariant = Color(0xFF64748B); // #64748b
 
-  // PÃºrpura
+  // Gradientes
   static const Color emerald700 = Color(0xFF047857); // #047857 Emerald-700
   static const Color teal500 = Color(0xFF14B8A6); // #14b8a6 Teal-500
 
@@ -39,7 +39,7 @@ class AppColors {
   static const Map<String, Color> roleColors = {
     'RECTOR': Color(0xFFDC2626), // #dc2626
     'ADMIN': Color(0xFFDC2626),
-    'ADMINISTRATIVO': Color(0xFF7C3AED), // #7c3aed
+    'ADMINISTRATIVO': Color(0xFF0891B2), // Cyan-600
     'DOCENTE': Color(0xFF059669), // #059669
     'ESTUDIANTE': Color(0xFF2563EB), // #2563eb
     'ACUDIENTE': Color(0xFFD97706), // #d97706
@@ -214,16 +214,14 @@ class AppTheme {
       useMaterial3: true,
 
       // Colores
-      colorScheme: ColorScheme.light(
+      colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
         secondary: AppColors.secondary,
         surface: AppColors.white,
-        background: AppColors.surfaceMain,
         error: AppColors.error,
         onPrimary: AppColors.white,
         onSecondary: AppColors.white,
         onSurface: AppColors.onSurface,
-        onBackground: AppColors.onSurface,
         onError: AppColors.white,
       ),
 
@@ -242,7 +240,7 @@ class AppTheme {
       ),
 
       // Cards
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: AppColors.white,
         elevation: 2,
         shape: RoundedRectangleBorder(
@@ -280,19 +278,19 @@ class AppTheme {
         fillColor: AppColors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.level3),
+          borderSide: const BorderSide(color: AppColors.level3),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.level3),
+          borderSide: const BorderSide(color: AppColors.level3),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.primary, width: 2),
+          borderSide: const BorderSide(color: AppColors.primary, width: 2),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: BorderSide(color: AppColors.error),
+          borderSide: const BorderSide(color: AppColors.error),
         ),
         labelStyle: AppTypography.inputLabel,
         hintStyle: AppTypography.inputText.copyWith(
@@ -301,7 +299,7 @@ class AppTheme {
       ),
 
       // Texto por defecto
-      textTheme: TextTheme(
+      textTheme: const TextTheme(
         displayLarge: AppTypography.h1,
         displayMedium: AppTypography.h2,
         displaySmall: AppTypography.h3,

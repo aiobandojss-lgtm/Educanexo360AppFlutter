@@ -1,5 +1,6 @@
-// lib/screens/asistencia/registrar_asistencia_screen.dart
+﻿// lib/screens/asistencia/registrar_asistencia_screen.dart
 
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -39,10 +40,13 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
   bool _guardando = false;
   bool _cargandoEstudiantes = false;
   bool _cargandoDatos = false; // ✅ NUEVO - Para cargar datos en edición
+  bool _mostrarOpcionesAvanzadas = false;
 
   @override
   void initState() {
     super.initState();
+
+    _mostrarOpcionesAvanzadas = widget.isEditMode;
 
     if (widget.isEditMode && widget.asistenciaId != null) {
       // ✅ Modo edición: cargar datos existentes
@@ -59,65 +63,66 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
     super.dispose();
   }
 
-  // ✅ NUEVO - Cargar datos existentes para edición
+  // Cargar datos existentes para edición
   Future<void> _cargarDatosExistentes() async {
     setState(() => _cargandoDatos = true);
 
     final provider = context.read<AsistenciaProvider>();
 
-    // Cargar el registro existente
-    await provider.cargarRegistro(widget.asistenciaId!);
+    try {
+      await provider.cargarRegistro(widget.asistenciaId!);
+      await provider.cargarCursos();
 
-    // Cargar cursos
-    await provider.cargarCursos();
+      final registro = provider.registroActual;
 
-    final registro = provider.registroActual;
+      if (registro == null) {
+        if (mounted) {
+          _mostrarMensaje(
+            'No se pudo cargar el registro. Verifica tu conexión.',
+            tipo: 'error',
+          );
+          context.go('/asistencia');
+        }
+        return;
+      }
 
-    if (registro != null) {
-      // Poblar campos con datos existentes
       setState(() {
         _fecha = registro.fecha;
         _cursoSeleccionado = registro.curso.id;
         _asignaturaSeleccionada = registro.asignatura?.id;
         _tipoSesion = registro.tipoSesion;
-
-        // Parsear horas
-        final inicioSplit = registro.horaInicio.split(':');
-        _horaInicio = TimeOfDay(
-          hour: int.parse(inicioSplit[0]),
-          minute: int.parse(inicioSplit[1]),
-        );
-
-        final finSplit = registro.horaFin.split(':');
-        _horaFin = TimeOfDay(
-          hour: int.parse(finSplit[0]),
-          minute: int.parse(finSplit[1]),
-        );
-
+        _horaInicio = _parseHora(
+            registro.horaInicio, const TimeOfDay(hour: 7, minute: 0));
+        _horaFin =
+            _parseHora(registro.horaFin, const TimeOfDay(hour: 8, minute: 0));
         if (registro.observacionesGenerales != null) {
           _observacionesController.text = registro.observacionesGenerales!;
         }
       });
 
-      // ✅ CRÍTICO: Cargar asignaturas del curso
       await provider.cargarAsignaturas(_cursoSeleccionado!);
-
-      // ✅ CRÍTICO: Usar los estudiantes DEL REGISTRO, NO cargar frescos
-      // Esto preserva los estados originales (Presente, Ausente, Permiso, etc.)
       provider.establecerEstudiantes(registro.estudiantes);
 
-      print('✅ Datos cargados para edición:');
-      print('   - Curso: ${registro.curso.nombreCompleto}');
-      print('   - Asignatura: ${registro.asignatura?.nombre ?? "Ninguna"}');
-      print('   - Estudiantes: ${registro.estudiantes.length}');
-
-      // Debug: Mostrar estados de estudiantes
-      for (var est in registro.estudiantes) {
-        print('   - ${est.nombreCompleto}: ${est.estado}');
+      dlog('✅ Datos cargados para edición — ${registro.estudiantes.length} estudiantes');
+    } catch (e) {
+      if (mounted) {
+        _mostrarMensaje('Error al cargar: ${e.toString()}', tipo: 'error');
+        context.go('/asistencia');
       }
+    } finally {
+      if (mounted) setState(() => _cargandoDatos = false);
     }
+  }
 
-    setState(() => _cargandoDatos = false);
+  // Helper seguro para parsear hora "HH:mm" con fallback
+  TimeOfDay _parseHora(String hora, TimeOfDay fallback) {
+    if (hora.isEmpty || !hora.contains(':')) return fallback;
+    final parts = hora.split(':');
+    if (parts.length < 2) return fallback;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return fallback;
+    return TimeOfDay(hour: h, minute: m);
   }
 
   Future<void> _cargarCursos() async {
@@ -195,7 +200,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
     try {
       if (widget.isEditMode && widget.asistenciaId != null) {
         // ✅ MODO EDICIÓN
-        print('🔧 Editando registro: ${widget.asistenciaId}');
+        dlog('🔧 Editando registro: ${widget.asistenciaId}');
 
         final registro = await provider.actualizarRegistro(
           id: widget.asistenciaId!,
@@ -221,7 +226,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
         }
       } else {
         // ✅ MODO CREACIÓN (código original)
-        print('➕ Creando nuevo registro');
+        dlog('➕ Creando nuevo registro');
 
         final registro = await provider.crearRegistro(
           fecha: _fecha,
@@ -400,7 +405,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.calendar_today, color: const Color(0xFF047857)),
+                  const Icon(Icons.calendar_today, color: Color(0xFF047857)),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -435,7 +440,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
           Consumer<AsistenciaProvider>(
             builder: (context, provider, _) {
               return DropdownButtonFormField<String>(
-                value: _cursoSeleccionado,
+                initialValue: _cursoSeleccionado,
                 decoration: InputDecoration(
                   labelText: 'Curso *',
                   prefixIcon: const Icon(Icons.school),
@@ -528,7 +533,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
               }
 
               return DropdownButtonFormField<String>(
-                value: _asignaturaSeleccionada,
+                initialValue: _asignaturaSeleccionada,
                 decoration: InputDecoration(
                   labelText: 'Asignatura (opcional)',
                   prefixIcon: const Icon(Icons.book),
@@ -557,117 +562,155 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
             },
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
 
-          // Tipo de sesión y horarios
-          Row(
-            children: [
-              Expanded(
-                flex: 2,
-                child: DropdownButtonFormField<String>(
-                  value: _tipoSesion,
-                  decoration: InputDecoration(
-                    labelText: 'Tipo',
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
+          // Toggle opciones avanzadas
+          InkWell(
+            onTap: () => setState(
+                () => _mostrarOpcionesAvanzadas = !_mostrarOpcionesAvanzadas),
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    _mostrarOpcionesAvanzadas
+                        ? Icons.expand_less
+                        : Icons.expand_more,
+                    size: 18,
+                    color: const Color(0xFF047857),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    _mostrarOpcionesAvanzadas
+                        ? 'Ocultar opciones'
+                        : 'Opciones avanzadas',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF047857),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
-                  items: TiposSesion.todos.map((tipo) {
-                    return DropdownMenuItem(
-                      value: tipo,
-                      child: Text(TiposSesion.getLabel(tipo)),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) setState(() => _tipoSesion = value);
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: InkWell(
-                  onTap: () => _seleccionarHora(true),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Inicio',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        Text(
-                          _horaInicio.format(context),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: InkWell(
-                  onTap: () => _seleccionarHora(false),
-                  child: Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Fin',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        Text(
-                          _horaFin.format(context),
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 12),
-
-          // Observaciones generales
-          TextFormField(
-            controller: _observacionesController,
-            decoration: InputDecoration(
-              labelText: 'Observaciones generales (opcional)',
-              prefixIcon: const Icon(Icons.notes),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                ],
               ),
             ),
-            maxLines: 2,
           ),
+
+          // Tipo de sesión, horas y observaciones (colapsable)
+          if (_mostrarOpcionesAvanzadas) ...[
+            const SizedBox(height: 12),
+
+            // Tipo de sesión y horarios
+            Row(
+              children: [
+                Expanded(
+                  flex: 2,
+                  child: DropdownButtonFormField<String>(
+                    initialValue: _tipoSesion,
+                    decoration: InputDecoration(
+                      labelText: 'Tipo',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                    ),
+                    items: TiposSesion.todos.map((tipo) {
+                      return DropdownMenuItem(
+                        value: tipo,
+                        child: Text(TiposSesion.getLabel(tipo)),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      if (value != null) setState(() => _tipoSesion = value);
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _seleccionarHora(true),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Inicio',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            _horaInicio.format(context),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: InkWell(
+                    onTap: () => _seleccionarHora(false),
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.grey[300]!),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Fin',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                          Text(
+                            _horaFin.format(context),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 12),
+
+            // Observaciones generales
+            TextFormField(
+              controller: _observacionesController,
+              decoration: InputDecoration(
+                labelText: 'Observaciones generales (opcional)',
+                prefixIcon: const Icon(Icons.notes),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              maxLines: 2,
+            ),
+          ],
         ],
       ),
     );
@@ -711,6 +754,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
         return Column(
           children: [
             _buildAccionesRapidas(),
+            _buildContadorEstudiantes(provider),
             Expanded(
               child: ListView.builder(
                 padding: const EdgeInsets.all(16),
@@ -738,12 +782,15 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
       ),
       child: Row(
         children: [
-          Text(
-            'Marcar todos como:',
-            style: TextStyle(
-              fontSize: 13,
-              color: Colors.grey[700],
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              'Marcar todos como:',
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.grey[700],
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
           const SizedBox(width: 8),
@@ -803,105 +850,89 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
   }
 
   Widget _buildEstudianteCard(EstudianteAsistencia estudiante) {
+    final colorEstado = _getColorEstado(estudiante.estado);
+    final esEspecial = estudiante.estado == EstadosAsistencia.justificado ||
+        estudiante.estado == EstadosAsistencia.permiso;
+
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      elevation: 1,
+      margin: const EdgeInsets.only(bottom: 6),
+      elevation: 0,
+      color: colorEstado.withValues(alpha: 0.04),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: colorEstado.withValues(alpha: 0.25)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
           children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: _getColorEstado(estudiante.estado),
-                  radius: 20,
-                  child: Text(
-                    estudiante.nombreCompleto
-                        .split(' ')
-                        .map((e) => e[0])
-                        .take(2)
-                        .join()
-                        .toUpperCase(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
+            CircleAvatar(
+              backgroundColor: colorEstado,
+              radius: 18,
+              child: Text(
+                estudiante.nombreCompleto
+                    .split(' ')
+                    .where((p) => p.isNotEmpty)
+                    .map((p) => p[0])
+                    .take(2)
+                    .join()
+                    .toUpperCase(),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
                     estudiante.nombreCompleto,
                     style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
+                        fontSize: 14, fontWeight: FontWeight.w600),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (estudiante.observaciones != null &&
+                      estudiante.observaciones!.isNotEmpty)
+                    Text(
+                      estudiante.observaciones!,
+                      style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                      overflow: TextOverflow.ellipsis,
                     ),
+                ],
+              ),
+            ),
+            _buildBotonEstado(estudiante, EstadosAsistencia.presente,
+                Icons.check_circle, Colors.green),
+            _buildBotonEstado(
+                estudiante, EstadosAsistencia.ausente, Icons.cancel, Colors.red),
+            _buildBotonEstado(estudiante, EstadosAsistencia.tardanza,
+                Icons.access_time, Colors.orange),
+            // Botón estados especiales (Justificado / Permiso)
+            GestureDetector(
+              onTap: () => _mostrarOpcionesEstudiante(estudiante),
+              child: Container(
+                width: 32,
+                height: 32,
+                margin: const EdgeInsets.only(left: 2),
+                decoration: BoxDecoration(
+                  color: esEspecial
+                      ? colorEstado.withValues(alpha: 0.15)
+                      : Colors.grey[100],
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: esEspecial ? colorEstado : Colors.grey[300]!,
                   ),
                 ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 6,
-              runSpacing: 6,
-              children: EstadosAsistencia.todos.map((estado) {
-                final seleccionado = estudiante.estado == estado;
-                return InkWell(
-                  onTap: () {
-                    final provider = context.read<AsistenciaProvider>();
-                    provider.actualizarEstadoEstudiante(
-                      estudiante.estudianteId,
-                      estado,
-                    );
-                  },
-                  borderRadius: BorderRadius.circular(8),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: seleccionado
-                          ? _getColorEstado(estado)
-                          : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: seleccionado
-                            ? _getColorEstado(estado)
-                            : Colors.grey[300]!,
-                        width: seleccionado ? 2 : 1,
-                      ),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          _getIconoEstado(estado),
-                          size: 16,
-                          color: seleccionado ? Colors.white : Colors.grey[600],
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          EstadosAsistencia.getLabel(estado),
-                          style: TextStyle(
-                            fontSize: 12,
-                            color:
-                                seleccionado ? Colors.white : Colors.grey[600],
-                            fontWeight: seleccionado
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
+                child: Icon(
+                  Icons.more_horiz,
+                  size: 16,
+                  color: esEspecial ? colorEstado : Colors.grey[400],
+                ),
+              ),
             ),
           ],
         ),
@@ -960,6 +991,277 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
     );
   }
 
+  // ========================================
+  // 📊 CONTADOR EN TIEMPO REAL
+  // ========================================
+
+  Widget _buildContadorEstudiantes(AsistenciaProvider provider) {
+    if (provider.estudiantes.isEmpty) return const SizedBox.shrink();
+
+    final total = provider.estudiantes.length;
+    final presentes = provider.estudiantes
+        .where((e) => e.estado == EstadosAsistencia.presente)
+        .length;
+    final ausentes = provider.estudiantes
+        .where((e) => e.estado == EstadosAsistencia.ausente)
+        .length;
+    final tardanzas = provider.estudiantes
+        .where((e) => e.estado == EstadosAsistencia.tardanza)
+        .length;
+    final otros = total - presentes - ausentes - tardanzas;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF0FDF4),
+        border: Border(
+          bottom: BorderSide(color: Color(0xFFBBF7D0)),
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: [
+          _buildMiniStat(Icons.check_circle, Colors.green, presentes, 'Pres.'),
+          _buildMiniStat(Icons.cancel, Colors.red, ausentes, 'Aus.'),
+          _buildMiniStat(Icons.access_time, Colors.orange, tardanzas, 'Tard.'),
+          if (otros > 0)
+            _buildMiniStat(Icons.more_horiz, Colors.blue, otros, 'Otros'),
+          Text(
+            'Total: $total',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMiniStat(
+      IconData icon, Color color, int count, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 3),
+        Text(
+          '$count',
+          style: TextStyle(
+              fontSize: 14, fontWeight: FontWeight.bold, color: color),
+        ),
+        const SizedBox(width: 2),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+        ),
+      ],
+    );
+  }
+
+  // ========================================
+  // 🎯 BOTÓN DE ESTADO (card compacta)
+  // ========================================
+
+  Widget _buildBotonEstado(
+    EstudianteAsistencia estudiante,
+    String estado,
+    IconData icono,
+    Color color,
+  ) {
+    final seleccionado = estudiante.estado == estado;
+    return GestureDetector(
+      onTap: () => context
+          .read<AsistenciaProvider>()
+          .actualizarEstadoEstudiante(estudiante.estudianteId, estado),
+      child: Container(
+        width: 34,
+        height: 34,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: seleccionado ? color : Colors.grey[100],
+          shape: BoxShape.circle,
+          border: Border.all(
+            color: seleccionado ? color : Colors.grey[300]!,
+          ),
+        ),
+        child: Icon(
+          icono,
+          size: 18,
+          color: seleccionado ? Colors.white : Colors.grey[400],
+        ),
+      ),
+    );
+  }
+
+  // ========================================
+  // ⚙️ BOTTOM SHEET: ESTADOS ESPECIALES
+  // ========================================
+
+  void _mostrarOpcionesEstudiante(EstudianteAsistencia estudianteInicial) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        String estadoSeleccionado = estudianteInicial.estado;
+        final obsController =
+            TextEditingController(text: estudianteInicial.observaciones ?? '');
+
+        return StatefulBuilder(
+          builder: (ctx, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 20,
+                right: 20,
+                top: 20,
+                bottom: MediaQuery.of(ctx).viewInsets.bottom + 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    estudianteInicial.nombreCompleto,
+                    style: const TextStyle(
+                        fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Estado especial para este estudiante',
+                    style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildOpcionSheet(
+                          estado: EstadosAsistencia.justificado,
+                          label: 'Justificado',
+                          icon: Icons.assignment_late,
+                          color: Colors.blue,
+                          estadoActual: estadoSeleccionado,
+                          onTap: () => setSheetState(() => estadoSeleccionado =
+                              EstadosAsistencia.justificado),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildOpcionSheet(
+                          estado: EstadosAsistencia.permiso,
+                          label: 'Permiso',
+                          icon: Icons.shield,
+                          color: const Color(0xFF059669),
+                          estadoActual: estadoSeleccionado,
+                          onTap: () => setSheetState(
+                              () => estadoSeleccionado = EstadosAsistencia.permiso),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: obsController,
+                    decoration: InputDecoration(
+                      labelText: 'Observaciones (opcional)',
+                      hintText: 'Ej: Presenta permiso médico',
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      prefixIcon: const Icon(Icons.notes),
+                    ),
+                    maxLines: 2,
+                  ),
+                  const SizedBox(height: 16),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF059669),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
+                      ),
+                      onPressed: () {
+                        final provider = context.read<AsistenciaProvider>();
+                        provider.actualizarEstadoEstudiante(
+                            estudianteInicial.estudianteId, estadoSeleccionado);
+                        if (obsController.text.isNotEmpty) {
+                          provider.actualizarObservacionEstudiante(
+                              estudianteInicial.estudianteId,
+                              obsController.text);
+                        }
+                        Navigator.pop(ctx);
+                      },
+                      child: const Text('Aplicar',
+                          style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildOpcionSheet({
+    required String estado,
+    required String label,
+    required IconData icon,
+    required Color color,
+    required String estadoActual,
+    required VoidCallback onTap,
+  }) {
+    final seleccionado = estadoActual == estado;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        decoration: BoxDecoration(
+          color:
+              seleccionado ? color.withValues(alpha: 0.1) : Colors.grey[50],
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: seleccionado ? color : Colors.grey[200]!,
+            width: seleccionado ? 2 : 1,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(icon,
+                color: seleccionado ? color : Colors.grey[400], size: 26),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight:
+                    seleccionado ? FontWeight.bold : FontWeight.normal,
+                color: seleccionado ? color : Colors.grey[600],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Color _getColorEstado(String estado) {
     switch (estado) {
       case 'PRESENTE':
@@ -977,20 +1279,4 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
     }
   }
 
-  IconData _getIconoEstado(String estado) {
-    switch (estado) {
-      case 'PRESENTE':
-        return Icons.check_circle;
-      case 'AUSENTE':
-        return Icons.cancel;
-      case 'TARDANZA':
-        return Icons.access_time;
-      case 'JUSTIFICADO':
-        return Icons.assignment_late;
-      case 'PERMISO':
-        return Icons.shield;
-      default:
-        return Icons.help;
-    }
-  }
 }

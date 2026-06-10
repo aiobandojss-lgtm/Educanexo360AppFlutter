@@ -1,5 +1,6 @@
-// lib/providers/tarea_provider.dart
+﻿// lib/providers/tarea_provider.dart
 
+import '../utils/logger.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
@@ -71,6 +72,18 @@ class TareaProvider with ChangeNotifier {
   int get misTareasVencidas => _misTareas.where((t) => t.estaVencida).length;
 
   // ========================================
+  // ⚡ PREPARAR ESTADO DE CARGA (para initState)
+  // ========================================
+
+  void prepareLoading() {
+    _isLoading = true;
+  }
+
+  void prepareLoadingMisTareas() {
+    _isLoadingMisTareas = true;
+  }
+
+  // ========================================
   // ðŸ“‹ LISTAR TAREAS (GENERAL - DOCENTES/ADMIN)
   // ========================================
 
@@ -85,7 +98,7 @@ class TareaProvider with ChangeNotifier {
         notifyListeners();
       }
 
-      print('ðŸ”¥ Cargando tareas... (pÃ¡gina $page)');
+      dlog('ðŸ”¥ Cargando tareas... (pÃ¡gina $page)');
 
       final result = await _tareaService.listarTareas(
         page: page,
@@ -106,10 +119,10 @@ class TareaProvider with ChangeNotifier {
       _meta = result['meta'];
       _isLoading = false;
 
-      print('âœ… Tareas cargadas: ${_tareas.length}');
+      dlog('âœ… Tareas cargadas: ${_tareas.length}');
       notifyListeners();
     } catch (e) {
-      print('âŒ Error cargando tareas: $e');
+      dlog('âŒ Error cargando tareas: $e');
       _isLoading = false;
       notifyListeners();
       rethrow;
@@ -128,8 +141,8 @@ class TareaProvider with ChangeNotifier {
       _isLoadingMisTareas = true;
       notifyListeners();
 
-      print('ðŸ”¥ Cargando mis tareas...');
-      print('   Filtro: ${filtro?.displayName ?? "Todas"}');
+      dlog('ðŸ”¥ Cargando mis tareas...');
+      dlog('   Filtro: ${filtro?.displayName ?? "Todas"}');
 
       final tareas = await _tareaService.misTareas(filtro: filtro);
 
@@ -140,10 +153,10 @@ class TareaProvider with ChangeNotifier {
 
       _isLoadingMisTareas = false;
 
-      print('âœ… Mis tareas cargadas: ${_misTareas.length}');
+      dlog('âœ… Mis tareas cargadas: ${_misTareas.length}');
       notifyListeners();
     } catch (e) {
-      print('âŒ Error cargando mis tareas: $e');
+      dlog('âŒ Error cargando mis tareas: $e');
       _isLoadingMisTareas = false;
       notifyListeners();
       rethrow;
@@ -157,10 +170,8 @@ class TareaProvider with ChangeNotifier {
   Future<void> cambiarFiltro(FiltroTareaEstudiante filtro) async {
     if (_currentFilter == filtro) return;
 
-    print('ðŸ”„ Cambiando filtro: ${filtro.displayName}');
+    dlog('ðŸ”„ Cambiando filtro: ${filtro.displayName}');
     _currentFilter = filtro;
-    notifyListeners();
-
     await cargarMisTareas(filtro: filtro, refresh: true);
   }
 
@@ -169,15 +180,14 @@ class TareaProvider with ChangeNotifier {
   // ========================================
 
   Future<void> buscar(String query) async {
-    print('ðŸ” Buscando: $query');
+    dlog('ðŸ” Buscando: $query');
     _searchQuery = query;
-    notifyListeners();
     await listarTareas(refresh: true);
   }
 
   void limpiarBusqueda() {
     if (_searchQuery.isNotEmpty) {
-      print('ðŸ§¹ Limpiando bÃºsqueda');
+      dlog('ðŸ§¹ Limpiando bÃºsqueda');
       _searchQuery = '';
       listarTareas(refresh: true);
     }
@@ -185,30 +195,26 @@ class TareaProvider with ChangeNotifier {
 
   void aplicarFiltroEstado(EstadoTarea? estado) {
     _estadoFilter = estado;
-    notifyListeners();
     listarTareas(refresh: true);
   }
 
   void aplicarFiltroPrioridad(PrioridadTarea? prioridad) {
     _prioridadFilter = prioridad;
-    notifyListeners();
     listarTareas(refresh: true);
   }
 
   void aplicarFiltroCurso(String? cursoId) {
     _cursoFilter = cursoId;
-    notifyListeners();
     listarTareas(refresh: true);
   }
 
   void aplicarFiltroAsignatura(String? asignaturaId) {
     _asignaturaFilter = asignaturaId;
-    notifyListeners();
     listarTareas(refresh: true);
   }
 
   void limpiarFiltros() {
-    print('ðŸ§¹ Limpiando filtros');
+    dlog('ðŸ§¹ Limpiando filtros');
     _estadoFilter = null;
     _prioridadFilter = null;
     _cursoFilter = null;
@@ -236,7 +242,7 @@ class TareaProvider with ChangeNotifier {
     List<File>? archivosReferencia,
   }) async {
     try {
-      print('ðŸ“ Creando tarea: $titulo');
+      dlog('ðŸ“ Creando tarea: $titulo');
 
       final tarea = await _tareaService.crearTarea(
         titulo: titulo,
@@ -253,14 +259,14 @@ class TareaProvider with ChangeNotifier {
         archivosReferencia: archivosReferencia,
       );
 
-      print('âœ… Tarea creada con ID: ${tarea.id}');
+      dlog('âœ… Tarea creada con ID: ${tarea.id}');
 
       // Refrescar lista
       await listarTareas(refresh: true);
 
       return tarea;
     } catch (e) {
-      print('âŒ Error creando tarea: $e');
+      dlog('âŒ Error creando tarea: $e');
       rethrow;
     }
   }
@@ -281,7 +287,7 @@ class TareaProvider with ChangeNotifier {
     double? pesoEvaluacion,
   }) async {
     try {
-      print('ðŸ“ Actualizando tarea: $tareaId');
+      dlog('ðŸ“ Actualizando tarea: $tareaId');
 
       final tarea = await _tareaService.actualizarTarea(
         tareaId: tareaId,
@@ -301,12 +307,12 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('âœ… Tarea actualizada');
+      dlog('âœ… Tarea actualizada');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('âŒ Error actualizando tarea: $e');
+      dlog('âŒ Error actualizando tarea: $e');
       rethrow;
     }
   }
@@ -317,7 +323,7 @@ class TareaProvider with ChangeNotifier {
 
   Future<void> eliminarTarea(String tareaId) async {
     try {
-      print('ðŸ—‘ï¸ Eliminando tarea: $tareaId');
+      dlog('ðŸ—‘ï¸ Eliminando tarea: $tareaId');
 
       // Optimistic update
       _tareas.removeWhere((t) => t.id == tareaId);
@@ -325,9 +331,9 @@ class TareaProvider with ChangeNotifier {
 
       await _tareaService.eliminarTarea(tareaId);
 
-      print('âœ… Tarea eliminada');
+      dlog('âœ… Tarea eliminada');
     } catch (e) {
-      print('âŒ Error eliminando tarea: $e');
+      dlog('âŒ Error eliminando tarea: $e');
       // Recargar en caso de error
       await listarTareas(refresh: true);
       rethrow;
@@ -340,7 +346,7 @@ class TareaProvider with ChangeNotifier {
 
   Future<Tarea> cerrarTarea(String tareaId) async {
     try {
-      print('ðŸ”’ Cerrando tarea: $tareaId');
+      dlog('ðŸ”’ Cerrando tarea: $tareaId');
 
       final tarea = await _tareaService.cerrarTarea(tareaId);
 
@@ -350,12 +356,12 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('âœ… Tarea cerrada');
+      dlog('âœ… Tarea cerrada');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('âŒ Error cerrando tarea: $e');
+      dlog('âŒ Error cerrando tarea: $e');
       rethrow;
     }
   }
@@ -369,7 +375,7 @@ class TareaProvider with ChangeNotifier {
     required List<File> archivos,
   }) async {
     try {
-      print('ðŸ“Ž Subiendo archivos de referencia a tarea: $tareaId');
+      dlog('ðŸ“Ž Subiendo archivos de referencia a tarea: $tareaId');
 
       final tarea = await _tareaService.subirArchivosReferencia(
         tareaId: tareaId,
@@ -382,12 +388,12 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('âœ… Archivos subidos');
+      dlog('âœ… Archivos subidos');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('âŒ Error subiendo archivos: $e');
+      dlog('âŒ Error subiendo archivos: $e');
       rethrow;
     }
   }
@@ -397,7 +403,7 @@ class TareaProvider with ChangeNotifier {
     required String archivoId,
   }) async {
     try {
-      print('ðŸ—‘ï¸ Eliminando archivo de referencia: $archivoId');
+      dlog('ðŸ—‘ï¸ Eliminando archivo de referencia: $archivoId');
 
       final tarea = await _tareaService.eliminarArchivoReferencia(
         tareaId: tareaId,
@@ -410,12 +416,12 @@ class TareaProvider with ChangeNotifier {
         _tareas[index] = tarea;
       }
 
-      print('âœ… Archivo eliminado');
+      dlog('âœ… Archivo eliminado');
       notifyListeners();
 
       return tarea;
     } catch (e) {
-      print('âŒ Error eliminando archivo: $e');
+      dlog('âŒ Error eliminando archivo: $e');
       rethrow;
     }
   }
@@ -430,7 +436,7 @@ class TareaProvider with ChangeNotifier {
     String? comentarioEstudiante,
   }) async {
     try {
-      print('ðŸ“¤ Entregando tarea: $tareaId');
+      dlog('ðŸ“¤ Entregando tarea: $tareaId');
 
       final entrega = await _tareaService.entregarTarea(
         tareaId: tareaId,
@@ -438,14 +444,14 @@ class TareaProvider with ChangeNotifier {
         comentarioEstudiante: comentarioEstudiante,
       );
 
-      print('âœ… Tarea entregada');
+      dlog('âœ… Tarea entregada');
 
       // Refrescar mis tareas
       await cargarMisTareas(filtro: _currentFilter, refresh: true);
 
       return entrega;
     } catch (e) {
-      print('âŒ Error entregando tarea: $e');
+      dlog('âŒ Error entregando tarea: $e');
       rethrow;
     }
   }
@@ -456,11 +462,11 @@ class TareaProvider with ChangeNotifier {
 
   Future<void> marcarVista(String tareaId) async {
     try {
-      print('ðŸ‘ï¸ Marcando tarea como vista: $tareaId');
+      dlog('ðŸ‘ï¸ Marcando tarea como vista: $tareaId');
       await _tareaService.marcarVista(tareaId);
-      print('âœ… Tarea marcada como vista');
+      dlog('âœ… Tarea marcada como vista');
     } catch (e) {
-      print('âŒ Error marcando vista: $e');
+      dlog('âŒ Error marcando vista: $e');
       // No hacer rethrow, es una operaciÃ³n de fondo
     }
   }
@@ -476,7 +482,7 @@ class TareaProvider with ChangeNotifier {
     String? comentarioDocente,
   }) async {
     try {
-      print('â­ Calificando entrega: $entregaId');
+      dlog('â­ Calificando entrega: $entregaId');
 
       final entrega = await _tareaService.calificarEntrega(
         tareaId: tareaId,
@@ -485,7 +491,7 @@ class TareaProvider with ChangeNotifier {
         comentarioDocente: comentarioDocente,
       );
 
-      print('âœ… Entrega calificada');
+      dlog('âœ… Entrega calificada');
 
       // Refrescar tarea actual si estÃ¡ en la lista
       final index = _tareas.indexWhere((t) => t.id == tareaId);
@@ -500,7 +506,7 @@ class TareaProvider with ChangeNotifier {
 
       return entrega;
     } catch (e) {
-      print('âŒ Error calificando entrega: $e');
+      dlog('âŒ Error calificando entrega: $e');
       rethrow;
     }
   }
@@ -511,7 +517,7 @@ class TareaProvider with ChangeNotifier {
 
   Future<Tarea?> obtenerTarea(String tareaId) async {
     try {
-      print('ðŸ”¥ Obteniendo tarea: $tareaId');
+      dlog('ðŸ”¥ Obteniendo tarea: $tareaId');
 
       // Primero buscar en lista local
       final localTarea = _tareas.firstWhere(
@@ -544,21 +550,21 @@ class TareaProvider with ChangeNotifier {
       );
 
       if (localTarea.id == tareaId) {
-        print('âœ… Tarea encontrada en cache local');
+        dlog('âœ… Tarea encontrada en cache local');
         return localTarea;
       }
 
       // Si no estÃ¡ en local, obtener del servidor
-      print('ðŸ“¡ Obteniendo del servidor...');
+      dlog('ðŸ“¡ Obteniendo del servidor...');
       final tarea = await _tareaService.obtenerTarea(tareaId);
 
       if (tarea != null) {
-        print('âœ… Tarea obtenida del servidor');
+        dlog('âœ… Tarea obtenida del servidor');
       }
 
       return tarea;
     } catch (e) {
-      print('âŒ Error obteniendo tarea: $e');
+      dlog('âŒ Error obteniendo tarea: $e');
       rethrow;
     }
   }
@@ -569,12 +575,12 @@ class TareaProvider with ChangeNotifier {
 
   Future<List<EntregaTarea>> verEntregas(String tareaId) async {
     try {
-      print('ðŸ“Š Obteniendo entregas de tarea: $tareaId');
+      dlog('ðŸ“Š Obteniendo entregas de tarea: $tareaId');
       final entregas = await _tareaService.verEntregas(tareaId);
-      print('âœ… Entregas obtenidas: ${entregas.length}');
+      dlog('âœ… Entregas obtenidas: ${entregas.length}');
       return entregas;
     } catch (e) {
-      print('âŒ Error obteniendo entregas: $e');
+      dlog('âŒ Error obteniendo entregas: $e');
       rethrow;
     }
   }
@@ -584,12 +590,12 @@ class TareaProvider with ChangeNotifier {
   // ========================================
 
   Future<void> refrescar() async {
-    print('ðŸ”„ Refrescando lista...');
+    dlog('ðŸ”„ Refrescando lista...');
     await listarTareas(refresh: true);
   }
 
   Future<void> refrescarMisTareas() async {
-    print('ðŸ”„ Refrescando mis tareas...');
+    dlog('ðŸ”„ Refrescando mis tareas...');
     await cargarMisTareas(filtro: _currentFilter, refresh: true);
   }
 
@@ -600,7 +606,7 @@ class TareaProvider with ChangeNotifier {
   Future<void> cargarMas() async {
     if (!hasMorePages || _isLoading) return;
 
-    print('ðŸ“„ Cargando mÃ¡s tareas... (pÃ¡gina ${currentPage + 1})');
+    dlog('ðŸ“„ Cargando mÃ¡s tareas... (pÃ¡gina ${currentPage + 1})');
 
     final nextPage = currentPage + 1;
     await listarTareas(page: nextPage);
@@ -611,7 +617,7 @@ class TareaProvider with ChangeNotifier {
   // ========================================
 
   void limpiarEstado() {
-    print('ðŸ§¹ Limpiando estado del provider');
+    dlog('ðŸ§¹ Limpiando estado del provider');
     _tareas = [];
     _misTareas = [];
     _meta = {
@@ -650,7 +656,7 @@ class TareaProvider with ChangeNotifier {
       _isLoadingTareasHijo = true;
       notifyListeners();
 
-      print('📚 Cargando tareas del hijo: $estudianteId');
+      dlog('📚 Cargando tareas del hijo: $estudianteId');
 
       final tareas = await _tareaService.tareasEstudiante(
         estudianteId: estudianteId,
@@ -659,10 +665,10 @@ class TareaProvider with ChangeNotifier {
       _tareasHijo = tareas;
       _isLoadingTareasHijo = false;
 
-      print('✅ Tareas del hijo cargadas: ${_tareasHijo.length}');
+      dlog('✅ Tareas del hijo cargadas: ${_tareasHijo.length}');
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando tareas del hijo: $e');
+      dlog('❌ Error cargando tareas del hijo: $e');
       _isLoadingTareasHijo = false;
       notifyListeners();
       rethrow;

@@ -1,11 +1,14 @@
 // lib/screens/asistencia/lista_asistencia_screen.dart
 
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/asistencia.dart';
+import '../../models/usuario.dart';
 import '../../providers/asistencia_provider.dart';
+import '../../services/api_service.dart';
 import '../../services/permission_service.dart';
 
 class ListaAsistenciaScreen extends StatefulWidget {
@@ -16,7 +19,16 @@ class ListaAsistenciaScreen extends StatefulWidget {
 }
 
 class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
+  final ApiService _apiService = ApiService();
+
   String? _cursoSeleccionado;
+  // Para ACUDIENTE: ID del hijo seleccionado actualmente
+  String? _estudianteIdSeleccionado;
+  // Datos completos de hijos del acudiente (con nombres reales)
+  List<Usuario> _hijosUsuarios = [];
+  // Panel de filtros visible (colapsable)
+  bool _filtrosVisibles = true;
+
   DateTime _fechaInicio = DateTime(
     DateTime.now().year,
     DateTime.now().month,
@@ -24,25 +36,94 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
   );
   DateTime _fechaFin = DateTime.now();
 
+  bool get _esEstudiante =>
+      PermissionService.getCurrentUser()?.tipo.value == 'ESTUDIANTE';
+  bool get _esAcudiente =>
+      PermissionService.getCurrentUser()?.tipo.value == 'ACUDIENTE';
+  bool get _esRectorOCoordinador {
+    final tipo = PermissionService.getCurrentUser()?.tipo.value ?? '';
+    return tipo == 'RECTOR' || tipo == 'COORDINADOR';
+  }
+
   @override
   void initState() {
     super.initState();
-    _cargarDatos();
+    _filtrosVisibles = !_esEstudiante;
+
+    final provider = context.read<AsistenciaProvider>();
+    if (provider.resumenes.isEmpty) {
+      provider.prepareLoading();
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _inicializarRol();
+    });
+  }
+
+  void _inicializarRol() {
+    final user = PermissionService.getCurrentUser();
+    if (user == null) return;
+
+    if (_esEstudiante) {
+      // ESTUDIANTE: filtra por su propio ID
+      _estudianteIdSeleccionado = user.id;
+      _cargarDatos();
+    } else if (_esAcudiente) {
+      // ACUDIENTE: cargar datos reales de cada hijo para mostrar su nombre
+      final hijosIds = user.infoAcademica?.estudiantesAsociados ?? [];
+      if (hijosIds.isNotEmpty) {
+        _estudianteIdSeleccionado = hijosIds.first;
+        _cargarNombresHijos(hijosIds);
+      } else {
+        _cargarDatos();
+      }
+    } else {
+      _cargarDatos();
+    }
+  }
+
+  Future<void> _cargarNombresHijos(List<String> ids) async {
+    final futures = ids.map((id) async {
+      try {
+        final response = await _apiService.get('/usuarios/$id');
+        final data = response['data'] ?? response;
+        return Usuario.fromJson(data);
+      } catch (e) {
+        dlog('⚠️ No se pudo cargar nombre del hijo $id: $e');
+        return null;
+      }
+    });
+
+    final results = await Future.wait(futures);
+    if (!mounted) return;
+    setState(() => _hijosUsuarios = results.whereType<Usuario>().toList());
+    await _cargarDatos();
   }
 
   Future<void> _cargarDatos() async {
     final provider = context.read<AsistenciaProvider>();
 
-    // Cargar cursos
-    await provider.cargarCursos();
-
-    // Cargar resumen de asistencia
-    await provider.cargarResumen(
-      refresh: true,
-      fechaInicio: DateFormat('yyyy-MM-dd').format(_fechaInicio),
-      fechaFin: DateFormat('yyyy-MM-dd').format(_fechaFin),
-      cursoId: _cursoSeleccionado,
-    );
+    if (!_esEstudiante && !_esAcudiente) {
+      // Docente/Admin: cursos y resumen en paralelo
+      await Future.wait([
+        provider.cargarCursos(),
+        provider.cargarResumen(
+          refresh: true,
+          fechaInicio: DateFormat('yyyy-MM-dd').format(_fechaInicio),
+          fechaFin: DateFormat('yyyy-MM-dd').format(_fechaFin),
+          cursoId: _cursoSeleccionado,
+          estudianteId: _estudianteIdSeleccionado,
+        ),
+      ]);
+    } else {
+      await provider.cargarResumen(
+        refresh: true,
+        fechaInicio: DateFormat('yyyy-MM-dd').format(_fechaInicio),
+        fechaFin: DateFormat('yyyy-MM-dd').format(_fechaFin),
+        cursoId: _cursoSeleccionado,
+        estudianteId: _estudianteIdSeleccionado,
+      );
+    }
   }
 
   Future<void> _onRefresh() async {
@@ -56,6 +137,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
       fechaInicio: DateFormat('yyyy-MM-dd').format(_fechaInicio),
       fechaFin: DateFormat('yyyy-MM-dd').format(_fechaFin),
       cursoId: _cursoSeleccionado,
+      estudianteId: _estudianteIdSeleccionado,
     );
   }
 
@@ -107,11 +189,34 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
           ),
         ),
         foregroundColor: Colors.white,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.go('/');
+            }
+          },
+        ),
+        actions: [
+          IconButton(
+            icon: Icon(
+              _filtrosVisibles ? Icons.filter_list_off : Icons.filter_list,
+              color: Colors.white,
+            ),
+            onPressed: () => setState(() => _filtrosVisibles = !_filtrosVisibles),
+            tooltip: _filtrosVisibles ? 'Ocultar filtros' : 'Mostrar filtros',
+          ),
+        ],
       ),
       body: Column(
         children: [
           // 🔍 PANEL DE FILTROS
-          _buildFiltrosPanel(),
+          if (_filtrosVisibles) _buildFiltrosPanel(),
+
+          // 🚨 BANNER RIESGO (solo RECTOR / COORDINADOR)
+          if (_esRectorOCoordinador) _buildBannerRiesgo(),
 
           // 📋 LISTA DE REGISTROS
           Expanded(
@@ -159,6 +264,44 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
   }
 
   // ========================================
+  // 🚨 BANNER ESTUDIANTES EN RIESGO
+  // ========================================
+
+  Widget _buildBannerRiesgo() {
+    return InkWell(
+      onTap: () => context.push('/asistencia/informes/riesgo'),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: const BoxDecoration(
+          color: Color(0xFFFEF2F2),
+          border: Border(
+            bottom: BorderSide(color: Color(0xFFFECACA)),
+          ),
+        ),
+        child: const Row(
+          children: [
+            Icon(Icons.warning_amber_rounded,
+                color: Color(0xFFEF4444), size: 20),
+            SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Ver estudiantes en riesgo de ausencias',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: Color(0xFFB91C1C),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Icon(Icons.chevron_right,
+                color: Color(0xFFEF4444), size: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ========================================
   // 🔍 PANEL DE FILTROS
   // ========================================
 
@@ -169,7 +312,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -177,43 +320,124 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
       ),
       child: Column(
         children: [
-          // Selector de curso
-          Consumer<AsistenciaProvider>(
-            builder: (context, provider, _) {
-              return DropdownButtonFormField<String>(
-                value: _cursoSeleccionado,
-                decoration: InputDecoration(
-                  labelText: 'Curso',
-                  prefixIcon: const Icon(Icons.school),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+          // ── SELECTOR DE CURSO (solo para roles que ven todos los cursos) ──
+          if (!_esEstudiante && !_esAcudiente)
+            Consumer<AsistenciaProvider>(
+              builder: (context, provider, _) {
+                return DropdownButtonFormField<String>(
+                  initialValue: _cursoSeleccionado,
+                  decoration: InputDecoration(
+                    labelText: 'Curso',
+                    prefixIcon: const Icon(Icons.school),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[50],
                   ),
-                  filled: true,
-                  fillColor: Colors.grey[50],
+                  items: [
+                    const DropdownMenuItem(
+                      value: null,
+                      child: Text('Todos los cursos'),
+                    ),
+                    ...provider.cursos.map((curso) {
+                      return DropdownMenuItem(
+                        value: curso.id,
+                        child: Text(curso.nombreCompleto),
+                      );
+                    }),
+                  ],
+                  onChanged: (value) {
+                    setState(() => _cursoSeleccionado = value);
+                    _aplicarFiltros();
+                  },
+                );
+              },
+            ),
+
+          // ── SELECTOR DE HIJO (solo ACUDIENTE con múltiples hijos) ──
+          if (_esAcudiente && _hijosUsuarios.length > 1) ...[
+            DropdownButtonFormField<String>(
+              initialValue: _estudianteIdSeleccionado,
+              decoration: InputDecoration(
+                labelText: 'Seleccionar hijo',
+                prefixIcon: const Icon(Icons.child_care),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
                 ),
-                items: [
-                  const DropdownMenuItem(
-                    value: null,
-                    child: Text('Todos los cursos'),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              items: _hijosUsuarios.map((hijo) {
+                return DropdownMenuItem<String>(
+                  value: hijo.id,
+                  child: Text(hijo.nombreCompleto),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() => _estudianteIdSeleccionado = value);
+                _aplicarFiltros();
+              },
+            ),
+          ],
+
+          // ── LABEL ESTUDIANTE (solo rol ESTUDIANTE) ──
+          if (_esEstudiante)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.person_outline,
+                      color: Color(0xFF047857), size: 20),
+                  SizedBox(width: 10),
+                  Text(
+                    'Viendo mi propia asistencia',
+                    style: TextStyle(
+                      color: Color(0xFF047857),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
                   ),
-                  ...provider.cursos.map((curso) {
-                    return DropdownMenuItem(
-                      value: curso.id,
-                      child: Text(curso.nombreCompleto),
-                    );
-                  }),
                 ],
-                onChanged: (value) {
-                  setState(() => _cursoSeleccionado = value);
-                  _aplicarFiltros();
-                },
-              );
-            },
-          ),
+              ),
+            ),
 
-          const SizedBox(height: 12),
+          // ── LABEL ACUDIENTE hijo único ──
+          if (_esAcudiente && _hijosUsuarios.length == 1)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF0FDF4),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFBBF7D0)),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.child_care, color: Color(0xFF047857), size: 20),
+                  SizedBox(width: 10),
+                  Text(
+                    'Viendo asistencia de tu hijo',
+                    style: TextStyle(
+                      color: Color(0xFF047857),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
 
-          // Selectores de fecha
+          if (!_esEstudiante && !_esAcudiente) const SizedBox(height: 12),
+          if (_esEstudiante || _esAcudiente) const SizedBox(height: 12),
+
+          // ── SELECTORES DE FECHA (todos los roles) ──
           Row(
             children: [
               Expanded(
@@ -254,8 +478,8 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
         ),
         child: Row(
           children: [
-            Icon(Icons.calendar_today,
-                size: 20, color: const Color(0xFF047857)),
+            const Icon(Icons.calendar_today,
+                size: 20, color: Color(0xFF047857)),
             const SizedBox(width: 8),
             Expanded(
               child: Column(
@@ -312,9 +536,9 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                       color: const Color(0xFFF0FDF4),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.calendar_today,
-                      color: const Color(0xFF047857),
+                      color: Color(0xFF047857),
                       size: 24,
                     ),
                   ),
@@ -441,8 +665,8 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.book,
-                          size: 16, color: const Color(0xFF047857)),
+                      const Icon(Icons.book,
+                          size: 16, color: Color(0xFF047857)),
                       const SizedBox(width: 6),
                       Text(
                         'Asignatura: ',
@@ -455,9 +679,9 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                       Expanded(
                         child: Text(
                           resumen.asignatura!.nombre,
-                          style: TextStyle(
+                          style: const TextStyle(
                             fontSize: 12,
-                            color: const Color(0xFF047857),
+                            color: Color(0xFF047857),
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -472,23 +696,6 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
               // Barra de porcentaje
               _buildBarraAsistencia(resumen.porcentajeAsistencia),
 
-              // Info del docente
-              if (resumen.registradoPor != null) ...[
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Icon(Icons.person, size: 14, color: Colors.grey[500]),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Registrado por: ${resumen.registradoPor!.nombreCompleto}',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
             ],
           ),
         ),

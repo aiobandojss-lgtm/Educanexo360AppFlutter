@@ -1,13 +1,13 @@
-// lib/screens/usuarios/edit_user_screen.dart
+﻿// lib/screens/usuarios/edit_user_screen.dart
 // ✏️ PANTALLA DE CREAR/EDITAR USUARIO - CORREGIDA
 // Basada en EditUserScreen.tsx - SIN CAMPO TELÉFONO
 
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
-import '../../services/permission_service.dart';
 import '../../services/auth_service.dart'; // ✅ AGREGADO
 
 class EditUserScreen extends StatefulWidget {
@@ -41,15 +41,27 @@ class _EditUserScreenState extends State<EditUserScreen> {
   bool _showConfirmPassword = false;
   bool _showRoleSelector = false;
 
+  // 🎨 DESCRIPCIONES POR ROL
+  static const Map<UserRole, String> _roleDescriptions = {
+    UserRole.superAdmin: 'Acceso total al sistema',
+    UserRole.admin: 'Gestiona toda la institución',
+    UserRole.rector: 'Supervisión académica y administrativa',
+    UserRole.coordinador: 'Coordinación de cursos y docentes',
+    UserRole.administrativo: 'Funciones administrativas generales',
+    UserRole.docente: 'Cursos, tareas y calificaciones',
+    UserRole.estudiante: 'Ve tareas, entregas y calificaciones',
+    UserRole.acudiente: 'Seguimiento de sus hijos asociados',
+  };
+
   // 🎨 COLORES POR ROL
   static const Map<UserRole, Color> _roleColors = {
-    UserRole.superAdmin: Color(0xFF7C3AED),
+    UserRole.superAdmin: Color(0xFF0F766E),
     UserRole.admin: Color(0xFF059669),
     UserRole.rector: Color(0xFF0284C7),
     UserRole.coordinador: Color(0xFF0891B2),
     UserRole.administrativo: Color(0xFF10B981),
     UserRole.docente: Color(0xFFF59E0B),
-    UserRole.estudiante: Color(0xFFEC4899),
+    UserRole.estudiante: Color(0xFF2563EB),
     UserRole.acudiente: Color(0xFFEF4444),
   };
 
@@ -179,7 +191,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
           return;
         }
 
-        print('🏫 Usando escuelaId: $escuelaId');
+        dlog('🏫 Usando escuelaId: $escuelaId');
 
         // Crear nuevo usuario
         final usuario = await provider.createUsuario(
@@ -206,7 +218,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
       }
     } catch (e) {
       setState(() => _isSaving = false);
-      print('❌ Error completo: $e');
+      dlog('❌ Error completo: $e');
       _showError('Error al guardar usuario: ${e.toString()}');
     }
   }
@@ -299,7 +311,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
           const SizedBox(width: 8),
           Expanded(
             child: Text(
-              _isEditing ? '✏️ Editar Usuario' : '➕ Crear Usuario',
+              _isEditing ? 'Editar Usuario' : 'Crear Usuario',
               style: const TextStyle(
                 fontSize: 20,
                 color: Colors.white,
@@ -323,13 +335,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '👤 Información Personal',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            _buildSectionTitle(Icons.person, 'Información Personal'),
             const SizedBox(height: 16),
 
             // Nombre
@@ -357,6 +363,35 @@ class _EditUserScreenState extends State<EditUserScreen> {
               hint: 'correo@ejemplo.com',
               keyboardType: TextInputType.emailAddress,
             ),
+
+            // Aviso de contraseña en modo edición
+            if (_isEditing) ...[
+              const SizedBox(height: 14),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFFBEB),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFFCD34D)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.lock_outline, size: 18, color: Color(0xFF92400E)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Para cambiar la contraseña, ve al Detalle del usuario → Cambiar Contraseña.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF92400E),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -374,13 +409,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '🔒 Contraseña',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            _buildSectionTitle(Icons.lock, 'Contraseña'),
             const SizedBox(height: 8),
 
             Container(
@@ -392,7 +421,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
               ),
               child: const Row(
                 children: [
-                  Text('🔐', style: TextStyle(fontSize: 16)),
+                  Icon(Icons.lock_outline, size: 20, color: Color(0xFF0369A1)),
                   SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -445,13 +474,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '⚙️ Configuración del Sistema',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
+            _buildSectionTitle(Icons.settings, 'Configuración del Sistema'),
             const SizedBox(height: 16),
 
             // Selector de rol
@@ -545,7 +568,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
                             value ? UserStatus.activo : UserStatus.inactivo;
                       });
                     },
-                    activeColor: const Color(0xFF10B981),
+                    activeThumbColor: const Color(0xFF10B981),
                   ),
                 ],
               ),
@@ -633,9 +656,30 @@ class _EditUserScreenState extends State<EditUserScreen> {
               borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
             ),
             suffixIcon: IconButton(
-              icon: Text(showPassword ? '🙈' : '👁️'),
+              icon: Icon(
+                showPassword ? Icons.visibility_off : Icons.visibility,
+                color: Colors.grey[600],
+                size: 20,
+              ),
               onPressed: onToggle,
             ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSectionTitle(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.black87),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w700,
+            color: Colors.black87,
           ),
         ),
       ],
@@ -647,19 +691,21 @@ class _EditUserScreenState extends State<EditUserScreen> {
   // ========================================
 
   Widget _buildBottomBar() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 8,
-            offset: const Offset(0, -2),
-          ),
-        ],
-      ),
-      child: Row(
+    return SafeArea(
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
+            ),
+          ],
+        ),
+        child: Row(
         children: [
           // Botón cancelar
           Expanded(
@@ -717,6 +763,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
           ),
         ],
       ),
+      ),
     );
   }
 
@@ -725,7 +772,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
   // ========================================
 
   Widget _buildRoleSelectorModal() {
-    final roles = UserRole.values;
+    const roles = UserRole.values;
 
     return Material(
       color: Colors.black54,
@@ -801,23 +848,39 @@ class _EditUserScreenState extends State<EditUserScreen> {
                                   ),
                                 ),
                                 const SizedBox(width: 12),
-                                Text(
-                                  role.displayName,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: _selectedRole == role
-                                        ? FontWeight.w600
-                                        : FontWeight.w500,
-                                    color: _selectedRole == role
-                                        ? _roleColors[role]
-                                        : Colors.black87,
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        role.displayName,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: _selectedRole == role
+                                              ? FontWeight.w600
+                                              : FontWeight.w500,
+                                          color: _selectedRole == role
+                                              ? _roleColors[role]
+                                              : Colors.black87,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        _roleDescriptions[role] ?? '',
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          color: Colors.grey[500],
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         );
-                      }).toList(),
+                      }),
                     ],
                   ),
                 ),

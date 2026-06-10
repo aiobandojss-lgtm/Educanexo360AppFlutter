@@ -1,4 +1,5 @@
-// lib/services/auth_service.dart
+﻿// lib/services/auth_service.dart
+import '../utils/logger.dart';
 import '../models/usuario.dart';
 import '../config/app_config.dart';
 import 'api_service.dart';
@@ -22,8 +23,8 @@ class AuthService {
   /// Iniciar sesión
   Future<AuthResponse> login(String email, String password) async {
     try {
-      print('\n🔐 === INICIANDO LOGIN ===');
-      print('📧 Email: $email');
+      dlog('\n🔐 === INICIANDO LOGIN ===');
+      dlog('📧 Email: $email');
 
       // Limpiar cualquier sesión anterior
       await logout(silent: true);
@@ -37,7 +38,7 @@ class AuthService {
         },
       );
 
-      print('📦 Respuesta del backend recibida');
+      dlog('📦 Respuesta del backend recibida');
 
       // Verificar respuesta
       if (response['success'] != true) {
@@ -51,14 +52,14 @@ class AuthService {
       final accessToken = tokens['access']['token'] as String;
       final refreshToken = tokens['refresh']['token'] as String;
 
-      print('🔑 Tokens extraídos:');
-      print('   Access: ${accessToken.substring(0, 20)}...');
-      print('   Refresh: ${refreshToken.substring(0, 20)}...');
+      dlog('🔑 Tokens extraídos:');
+      dlog('   Access: ${accessToken.substring(0, 20)}...');
+      dlog('   Refresh: ${refreshToken.substring(0, 20)}...');
 
       // Guardar tokens
       await StorageService.saveToken(accessToken);
       await StorageService.saveRefreshToken(refreshToken);
-      print('✅ Tokens guardados en storage');
+      dlog('✅ Tokens guardados en storage');
 
       // Crear objeto Usuario desde la respuesta
       final userJson = data['user'];
@@ -67,13 +68,13 @@ class AuthService {
       // Guardar usuario
       await StorageService.saveUser(user);
       _currentUser = user;
-      print('✅ Usuario guardado: ${user.nombre} ${user.apellidos}');
+      dlog('✅ Usuario guardado: ${user.nombre} ${user.apellidos}');
 
       // Actualizar PermissionService con el usuario actual
       PermissionService.setCurrentUser(user);
-      print('✅ PermissionService actualizado');
+      dlog('✅ PermissionService actualizado');
 
-      print('🎉 Login exitoso\n');
+      dlog('🎉 Login exitoso\n');
 
       return AuthResponse(
         success: true,
@@ -83,13 +84,13 @@ class AuthService {
         message: 'Inicio de sesión exitoso',
       );
     } on ApiException catch (e) {
-      print('❌ Error de API: ${e.message}');
+      dlog('❌ Error de API: ${e.message}');
       return AuthResponse(
         success: false,
         message: e.message,
       );
     } catch (e) {
-      print('❌ Error inesperado: $e');
+      dlog('❌ Error inesperado: $e');
       return AuthResponse(
         success: false,
         message: 'Error al iniciar sesión: ${e.toString()}',
@@ -104,14 +105,14 @@ class AuthService {
   /// Cerrar sesión
   Future<void> logout({bool silent = false}) async {
     try {
-      if (!silent) print('\n🚪 === CERRANDO SESIÓN ===');
+      if (!silent) dlog('\n🚪 === CERRANDO SESIÓN ===');
 
       // Intentar llamar al endpoint de logout (opcional)
       try {
         await apiService.post(AppConfig.authLogout);
       } catch (e) {
         // Ignorar errores del backend en logout
-        if (!silent) print('⚠️ Error en logout del backend (ignorado): $e');
+        if (!silent) dlog('⚠️ Error en logout del backend (ignorado): $e');
       }
 
       // Limpiar storage local
@@ -123,9 +124,9 @@ class AuthService {
       // Limpiar PermissionService
       PermissionService.clearCurrentUser();
 
-      if (!silent) print('✅ Sesión cerrada correctamente\n');
+      if (!silent) dlog('✅ Sesión cerrada correctamente\n');
     } catch (e) {
-      if (!silent) print('❌ Error cerrando sesión: $e\n');
+      if (!silent) dlog('❌ Error cerrando sesión: $e\n');
       rethrow;
     }
   }
@@ -137,13 +138,13 @@ class AuthService {
   /// Verificar si hay una sesión válida
   Future<bool> checkSession() async {
     try {
-      print('\n🔍 === VERIFICANDO SESIÓN ===');
+      dlog('\n🔍 === VERIFICANDO SESIÓN ===');
 
       // Verificar si hay token y usuario guardados
       final hasSession = await StorageService.hasValidSession();
 
       if (!hasSession) {
-        print('❌ No hay sesión guardada\n');
+        dlog('❌ No hay sesión guardada\n');
         return false;
       }
 
@@ -151,7 +152,7 @@ class AuthService {
       final user = await StorageService.getUser();
 
       if (user == null) {
-        print('❌ No se pudo recuperar usuario\n');
+        dlog('❌ No se pudo recuperar usuario\n');
         return false;
       }
 
@@ -159,14 +160,14 @@ class AuthService {
       _currentUser = user;
       PermissionService.setCurrentUser(user);
 
-      print('✅ Sesión válida encontrada');
-      print('👤 Usuario: ${user.nombre} ${user.apellidos} (${user.tipo})');
-      print(
+      dlog('✅ Sesión válida encontrada');
+      dlog('👤 Usuario: ${user.nombre} ${user.apellidos} (${user.tipo})');
+      dlog(
           '🎯 Permisos cargados: ${PermissionService.getUserPermissions().length}\n');
 
       return true;
     } catch (e) {
-      print('❌ Error verificando sesión: $e\n');
+      dlog('❌ Error verificando sesión: $e\n');
       return false;
     }
   }
@@ -184,7 +185,7 @@ class AuthService {
     String? telefono,
   }) async {
     try {
-      print('\n🔄 === ACTUALIZANDO USUARIO ===');
+      dlog('\n🔄 === ACTUALIZANDO USUARIO ===');
 
       final data = <String, dynamic>{};
       if (nombre != null) data['nombre'] = nombre;
@@ -210,11 +211,11 @@ class AuthService {
       _currentUser = updatedUser;
       PermissionService.setCurrentUser(updatedUser);
 
-      print('✅ Usuario actualizado correctamente\n');
+      dlog('✅ Usuario actualizado correctamente\n');
 
       return updatedUser;
     } on ApiException catch (e) {
-      print('❌ Error de API: ${e.message}\n');
+      dlog('❌ Error de API: ${e.message}\n');
       rethrow;
     }
   }
@@ -230,7 +231,7 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      print('\n🔒 === CAMBIANDO CONTRASEÑA ===');
+      dlog('\n🔒 === CAMBIANDO CONTRASEÑA ===');
 
       final response = await apiService.post(
         AppConfig.usuarioChangePassword(userId),
@@ -245,9 +246,9 @@ class AuthService {
             response['message'] ?? 'Error cambiando contraseña');
       }
 
-      print('✅ Contraseña cambiada exitosamente\n');
+      dlog('✅ Contraseña cambiada exitosamente\n');
     } on ApiException catch (e) {
-      print('❌ Error de API: ${e.message}\n');
+      dlog('❌ Error de API: ${e.message}\n');
       throw AuthException(e.message);
     }
   }
@@ -259,8 +260,8 @@ class AuthService {
   /// Solicitar recuperación de contraseña
   Future<void> forgotPassword(String email) async {
     try {
-      print('\n📧 === RECUPERAR CONTRASEÑA ===');
-      print('Email: $email');
+      dlog('\n📧 === RECUPERAR CONTRASEÑA ===');
+      dlog('Email: $email');
 
       final response = await apiService.post(
         AppConfig.authForgotPassword,
@@ -272,9 +273,9 @@ class AuthService {
             response['message'] ?? 'Error solicitando recuperación');
       }
 
-      print('✅ Email de recuperación enviado\n');
+      dlog('✅ Email de recuperación enviado\n');
     } on ApiException catch (e) {
-      print('❌ Error de API: ${e.message}\n');
+      dlog('❌ Error de API: ${e.message}\n');
       throw AuthException(e.message);
     }
   }
@@ -285,7 +286,7 @@ class AuthService {
     required String newPassword,
   }) async {
     try {
-      print('\n🔐 === RESTABLECER CONTRASEÑA ===');
+      dlog('\n🔐 === RESTABLECER CONTRASEÑA ===');
 
       final response = await apiService.post(
         AppConfig.authResetPassword,
@@ -300,9 +301,9 @@ class AuthService {
             response['message'] ?? 'Error restableciendo contraseña');
       }
 
-      print('✅ Contraseña restablecida exitosamente\n');
+      dlog('✅ Contraseña restablecida exitosamente\n');
     } on ApiException catch (e) {
-      print('❌ Error de API: ${e.message}\n');
+      dlog('❌ Error de API: ${e.message}\n');
       throw AuthException(e.message);
     }
   }
@@ -321,18 +322,18 @@ class AuthService {
   UserRole? get currentUserRole => _currentUser?.tipo;
 
   /// Debug: mostrar estado actual de autenticación
-  void debugPrint() {
-    print('\n👤 ===== AUTH SERVICE DEBUG =====');
-    print('Autenticado: ${isAuthenticated ? "SÍ" : "NO"}');
+  void debugState() {
+    dlog('\n👤 ===== AUTH SERVICE DEBUG =====');
+    dlog('Autenticado: ${isAuthenticated ? "SÍ" : "NO"}');
     if (_currentUser != null) {
-      print('Usuario: ${_currentUser!.nombre} ${_currentUser!.apellidos}');
-      print('Email: ${_currentUser!.email}');
-      print('Rol: ${_currentUser!.tipo}');
-      print('ID: ${_currentUser!.id}');
-      print('Escuela: ${_currentUser!.escuelaId ?? "N/A"}');
-      print('Permisos: ${PermissionService.getUserPermissions().length}');
+      dlog('Usuario: ${_currentUser!.nombre} ${_currentUser!.apellidos}');
+      dlog('Email: ${_currentUser!.email}');
+      dlog('Rol: ${_currentUser!.tipo}');
+      dlog('ID: ${_currentUser!.id}');
+      dlog('Escuela: ${_currentUser!.escuelaId ?? "N/A"}');
+      dlog('Permisos: ${PermissionService.getUserPermissions().length}');
     }
-    print('===============================\n');
+    dlog('===============================\n');
   }
 }
 

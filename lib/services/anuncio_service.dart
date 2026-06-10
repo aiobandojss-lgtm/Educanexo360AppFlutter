@@ -1,5 +1,6 @@
-// lib/services/anuncio_service.dart
+﻿// lib/services/anuncio_service.dart
 
+import '../utils/logger.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import '../models/anuncio.dart';
@@ -22,9 +23,9 @@ class AnuncioService {
     bool soloPublicados = false,
   }) async {
     try {
-      print('📥 Obteniendo anuncios...');
-      print('   Filtro: ${filtro.displayName}');
-      print('   Solo publicados: $soloPublicados');
+      dlog('📥 Obteniendo anuncios...');
+      dlog('   Filtro: ${filtro.displayName}');
+      dlog('   Solo publicados: $soloPublicados');
 
       final queryParams = <String, dynamic>{
         'pagina': page,
@@ -76,14 +77,14 @@ class AnuncioService {
             'paginas': 1,
           };
 
-      print('✅ Anuncios obtenidos: ${anuncios.length}');
+      dlog('✅ Anuncios obtenidos: ${anuncios.length}');
 
       return {
         'anuncios': anuncios,
         'meta': meta,
       };
     } catch (e) {
-      print('❌ Error obteniendo anuncios: $e');
+      dlog('❌ Error obteniendo anuncios: $e');
       return {
         'anuncios': <Anuncio>[],
         'meta': {
@@ -102,7 +103,7 @@ class AnuncioService {
 
   Future<Anuncio?> getAnuncioById(String id) async {
     try {
-      print('📥 Obteniendo anuncio: $id');
+      dlog('📥 Obteniendo anuncio: $id');
       final response = await _apiService.get('/anuncios/$id');
 
       if (response['data'] != null) {
@@ -111,7 +112,7 @@ class AnuncioService {
 
       return null;
     } catch (e) {
-      print('❌ Error obteniendo anuncio: $e');
+      dlog('❌ Error obteniendo anuncio: $e');
       rethrow;
     }
   }
@@ -132,10 +133,10 @@ class AnuncioService {
     File? imagenPortada,
   }) async {
     try {
-      print('📤 Creando anuncio...');
-      print('   Título: $titulo');
-      print('   Publicar: $publicar');
-      print('   Adjuntos: ${adjuntos?.length ?? 0}');
+      dlog('📤 Creando anuncio...');
+      dlog('   Título: $titulo');
+      dlog('   Publicar: $publicar');
+      dlog('   Adjuntos: ${adjuntos?.length ?? 0}');
 
       // Validar que tenga al menos una audiencia
       if (!paraEstudiantes && !paraDocentes && !paraPadres) {
@@ -182,7 +183,7 @@ class AnuncioService {
           data: formData,
         );
 
-        print('✅ Anuncio creado con archivos');
+        dlog('✅ Anuncio creado con archivos');
         return Anuncio.fromJson(response['data']);
       } else {
         // Sin archivos, usar JSON
@@ -199,11 +200,11 @@ class AnuncioService {
           },
         );
 
-        print('✅ Anuncio creado sin archivos');
+        dlog('✅ Anuncio creado sin archivos');
         return Anuncio.fromJson(response['data']);
       }
     } catch (e) {
-      print('❌ Error creando anuncio: $e');
+      dlog('❌ Error creando anuncio: $e');
       rethrow;
     }
   }
@@ -224,7 +225,7 @@ class AnuncioService {
     File? nuevaImagenPortada,
   }) async {
     try {
-      print('📝 Actualizando anuncio: $anuncioId');
+      dlog('📝 Actualizando anuncio: $anuncioId');
 
       // Validar audiencia
       if (!paraEstudiantes && !paraDocentes && !paraPadres) {
@@ -271,7 +272,7 @@ class AnuncioService {
           data: formData,
         );
 
-        print('✅ Anuncio actualizado con archivos');
+        dlog('✅ Anuncio actualizado con archivos');
         return Anuncio.fromJson(response['data']);
       } else {
         // Sin archivos nuevos, usar JSON
@@ -287,11 +288,11 @@ class AnuncioService {
           },
         );
 
-        print('✅ Anuncio actualizado');
+        dlog('✅ Anuncio actualizado');
         return Anuncio.fromJson(response['data']);
       }
     } catch (e) {
-      print('❌ Error actualizando anuncio: $e');
+      dlog('❌ Error actualizando anuncio: $e');
       rethrow;
     }
   }
@@ -302,14 +303,14 @@ class AnuncioService {
 
   Future<Anuncio> publicarAnuncio(String anuncioId) async {
     try {
-      print('📢 Publicando anuncio: $anuncioId');
+      dlog('📢 Publicando anuncio: $anuncioId');
 
       final response = await _apiService.patch('/anuncios/$anuncioId/publicar');
 
-      print('✅ Anuncio publicado');
+      dlog('✅ Anuncio publicado');
       return Anuncio.fromJson(response['data']);
     } catch (e) {
-      print('❌ Error publicando anuncio: $e');
+      dlog('❌ Error publicando anuncio: $e');
       rethrow;
     }
   }
@@ -320,14 +321,14 @@ class AnuncioService {
 
   Future<Anuncio> archivarAnuncio(String anuncioId) async {
     try {
-      print('🗂️ Archivando anuncio: $anuncioId');
+      dlog('🗂️ Archivando anuncio: $anuncioId');
 
       final response = await _apiService.patch('/anuncios/$anuncioId/archivar');
 
-      print('✅ Anuncio archivado');
+      dlog('✅ Anuncio archivado');
       return Anuncio.fromJson(response['data']);
     } catch (e) {
-      print('❌ Error archivando anuncio: $e');
+      dlog('❌ Error archivando anuncio: $e');
       rethrow;
     }
   }
@@ -338,11 +339,11 @@ class AnuncioService {
 
   Future<void> deleteAnuncio(String anuncioId) async {
     try {
-      print('🗑️ Eliminando anuncio: $anuncioId');
+      dlog('🗑️ Eliminando anuncio: $anuncioId');
       await _apiService.delete('/anuncios/$anuncioId');
-      print('✅ Anuncio eliminado');
+      dlog('✅ Anuncio eliminado');
     } catch (e) {
-      print('❌ Error eliminando anuncio: $e');
+      dlog('❌ Error eliminando anuncio: $e');
       rethrow;
     }
   }
@@ -357,15 +358,15 @@ class AnuncioService {
     String fileName,
   ) async {
     try {
-      print('📎 Descargando adjunto: $fileName');
+      dlog('📎 Descargando adjunto: $fileName');
 
       final url = '/anuncios/$anuncioId/adjunto/$adjuntoId';
 
       // TODO: Implementar descarga real según plataforma
-      print('🔗 URL de descarga: $url');
-      print('ℹ️ Implementar descarga de archivos según plataforma');
+      dlog('🔗 URL de descarga: $url');
+      dlog('ℹ️ Implementar descarga de archivos según plataforma');
     } catch (e) {
-      print('❌ Error descargando adjunto: $e');
+      dlog('❌ Error descargando adjunto: $e');
       rethrow;
     }
   }

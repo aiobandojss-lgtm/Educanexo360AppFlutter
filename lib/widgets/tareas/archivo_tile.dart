@@ -110,7 +110,7 @@ class ArchivoTile extends StatelessWidget {
                     IconButton(
                       onPressed: onDownload,
                       icon: const Icon(Icons.download_outlined),
-                      color: const Color(0xFF6366F1),
+                      color: const Color(0xFF059669),
                       tooltip: 'Descargar',
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(
@@ -172,7 +172,7 @@ class ArchivoTile extends StatelessWidget {
     if (archivo.isPdf) return Colors.red;
     if (archivo.isWord) return Colors.blue;
     if (archivo.isExcel) return Colors.green;
-    if (archivo.isImage) return Colors.purple;
+    if (archivo.isImage) return const Color(0xFF0D9488);
     return Colors.grey;
   }
 
@@ -263,7 +263,7 @@ class ArchivosList extends StatelessWidget {
             onDelete: onDelete != null ? () => onDelete!(archivo) : null,
             compacto: compacto,
           );
-        }).toList(),
+        }),
       ],
     );
   }
@@ -378,7 +378,7 @@ class ArchivosGrid extends StatelessWidget {
     if (archivo.isPdf) return Colors.red;
     if (archivo.isWord) return Colors.blue;
     if (archivo.isExcel) return Colors.green;
-    if (archivo.isImage) return Colors.purple;
+    if (archivo.isImage) return const Color(0xFF0D9488);
     return Colors.grey;
   }
 }

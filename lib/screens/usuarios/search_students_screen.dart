@@ -296,7 +296,7 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFEC4899),
+          backgroundColor: const Color(0xFF2563EB),
           radius: 28,
           child: Text(
             estudiante.iniciales,

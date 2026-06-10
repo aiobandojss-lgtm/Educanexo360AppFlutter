@@ -1,6 +1,7 @@
-// lib/providers/curso_provider.dart
+﻿// lib/providers/curso_provider.dart
 // 📚 PROVIDER DE CURSOS - Siguiendo patrón de usuario_provider.dart
 
+import '../utils/logger.dart';
 import 'package:flutter/material.dart';
 import '../models/curso.dart';
 import '../services/curso_service.dart';
@@ -52,6 +53,14 @@ class CursoProvider with ChangeNotifier {
   int get totalCursos => _todosCursos.length;
 
   // ========================================
+  // ⚡ PREPARAR ESTADO DE CARGA (para initState)
+  // ========================================
+
+  void prepareLoading() {
+    _isLoading = true;
+  }
+
+  // ========================================
   // 📋 CARGAR CURSOS
   // ========================================
 
@@ -65,7 +74,7 @@ class CursoProvider with ChangeNotifier {
         notifyListeners();
       }
 
-      print('📥 Cargando cursos... (refresh: $refresh, silent: $silent)');
+      dlog('📥 Cargando cursos... (refresh: $refresh, silent: $silent)');
 
       // Obtener TODOS los cursos del backend
       final cursos = await _cursoService.getCursos();
@@ -78,11 +87,11 @@ class CursoProvider with ChangeNotifier {
 
       _isLoading = false;
 
-      print(
+      dlog(
           '✅ Cursos cargados: ${_cursos.length} (total: ${_todosCursos.length})');
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando cursos: $e');
+      dlog('❌ Error cargando cursos: $e');
       _isLoading = false;
       notifyListeners();
       rethrow;
@@ -94,24 +103,24 @@ class CursoProvider with ChangeNotifier {
   // ========================================
 
   void _aplicarFiltros() {
-    print('🎛️ Aplicando filtros localmente...');
-    print('   Nivel: ${_currentNivelFilter?.displayName ?? "Todos"}');
-    print('   Jornada: ${_currentJornadaFilter?.displayName ?? "Todas"}');
-    print('   Búsqueda: $_searchQuery');
+    dlog('🎛️ Aplicando filtros localmente...');
+    dlog('   Nivel: ${_currentNivelFilter?.displayName ?? "Todos"}');
+    dlog('   Jornada: ${_currentJornadaFilter?.displayName ?? "Todas"}');
+    dlog('   Búsqueda: $_searchQuery');
 
     List<Curso> filtered = [..._todosCursos];
 
     // Filtro por nivel
     if (_currentNivelFilter != null) {
       filtered = filtered.where((c) => c.nivel == _currentNivelFilter).toList();
-      print('📚 Después de filtrar por nivel: ${filtered.length}');
+      dlog('📚 Después de filtrar por nivel: ${filtered.length}');
     }
 
     // Filtro por jornada
     if (_currentJornadaFilter != null) {
       filtered =
           filtered.where((c) => c.jornada == _currentJornadaFilter).toList();
-      print('🕐 Después de filtrar por jornada: ${filtered.length}');
+      dlog('🕐 Después de filtrar por jornada: ${filtered.length}');
     }
 
     // Filtro por búsqueda
@@ -130,12 +139,12 @@ class CursoProvider with ChangeNotifier {
               (curso.grado ?? '').toLowerCase().contains(search) ||
               (curso.grupo ?? '').toLowerCase().contains(search))
           .toList();
-      print(
+      dlog(
           '🔍 Después de filtrar por búsqueda "$_searchQuery": ${filtered.length}');
     }
 
     _cursos = filtered;
-    print(
+    dlog(
         '📊 Resultado final: ${_cursos.length} cursos filtrados de ${_todosCursos.length} totales');
   }
 
@@ -146,7 +155,7 @@ class CursoProvider with ChangeNotifier {
   Future<void> changeNivelFilter(NivelEducativo? newFilter) async {
     if (_currentNivelFilter == newFilter) return;
 
-    print('🔄 Cambiando filtro de nivel: ${newFilter?.displayName ?? "Todos"}');
+    dlog('🔄 Cambiando filtro de nivel: ${newFilter?.displayName ?? "Todos"}');
 
     _currentNivelFilter = newFilter;
     _aplicarFiltros();
@@ -156,7 +165,7 @@ class CursoProvider with ChangeNotifier {
   Future<void> changeJornadaFilter(Jornada? newFilter) async {
     if (_currentJornadaFilter == newFilter) return;
 
-    print(
+    dlog(
         '🔄 Cambiando filtro de jornada: ${newFilter?.displayName ?? "Todas"}');
 
     _currentJornadaFilter = newFilter;
@@ -169,7 +178,7 @@ class CursoProvider with ChangeNotifier {
   // ========================================
 
   Future<void> search(String query) async {
-    print('🔍 Buscando: $query');
+    dlog('🔍 Buscando: $query');
     _searchQuery = query;
     _aplicarFiltros();
     notifyListeners();
@@ -177,7 +186,7 @@ class CursoProvider with ChangeNotifier {
 
   void clearSearch() {
     if (_searchQuery.isNotEmpty) {
-      print('🧹 Limpiando búsqueda');
+      dlog('🧹 Limpiando búsqueda');
       _searchQuery = '';
       _aplicarFiltros();
       notifyListeners();
@@ -190,24 +199,24 @@ class CursoProvider with ChangeNotifier {
 
   Future<Curso?> getCursoById(String id) async {
     try {
-      print('🔍 Obteniendo curso: $id');
+      dlog('🔍 Obteniendo curso: $id');
 
       // Buscar en cache local
       final localCurso = _cursos.where((c) => c.id == id).firstOrNull;
       if (localCurso != null) {
-        print('✅ Curso encontrado en cache');
+        dlog('✅ Curso encontrado en cache');
         // Pero obtener versión completa del servidor
         final cursoCompleto = await _cursoService.getCursoById(id);
         return cursoCompleto ?? localCurso;
       }
 
       // Obtener del servidor
-      print('📡 Obteniendo del servidor...');
+      dlog('📡 Obteniendo del servidor...');
       final curso = await _cursoService.getCursoById(id);
-      print('✅ Curso obtenido del servidor');
+      dlog('✅ Curso obtenido del servidor');
       return curso;
     } catch (e) {
-      print('❌ Error obteniendo curso: $e');
+      dlog('❌ Error obteniendo curso: $e');
       rethrow;
     }
   }
@@ -218,10 +227,10 @@ class CursoProvider with ChangeNotifier {
 
   Future<List<EstudianteCurso>> getEstudiantesCurso(String cursoId) async {
     try {
-      print('👥 Obteniendo estudiantes del curso...');
+      dlog('👥 Obteniendo estudiantes del curso...');
       return await _cursoService.getCursoEstudiantes(cursoId);
     } catch (e) {
-      print('❌ Error obteniendo estudiantes: $e');
+      dlog('❌ Error obteniendo estudiantes: $e');
       return [];
     }
   }
@@ -232,10 +241,10 @@ class CursoProvider with ChangeNotifier {
 
   Future<List<AsignaturaCurso>> getAsignaturasCurso(String cursoId) async {
     try {
-      print('📚 Obteniendo asignaturas del curso...');
+      dlog('📚 Obteniendo asignaturas del curso...');
       return await _cursoService.getCursoAsignaturas(cursoId);
     } catch (e) {
-      print('❌ Error obteniendo asignaturas: $e');
+      dlog('❌ Error obteniendo asignaturas: $e');
       return [];
     }
   }
@@ -245,7 +254,7 @@ class CursoProvider with ChangeNotifier {
   // ========================================
 
   Future<void> refresh() async {
-    print('🔄 Refrescando lista...');
+    dlog('🔄 Refrescando lista...');
     await loadCursos(refresh: true);
   }
 
@@ -254,7 +263,7 @@ class CursoProvider with ChangeNotifier {
   // ========================================
 
   void clearState() {
-    print('🧹 Limpiando estado del provider');
+    dlog('🧹 Limpiando estado del provider');
     _cursos = [];
     _todosCursos = [];
     _currentNivelFilter = null;
@@ -269,7 +278,7 @@ class CursoProvider with ChangeNotifier {
   // ========================================
 
   void clearAllFilters() {
-    print('🧹 Limpiando todos los filtros');
+    dlog('🧹 Limpiando todos los filtros');
     _currentNivelFilter = null;
     _currentJornadaFilter = null;
     _searchQuery = '';

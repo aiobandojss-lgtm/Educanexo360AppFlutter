@@ -1,23 +1,38 @@
-// lib/config/app_config.dart
+﻿// lib/config/app_config.dart
+import '../utils/logger.dart';
+
 class AppConfig {
   // ==========================================
-  // CONFIGURACIÓN BASE
+  // CONFIGURACIÓN BASE - SISTEMA DE ENTORNOS
   // ==========================================
+  //
+  // Para desarrollo local, usar:
+  //   flutter run --dart-define=API_URL=http://192.168.0.17:3000/api
+  //
+  // Para producción (release), usar:
+  //   flutter build apk --dart-define=API_URL=https://TU_DOMINIO.com/api
+  //   flutter build appbundle --dart-define=API_URL=https://TU_DOMINIO.com/api
+  //
+  // Si no se pasa --dart-define, usa la URL de desarrollo por defecto.
 
-  // ⚠️ CAMBIAR ESTA IP POR LA DE TU SERVIDOR BACKEND
-  static const String _localIp = '192.168.1.4'; // 👈 ACTUALIZA CON TU IP
-  static const int _port = 3000;
+  static const String _defaultDevUrl = 'http://192.168.1.7:3000/api';
 
-  // URL base según el entorno
+  // URL inyectada en tiempo de compilación via --dart-define
+  static const String _injectedUrl = String.fromEnvironment(
+    'API_URL',
+    defaultValue: '',
+  );
+
+  // URL base activa
   static String get baseUrl {
-    const isDevelopment = true; // Cambiar a false en producción
-
-    if (isDevelopment) {
-      return 'http://$_localIp:$_port/api';
-    } else {
-      return 'https://tu-servidor-produccion.com/api';
-    }
+    if (_injectedUrl.isNotEmpty) return _injectedUrl;
+    return _defaultDevUrl;
   }
+
+  static bool get isProduction =>
+      baseUrl.startsWith('https://') && !baseUrl.contains('192.168');
+
+  static bool get isDevelopment => !isProduction;
 
   // ==========================================
   // ENDPOINTS DE AUTENTICACIÓN
@@ -153,6 +168,17 @@ class AppConfig {
   static String escuelaPeriodos(String id) => '/escuelas/$id/periodos';
 
   // ==========================================
+  // ENDPOINTS DE PERFILES DE ROL (RBAC)
+  // ==========================================
+
+  static const String perfilesRol = '/perfiles-rol';
+
+  static String perfilRolDetail(String id) => '/perfiles-rol/$id';
+  static const String perfilesRolCatalogo = '/perfiles-rol/catalogo/permisos';
+  static String perfilesRolSugeridos(String rolBase) =>
+      '/perfiles-rol/catalogo/sugeridos/$rolBase';
+
+  // ==========================================
   // ENDPOINTS DE NOTIFICACIONES
   // ==========================================
 
@@ -219,26 +245,18 @@ class AppConfig {
     return newUri.toString();
   }
 
-  /// Verificar si es URL de desarrollo
-  static bool get isDevelopment =>
-      baseUrl.contains('localhost') || baseUrl.contains('192.168');
-
   /// Información de debug
   static Map<String, dynamic> get debugInfo => {
         'baseUrl': baseUrl,
-        'isDevelopment': isDevelopment,
-        'localIp': _localIp,
-        'port': _port,
+        'isProduction': isProduction,
+        'injectedUrl': _injectedUrl.isNotEmpty ? _injectedUrl : '(no inyectada)',
       };
 
   /// Imprimir configuración actual
   static void printConfig() {
-    print('\n🌐 ===== APP CONFIG =====');
-    print('📍 Base URL: $baseUrl');
-    print('🔧 Modo: ${isDevelopment ? "DESARROLLO" : "PRODUCCIÓN"}');
-    if (isDevelopment) {
-      print('🖥️  IP Local: $_localIp:$_port');
-    }
-    print('========================\n');
+    dlog('\n🌐 ===== APP CONFIG =====');
+    dlog('📍 Base URL: $baseUrl');
+    dlog('🔧 Modo: ${isProduction ? "PRODUCCIÓN" : "DESARROLLO"}');
+    dlog('========================\n');
   }
 }

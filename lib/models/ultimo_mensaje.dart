@@ -1,4 +1,5 @@
-// lib/models/ultimo_mensaje.dart
+﻿// lib/models/ultimo_mensaje.dart
+import '../utils/logger.dart';
 
 /// Modelo para los últimos mensajes del dashboard
 class UltimoMensaje {
@@ -19,29 +20,29 @@ class UltimoMensaje {
   });
 
   factory UltimoMensaje.fromJson(Map<String, dynamic> json) {
-    print('🔍 DEBUG UltimoMensaje.fromJson:');
-    print('   Raw JSON: $json');
+    dlog('🔍 DEBUG UltimoMensaje.fromJson:');
+    dlog('   Raw JSON: $json');
 
     // Intentar múltiples campos de fecha
     DateTime fechaEnvio;
 
     if (json['fechaEnvio'] != null) {
-      print('   ✅ Usando fechaEnvio: ${json['fechaEnvio']}');
+      dlog('   ✅ Usando fechaEnvio: ${json['fechaEnvio']}');
       fechaEnvio = DateTime.parse(json['fechaEnvio']);
     } else if (json['createdAt'] != null) {
-      print('   ✅ Usando createdAt: ${json['createdAt']}');
+      dlog('   ✅ Usando createdAt: ${json['createdAt']}');
       fechaEnvio = DateTime.parse(json['createdAt']);
     } else if (json['updatedAt'] != null) {
-      print('   ✅ Usando updatedAt: ${json['updatedAt']}');
+      dlog('   ✅ Usando updatedAt: ${json['updatedAt']}');
       fechaEnvio = DateTime.parse(json['updatedAt']);
     } else {
-      print('   ⚠️ No hay fecha, usando DateTime.now()');
+      dlog('   ⚠️ No hay fecha, usando DateTime.now()');
       fechaEnvio = DateTime.now();
     }
 
-    print('   📅 Fecha parseada: $fechaEnvio');
-    print('   🕐 Ahora: ${DateTime.now()}');
-    print('   ⏱️ Diferencia: ${DateTime.now().difference(fechaEnvio)}');
+    dlog('   📅 Fecha parseada: $fechaEnvio');
+    dlog('   🕐 Ahora: ${DateTime.now()}');
+    dlog('   ⏱️ Diferencia: ${DateTime.now().difference(fechaEnvio)}');
 
     // Limpiar HTML del preview
     String previewLimpio = json['preview'] ?? json['contenido'] ?? '';
@@ -49,7 +50,7 @@ class UltimoMensaje {
 
     // Calcular tiempo relativo correctamente
     String tiempoCalculado = _calcularTiempoRelativo(fechaEnvio);
-    print('   ⏰ Tiempo calculado: $tiempoCalculado');
+    dlog('   ⏰ Tiempo calculado: $tiempoCalculado');
 
     return UltimoMensaje(
       id: json['id'] ?? json['_id'] ?? '',

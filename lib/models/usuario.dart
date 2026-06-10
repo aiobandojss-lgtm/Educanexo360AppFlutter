@@ -1,4 +1,5 @@
-// lib/models/usuario.dart
+﻿// lib/models/usuario.dart
+import '../utils/logger.dart';
 
 /// Tipos de usuario en el sistema
 /// Traducido desde src/types/entities/user.ts
@@ -216,7 +217,7 @@ class Usuario {
     // ID con fallback seguro
     final userId = json['_id']?.toString() ?? json['id']?.toString() ?? '';
     if (userId.isEmpty) {
-      print('⚠️ WARNING: Usuario sin ID válido');
+      dlog('⚠️ WARNING: Usuario sin ID válido');
     }
 
     return Usuario(

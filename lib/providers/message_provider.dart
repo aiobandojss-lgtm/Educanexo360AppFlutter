@@ -1,5 +1,6 @@
-// lib/providers/message_provider.dart
+﻿// lib/providers/message_provider.dart
 
+import '../utils/logger.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -51,7 +52,7 @@ class MessageProvider with ChangeNotifier {
   // ========================================
 
   // Mensajes por bandeja
-  Map<Bandeja, List<Message>> _messagesByBandeja = {
+  final Map<Bandeja, List<Message>> _messagesByBandeja = {
     Bandeja.recibidos: [],
     Bandeja.enviados: [],
     Bandeja.borradores: [],
@@ -60,7 +61,7 @@ class MessageProvider with ChangeNotifier {
   };
 
   // Metadata de paginación por bandeja
-  Map<Bandeja, Map<String, dynamic>> _metaByBandeja = {
+  final Map<Bandeja, Map<String, dynamic>> _metaByBandeja = {
     Bandeja.recibidos: {
       'total': 0,
       'pagina': 1,
@@ -94,7 +95,7 @@ class MessageProvider with ChangeNotifier {
   };
 
   // Estados de loading por bandeja
-  Map<Bandeja, bool> _loadingByBandeja = {
+  final Map<Bandeja, bool> _loadingByBandeja = {
     Bandeja.recibidos: false,
     Bandeja.enviados: false,
     Bandeja.borradores: false,
@@ -151,37 +152,45 @@ class MessageProvider with ChangeNotifier {
   void _setupEventBusListeners() {
     // Cuando se crea un mensaje, refrescar ENVIADOS y RECIBIDOS
     _eventBus.onMessageCreated.listen((_) {
-      print('🔔 Event: Mensaje creado - Refrescando bandejas');
+      dlog('🔔 Event: Mensaje creado - Refrescando bandejas');
       loadMessages(Bandeja.enviados, refresh: true, silent: true);
       loadMessages(Bandeja.recibidos, refresh: true, silent: true);
     });
 
     // Cuando se guarda un borrador, refrescar BORRADORES
     _eventBus.onDraftSaved.listen((_) {
-      print('🔔 Event: Borrador guardado - Refrescando borradores');
+      dlog('🔔 Event: Borrador guardado - Refrescando borradores');
       loadMessages(Bandeja.borradores, refresh: true, silent: true);
     });
 
     // Cuando se elimina un mensaje, refrescar bandeja actual y ELIMINADOS
     _eventBus.onMessageDeleted.listen((_) {
-      print('🔔 Event: Mensaje eliminado - Refrescando bandejas');
+      dlog('🔔 Event: Mensaje eliminado - Refrescando bandejas');
       loadMessages(_currentBandeja, refresh: true, silent: true);
       loadMessages(Bandeja.eliminados, refresh: true, silent: true);
     });
 
     // Cuando se archiva, refrescar RECIBIDOS y ARCHIVADOS
     _eventBus.onMessageArchived.listen((_) {
-      print('🔔 Event: Mensaje archivado - Refrescando bandejas');
+      dlog('🔔 Event: Mensaje archivado - Refrescando bandejas');
       loadMessages(Bandeja.recibidos, refresh: true, silent: true);
       loadMessages(Bandeja.archivados, refresh: true, silent: true);
     });
 
     // Cuando se restaura, refrescar ELIMINADOS y bandeja destino
     _eventBus.onMessageRestored.listen((_) {
-      print('🔔 Event: Mensaje restaurado - Refrescando bandejas');
+      dlog('🔔 Event: Mensaje restaurado - Refrescando bandejas');
       loadMessages(Bandeja.eliminados, refresh: true, silent: true);
       loadMessages(Bandeja.recibidos, refresh: true, silent: true);
     });
+  }
+
+  // ========================================
+  // ⚡ PREPARAR ESTADO DE CARGA (para initState)
+  // ========================================
+
+  void prepareLoading() {
+    _loadingByBandeja[_currentBandeja] = true;
   }
 
   // ========================================
@@ -222,7 +231,7 @@ class MessageProvider with ChangeNotifier {
       _loadingByBandeja[bandeja] = false;
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando mensajes: $e');
+      dlog('❌ Error cargando mensajes: $e');
       _loadingByBandeja[bandeja] = false;
       notifyListeners();
       rethrow;
@@ -237,13 +246,13 @@ class MessageProvider with ChangeNotifier {
     if (_currentBandeja == newBandeja) return;
 
     _currentBandeja = newBandeja;
-    _searchQuery = ''; // Limpiar búsqueda al cambiar bandeja
+    _searchQuery = '';
     notifyListeners();
 
-    // Cargar mensajes si la bandeja está vacía
-    if ((_messagesByBandeja[newBandeja] ?? []).isEmpty) {
-      await loadMessages(newBandeja);
-    }
+    // Siempre refrescar al cambiar bandeja para mostrar cambios recientes.
+    // Si ya hay datos: recargar en silencio (sin spinner) para no interrumpir.
+    final hasData = (_messagesByBandeja[newBandeja] ?? []).isNotEmpty;
+    await loadMessages(newBandeja, refresh: true, silent: hasData);
   }
 
   // ========================================
@@ -290,7 +299,7 @@ class MessageProvider with ChangeNotifier {
 
       return message;
     } catch (e) {
-      print('❌ Error creando mensaje: $e');
+      dlog('❌ Error creando mensaje: $e');
       rethrow;
     }
   }
@@ -324,7 +333,7 @@ class MessageProvider with ChangeNotifier {
 
       return draft;
     } catch (e) {
-      print('❌ Error guardando borrador: $e');
+      dlog('❌ Error guardando borrador: $e');
       rethrow;
     }
   }
@@ -332,7 +341,7 @@ class MessageProvider with ChangeNotifier {
   /// 📤 ENVIAR BORRADOR (NUEVO)
   Future<Message> sendDraft(String draftId) async {
     try {
-      print('📤 Enviando borrador: $draftId');
+      dlog('📤 Enviando borrador: $draftId');
 
       final message = await _messageService.sendDraft(draftId);
 
@@ -347,11 +356,11 @@ class MessageProvider with ChangeNotifier {
       await loadMessages(Bandeja.borradores, refresh: true);
       await loadMessages(Bandeja.enviados, refresh: true);
 
-      print('✅ Borrador enviado correctamente');
+      dlog('✅ Borrador enviado correctamente');
 
       return message;
     } catch (e) {
-      print('❌ Error enviando borrador: $e');
+      dlog('❌ Error enviando borrador: $e');
       rethrow;
     }
   }
@@ -387,7 +396,7 @@ class MessageProvider with ChangeNotifier {
 
       return draft;
     } catch (e) {
-      print('❌ Error actualizando borrador: $e');
+      dlog('❌ Error actualizando borrador: $e');
       rethrow;
     }
   }
@@ -406,7 +415,7 @@ class MessageProvider with ChangeNotifier {
 
       return message;
     } catch (e) {
-      print('❌ Error enviando borrador: $e');
+      dlog('❌ Error enviando borrador: $e');
       rethrow;
     }
   }*/
@@ -434,7 +443,7 @@ class MessageProvider with ChangeNotifier {
 
       return message;
     } catch (e) {
-      print('❌ Error respondiendo mensaje: $e');
+      dlog('❌ Error respondiendo mensaje: $e');
       rethrow;
     }
   }
@@ -453,7 +462,7 @@ class MessageProvider with ChangeNotifier {
       // Notificar evento
       _eventBus.notifyMessageArchived();
     } catch (e) {
-      print('❌ Error archivando: $e');
+      dlog('❌ Error archivando: $e');
       // Recargar en caso de error
       await loadMessages(_currentBandeja, refresh: true);
       rethrow;
@@ -474,7 +483,7 @@ class MessageProvider with ChangeNotifier {
       // Notificar evento
       _eventBus.notifyMessageArchived();
     } catch (e) {
-      print('❌ Error desarchivando: $e');
+      dlog('❌ Error desarchivando: $e');
       await loadMessages(_currentBandeja, refresh: true);
       rethrow;
     }
@@ -494,7 +503,7 @@ class MessageProvider with ChangeNotifier {
       // Notificar evento
       _eventBus.notifyMessageDeleted();
     } catch (e) {
-      print('❌ Error eliminando: $e');
+      dlog('❌ Error eliminando: $e');
       await loadMessages(_currentBandeja, refresh: true);
       rethrow;
     }
@@ -506,24 +515,24 @@ class MessageProvider with ChangeNotifier {
 
   Future<void> restoreMessage(String messageId) async {
     try {
-      print('🔄 Restaurando mensaje: $messageId');
+      dlog('🔄 Restaurando mensaje: $messageId');
 
       await _messageService.restoreMessage(messageId);
 
       // ✅ SOLUCIÓN: Forzar recarga completa de AMBAS bandejas
       // Esto evita que el mensaje quede duplicado
-      print('📥 Recargando bandeja de eliminados...');
+      dlog('📥 Recargando bandeja de eliminados...');
       await loadMessages(Bandeja.eliminados, refresh: true);
 
-      print('📥 Recargando bandeja de recibidos...');
+      dlog('📥 Recargando bandeja de recibidos...');
       await loadMessages(Bandeja.recibidos, refresh: true);
 
       // Notificar evento
       _eventBus.notifyMessageRestored();
 
-      print('✅ Mensaje restaurado correctamente');
+      dlog('✅ Mensaje restaurado correctamente');
     } catch (e) {
-      print('❌ Error restaurando mensaje: $e');
+      dlog('❌ Error restaurando mensaje: $e');
       rethrow;
     }
   }
@@ -541,7 +550,7 @@ class MessageProvider with ChangeNotifier {
 
       // No notificar evento, solo afecta bandeja actual
     } catch (e) {
-      print('❌ Error eliminando permanentemente: $e');
+      dlog('❌ Error eliminando permanentemente: $e');
       await loadMessages(_currentBandeja, refresh: true);
       rethrow;
     }
@@ -561,7 +570,7 @@ class MessageProvider with ChangeNotifier {
       // Notificar evento
       _eventBus.notifyDraftSaved();
     } catch (e) {
-      print('❌ Error eliminando borrador: $e');
+      dlog('❌ Error eliminando borrador: $e');
       await loadMessages(_currentBandeja, refresh: true);
       rethrow;
     }
@@ -583,7 +592,7 @@ class MessageProvider with ChangeNotifier {
 
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando destinatarios/cursos: $e');
+      dlog('❌ Error cargando destinatarios/cursos: $e');
     }
   }
 

@@ -1,4 +1,5 @@
-// lib/services/dashboard_service.dart
+﻿// lib/services/dashboard_service.dart
+import '../utils/logger.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
 import '../models/ultimo_mensaje.dart';
@@ -24,25 +25,34 @@ class EscuelaInfo {
   }
 }
 
+/// Modelo para el próximo evento del dashboard
+class ProximoEvento {
+  final String titulo;
+  final DateTime fecha;
+  final String? lugar;
+  final String? tipo;
+
+  ProximoEvento({
+    required this.titulo,
+    required this.fecha,
+    this.lugar,
+    this.tipo,
+  });
+}
+
 /// Modelo para estadísticas del dashboard
 class DashboardStats {
   final int mensajesSinLeer;
   final int eventosProximos;
   final int anunciosRecientes;
+  final ProximoEvento? proximoEvento;
 
   DashboardStats({
     required this.mensajesSinLeer,
     required this.eventosProximos,
     required this.anunciosRecientes,
+    this.proximoEvento,
   });
-
-  factory DashboardStats.fromJson(Map<String, dynamic> json) {
-    return DashboardStats(
-      mensajesSinLeer: json['mensajesSinLeer'] ?? 0,
-      eventosProximos: json['eventosProximos'] ?? 0,
-      anunciosRecientes: json['anunciosRecientes'] ?? 0,
-    );
-  }
 }
 
 /// Servicio para obtener datos del dashboard
@@ -50,24 +60,32 @@ class DashboardService {
   /// Obtener información de la escuela
   static Future<EscuelaInfo?> getEscuelaInfo(String escuelaId) async {
     try {
-      print('📊 DashboardService - Obteniendo info de escuela: $escuelaId');
+      dlog('📊 DashboardService - Obteniendo info de escuela: $escuelaId');
 
       final response = await ApiService().get('/escuelas/$escuelaId');
 
-      if (response != null) {
-        final data = response['data'] ?? response;
+      final data = response['data'] ?? response;
 
-        if (data != null) {
-          final escuela = EscuelaInfo.fromJson(data);
-          print('✅ Escuela cargada: ${escuela.nombre}');
-          return escuela;
-        }
+      if (data != null) {
+        final escuela = EscuelaInfo.fromJson(data);
+        dlog('✅ Escuela cargada: ${escuela.nombre}');
+        return escuela;
       }
 
-      print('⚠️ No se encontró la escuela');
+      dlog('⚠️ No se encontró la escuela');
       return null;
     } catch (e) {
-      print('❌ Error obteniendo info de escuela: $e');
+      dlog('❌ Error obteniendo info de escuela: $e');
+      return null;
+    }
+  }
+
+  /// Helper: fetch seguro que retorna null en vez de lanzar excepción
+  static Future<dynamic> _safeFetch(String path) async {
+    try {
+      return await ApiService().get(path);
+    } catch (e) {
+      dlog('❌ Error fetching $path: $e');
       return null;
     }
   }
@@ -75,23 +93,27 @@ class DashboardService {
   /// Obtener estadísticas del dashboard
   static Future<DashboardStats> getDashboardStats() async {
     try {
-      print('📊 DashboardService - Obteniendo estadísticas del dashboard');
+      dlog('📊 DashboardService - Obteniendo estadísticas (paralelo)');
+
+      // Las 3 llamadas en paralelo en lugar de secuencial
+      final responses = await Future.wait<dynamic>([
+        _safeFetch('/mensajes'),
+        _safeFetch('/calendario'),
+        _safeFetch('/anuncios'),
+      ]);
 
       int mensajesSinLeer = 0;
       int eventosProximos = 0;
       int anunciosRecientes = 0;
+      ProximoEvento? proximoEvento;
 
       // ==========================================
-      // 1. OBTENER MENSAJES SIN LEER
+      // 1. PROCESAR MENSAJES SIN LEER
       // ==========================================
-      try {
-        print('📬 Obteniendo mensajes sin leer...');
-
-        final mensajesResponse = await ApiService().get('/mensajes');
-
-        if (mensajesResponse != null) {
+      final mensajesResponse = responses[0];
+      if (mensajesResponse != null) {
+        try {
           dynamic mensajes;
-
           if (mensajesResponse is List) {
             mensajes = mensajesResponse;
           } else if (mensajesResponse['data'] != null) {
@@ -103,52 +125,32 @@ class DashboardService {
           }
 
           if (mensajes is List) {
-            print('📬 Total de mensajes recibidos: ${mensajes.length}');
-
-            final authService = AuthService();
-            final user = authService.currentUser;
-            if (user == null) {
-              mensajesSinLeer = 0;
-            } else {
+            dlog('📬 Total mensajes recibidos: ${mensajes.length}');
+            final user = AuthService().currentUser;
+            if (user != null) {
               final userId = user.id;
-
-              final mensajesNoLeidos = mensajes.where((mensaje) {
+              mensajesSinLeer = mensajes.where((mensaje) {
                 if (mensaje == null || mensaje is! Map) return false;
-
-                final esDestinatario = mensaje['esDestinatario'] == true;
-                if (!esDestinatario) return false;
-
+                if (mensaje['esDestinatario'] != true) return false;
                 final lecturas = mensaje['lecturas'] as List? ?? [];
-
                 if (lecturas.isEmpty) return true;
-
-                final tieneLeido = lecturas.any((lectura) {
-                  if (lectura == null || lectura is! Map) return false;
-                  return lectura['usuarioId'] == userId;
-                });
-
-                return !tieneLeido;
-              }).toList();
-
-              mensajesSinLeer = mensajesNoLeidos.length;
-              print('📬 Mensajes SIN leer: $mensajesSinLeer');
+                return !lecturas.any((l) => l is Map && l['usuarioId'] == userId);
+              }).length;
+              dlog('📬 Mensajes SIN leer: $mensajesSinLeer');
             }
           }
+        } catch (e) {
+          dlog('❌ Error procesando mensajes: $e');
         }
-      } catch (e) {
-        print('❌ Error obteniendo mensajes: $e');
       }
 
       // ==========================================
-      // 2. OBTENER EVENTOS PRÓXIMOS
+      // 2. PROCESAR EVENTOS PRÓXIMOS
       // ==========================================
-      try {
-        print('📅 Obteniendo eventos...');
-        final eventosResponse = await ApiService().get('/calendario');
-
-        if (eventosResponse != null) {
+      final eventosResponse = responses[1];
+      if (eventosResponse != null) {
+        try {
           dynamic eventos;
-
           if (eventosResponse is List) {
             eventos = eventosResponse;
           } else if (eventosResponse['data'] != null) {
@@ -163,43 +165,57 @@ class DashboardService {
             final ahora = DateTime.now();
             final limite = ahora.add(const Duration(days: 30));
 
-            eventosProximos = eventos.where((e) {
+            String getFechaStr(dynamic e) =>
+                (e['fecha'] ?? e['fechaInicio'] ?? e['startDate'] ?? e['date'] ?? '').toString();
+
+            final proximos = eventos.where((e) {
               if (e == null || e is! Map) return false;
-
               try {
-                final fechaStr = e['fecha'] ??
-                    e['fechaInicio'] ??
-                    e['startDate'] ??
-                    e['date'] ??
-                    '';
-
-                if (fechaStr.isEmpty) return false;
-
-                final fechaEvento = DateTime.parse(fechaStr);
-                return fechaEvento.isAfter(ahora) &&
-                    fechaEvento.isBefore(limite);
-              } catch (error) {
+                final f = getFechaStr(e);
+                if (f.isEmpty) return false;
+                final fechaEvento = DateTime.parse(f);
+                return fechaEvento.isAfter(ahora) && fechaEvento.isBefore(limite);
+              } catch (_) {
                 return false;
               }
-            }).length;
+            }).toList();
 
-            print('📅 Eventos PRÓXIMOS (30 días): $eventosProximos');
+            eventosProximos = proximos.length;
+
+            if (proximos.isNotEmpty) {
+              proximos.sort((a, b) {
+                try {
+                  return DateTime.parse(getFechaStr(a))
+                      .compareTo(DateTime.parse(getFechaStr(b)));
+                } catch (_) {
+                  return 0;
+                }
+              });
+              final next = proximos.first as Map;
+              try {
+                proximoEvento = ProximoEvento(
+                  titulo: (next['titulo'] ?? next['title'] ?? next['nombre'] ?? 'Evento').toString(),
+                  fecha: DateTime.parse(getFechaStr(next)),
+                  lugar: next['lugar']?.toString() ?? next['location']?.toString(),
+                  tipo: next['tipo']?.toString() ?? next['type']?.toString(),
+                );
+              } catch (_) {}
+            }
+
+            dlog('📅 Eventos PRÓXIMOS (30 días): $eventosProximos');
           }
+        } catch (e) {
+          dlog('❌ Error procesando eventos: $e');
         }
-      } catch (e) {
-        print('❌ Error obteniendo eventos: $e');
       }
 
       // ==========================================
-      // 3. OBTENER ANUNCIOS RECIENTES
+      // 3. PROCESAR ANUNCIOS RECIENTES
       // ==========================================
-      try {
-        print('📢 Obteniendo anuncios...');
-        final anunciosResponse = await ApiService().get('/anuncios');
-
-        if (anunciosResponse != null) {
+      final anunciosResponse = responses[2];
+      if (anunciosResponse != null) {
+        try {
           dynamic anuncios;
-
           if (anunciosResponse is List) {
             anuncios = anunciosResponse;
           } else if (anunciosResponse['data'] != null) {
@@ -213,86 +229,62 @@ class DashboardService {
           if (anuncios is List) {
             final ahora = DateTime.now();
             final limite = ahora.subtract(const Duration(days: 7));
-
             anunciosRecientes = anuncios.where((a) {
               if (a == null || a is! Map) return false;
-
               try {
                 final estado = a['estado'] ?? a['status'] ?? 'PUBLICADO';
-
-                if (estado.toString().toUpperCase() != 'PUBLICADO') {
-                  return false;
-                }
-
-                final fechaStr = a['fechaPublicacion'] ??
-                    a['publishedAt'] ??
-                    a['createdAt'] ??
-                    a['fecha'] ??
-                    '';
-
+                if (estado.toString().toUpperCase() != 'PUBLICADO') return false;
+                final fechaStr = a['fechaPublicacion'] ?? a['publishedAt'] ?? a['createdAt'] ?? a['fecha'] ?? '';
                 if (fechaStr.isEmpty) return true;
-
-                final fechaAnuncio = DateTime.parse(fechaStr);
-                return fechaAnuncio.isAfter(limite);
-              } catch (error) {
+                return DateTime.parse(fechaStr).isAfter(limite);
+              } catch (_) {
                 return true;
               }
             }).length;
-
-            print('📢 Anuncios RECIENTES (7 días): $anunciosRecientes');
+            dlog('📢 Anuncios RECIENTES (7 días): $anunciosRecientes');
           }
+        } catch (e) {
+          dlog('❌ Error procesando anuncios: $e');
         }
-      } catch (e) {
-        print('❌ Error obteniendo anuncios: $e');
       }
 
-      // ==========================================
-      // RETORNAR ESTADÍSTICAS
-      // ==========================================
       final stats = DashboardStats(
         mensajesSinLeer: mensajesSinLeer,
         eventosProximos: eventosProximos,
         anunciosRecientes: anunciosRecientes,
+        proximoEvento: proximoEvento,
       );
-
-      print(
-          '✅ Stats: mensajes=$mensajesSinLeer, eventos=$eventosProximos, anuncios=$anunciosRecientes');
-
+      dlog('✅ Stats: mensajes=$mensajesSinLeer, eventos=$eventosProximos, anuncios=$anunciosRecientes');
       return stats;
     } catch (e) {
-      print('❌ Error GENERAL obteniendo estadísticas: $e');
-
-      return DashboardStats(
-        mensajesSinLeer: 0,
-        eventosProximos: 0,
-        anunciosRecientes: 0,
-      );
+      dlog('❌ Error GENERAL obteniendo estadísticas: $e');
+      return DashboardStats(mensajesSinLeer: 0, eventosProximos: 0, anunciosRecientes: 0, proximoEvento: null);
     }
   }
 
   /// Obtener últimos mensajes para mostrar en el dashboard
   static Future<List<UltimoMensaje>> getUltimosMensajes({int limit = 3}) async {
     try {
-      print('📬 DashboardService - Obteniendo últimos $limit mensajes');
+      dlog('📬 DashboardService - Obteniendo últimos $limit mensajes');
 
       final response = await ApiService().get('/mensajes/ultimos?limit=$limit');
 
-      if (response != null && response['success'] == true) {
+      if (response['success'] == true) {
         final data = response['data'];
 
         if (data is List) {
           final mensajes =
               data.map((json) => UltimoMensaje.fromJson(json)).toList();
 
-          print('✅ Cargados ${mensajes.length} mensajes');
+          dlog('✅ Cargados ${mensajes.length} mensajes');
           return mensajes;
         }
       }
 
-      print('⚠️ No se encontraron mensajes');
+      dlog('⚠️ No se encontraron mensajes');
       return [];
     } catch (e) {
-      print('❌ Error obteniendo últimos mensajes: $e');
+      dlog('❌ Error obteniendo últimos mensajes: $e');
       return [];
     }
   }

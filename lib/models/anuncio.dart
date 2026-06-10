@@ -155,7 +155,7 @@ class Anuncio {
     if (paraEstudiantes && paraDocentes && paraPadres) return 0xFF2563EB;
     if (paraPadres) return 0xFFF59E0B;
     if (paraEstudiantes) return 0xFF10B981;
-    if (paraDocentes) return 0xFF7C3AED;
+    if (paraDocentes) return 0xFF0D9488;
     return 0xFF64748B;
   }
 

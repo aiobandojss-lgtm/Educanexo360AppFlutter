@@ -169,7 +169,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       child: ListTile(
         contentPadding: const EdgeInsets.all(16),
         leading: CircleAvatar(
-          backgroundColor: const Color(0xFFEC4899),
+          backgroundColor: const Color(0xFF2563EB),
           radius: 28,
           child: Text(
             estudiante.iniciales,
@@ -225,7 +225,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🎓', style: TextStyle(fontSize: 64)),
+          const Icon(Icons.school, size: 64, color: Color(0xFF059669)),
           const SizedBox(height: 16),
           const Text(
             'Sin estudiantes asociados',

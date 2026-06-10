@@ -1,5 +1,6 @@
-// lib/screens/calendario/create_evento_screen.dart
+﻿// lib/screens/calendario/create_evento_screen.dart
 
+import '../../utils/logger.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -13,10 +14,10 @@ class CreateEventoScreen extends StatefulWidget {
   final DateTime? fechaInicial;
 
   const CreateEventoScreen({
-    Key? key,
+    super.key,
     this.evento,
     this.fechaInicial,
-  }) : super(key: key);
+  });
 
   @override
   State<CreateEventoScreen> createState() => _CreateEventoScreenState();
@@ -56,9 +57,9 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
   void _loadEventoData() {
     final evento = widget.evento!;
 
-    print('✏️ Cargando datos del evento para edición:');
-    print('   Título: ${evento.titulo}');
-    print('   Estado actual: ${evento.estado.value}');
+    dlog('✏️ Cargando datos del evento para edición:');
+    dlog('   Título: ${evento.titulo}');
+    dlog('   Estado actual: ${evento.estado.value}');
 
     _tituloController.text = evento.titulo;
     _descripcionController.text = evento.descripcion;
@@ -71,7 +72,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
     _tipoSeleccionado = evento.tipo;
     _estadoSeleccionado = evento.estado;
 
-    print('   Estado cargado en UI: ${_estadoSeleccionado.value}');
+    dlog('   Estado cargado en UI: ${_estadoSeleccionado.value}');
   }
 
   @override
@@ -296,7 +297,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
                               onSelected: (selected) {
                                 if (selected) {
                                   setState(() {
-                                    print(
+                                    dlog(
                                         '🔄 Cambiando estado UI: ${_estadoSeleccionado.value} → ${estado.value}');
                                     _estadoSeleccionado = estado;
                                   });
@@ -329,7 +330,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  'Selecciona el estado del evento. Los usuarios verán eventos según su estado.',
+                                  'El estado controla la visibilidad del evento para los usuarios.',
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Colors.blue[900],
@@ -416,7 +417,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: const Color(0xFF8b5cf6)),
+        prefixIcon: Icon(icon, color: const Color(0xFF059669)),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(color: Colors.grey[300]!),
@@ -427,7 +428,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Color(0xFF8b5cf6), width: 2),
+          borderSide: const BorderSide(color: Color(0xFF059669), width: 2),
         ),
         filled: true,
         fillColor: Colors.grey[50],
@@ -461,7 +462,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeColor: const Color(0xFF8b5cf6),
+            activeThumbColor: const Color(0xFF059669),
           ),
         ],
       ),
@@ -503,7 +504,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.calendar_today,
-                          size: 18, color: Color(0xFF8b5cf6)),
+                          size: 18, color: Color(0xFF059669)),
                       const SizedBox(width: 8),
                       Text(
                         DateFormat('d MMM yyyy', 'es_ES').format(date),
@@ -529,7 +530,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
                     child: Row(
                       children: [
                         const Icon(Icons.access_time,
-                            size: 18, color: Color(0xFF8b5cf6)),
+                            size: 18, color: Color(0xFF059669)),
                         const SizedBox(width: 8),
                         Text(
                           time.format(context),
@@ -562,7 +563,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF8b5cf6),
+              primary: Color(0xFF059669),
             ),
           ),
           child: child!,
@@ -587,7 +588,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
         return Theme(
           data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.light(
-              primary: Color(0xFF8b5cf6),
+              primary: Color(0xFF059669),
             ),
           ),
           child: child!,
@@ -629,7 +630,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
       child: Row(
         children: [
           const Icon(Icons.insert_drive_file,
-              size: 32, color: Color(0xFF8b5cf6)),
+              size: 32, color: Color(0xFF059669)),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
@@ -750,7 +751,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
           child: ElevatedButton(
             onPressed: _isSaving ? null : _saveEvento,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8b5cf6),
+              backgroundColor: const Color(0xFF059669),
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 14),
               shape: RoundedRectangleBorder(
@@ -801,16 +802,16 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
         return;
       }
 
-      print('\n📤 ===== GUARDANDO EVENTO =====');
-      print('Título: ${_tituloController.text}');
-      print('Tipo: ${_tipoSeleccionado.value}');
-      print('Estado a enviar: ${_estadoSeleccionado.value}');
-      print('Modo: ${_isEditMode ? "EDICIÓN" : "CREACIÓN"}');
+      dlog('\n📤 ===== GUARDANDO EVENTO =====');
+      dlog('Título: ${_tituloController.text}');
+      dlog('Tipo: ${_tipoSeleccionado.value}');
+      dlog('Estado a enviar: ${_estadoSeleccionado.value}');
+      dlog('Modo: ${_isEditMode ? "EDICIÓN" : "CREACIÓN"}');
 
       final provider = context.read<CalendarioProvider>();
 
       if (_isEditMode) {
-        print('ID del evento: ${widget.evento!.id}');
+        dlog('ID del evento: ${widget.evento!.id}');
 
         await provider.actualizarEvento(
           eventoId: widget.evento!.id,
@@ -825,7 +826,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
           archivoAdjunto: _archivoAdjunto,
         );
 
-        print('✅ Evento actualizado con estado: ${_estadoSeleccionado.value}');
+        dlog('✅ Evento actualizado con estado: ${_estadoSeleccionado.value}');
         _showSuccess('Evento actualizado exitosamente');
       } else {
         await provider.crearEvento(
@@ -840,17 +841,17 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
           archivoAdjunto: _archivoAdjunto,
         );
 
-        print('✅ Evento creado con estado: ${_estadoSeleccionado.value}');
+        dlog('✅ Evento creado con estado: ${_estadoSeleccionado.value}');
         _showSuccess('Evento creado exitosamente');
       }
 
-      print('===============================\n');
+      dlog('===============================\n');
 
       if (mounted) {
         Navigator.pop(context, true);
       }
     } catch (e) {
-      print('❌ Error al guardar evento: $e');
+      dlog('❌ Error al guardar evento: $e');
       _showError('Error al guardar evento: $e');
     } finally {
       if (mounted) {

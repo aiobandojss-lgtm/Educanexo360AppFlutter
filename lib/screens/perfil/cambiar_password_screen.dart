@@ -1,4 +1,5 @@
-// lib/screens/perfil/cambiar_password_screen.dart
+﻿// lib/screens/perfil/cambiar_password_screen.dart
+import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
@@ -46,7 +47,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
     setState(() => _loading = true);
 
     try {
-      print('🔒 Cambiando contraseña...');
+      dlog('🔒 Cambiando contraseña...');
 
       await UsuarioService().changePassword(
         userId: user.id,
@@ -54,7 +55,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
         newPassword: _nuevaPasswordController.text,
       );
 
-      print('✅ Contraseña cambiada correctamente');
+      dlog('✅ Contraseña cambiada correctamente');
 
       if (!mounted) return;
 
@@ -82,7 +83,7 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
         ),
       );
     } catch (e) {
-      print('❌ Error cambiando contraseña: $e');
+      dlog('❌ Error cambiando contraseña: $e');
 
       String errorMessage = 'Error al cambiar la contraseña';
 

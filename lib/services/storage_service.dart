@@ -1,4 +1,5 @@
-// lib/services/storage_service.dart
+﻿// lib/services/storage_service.dart
+import '../utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
@@ -25,9 +26,9 @@ class StorageService {
   static Future<void> saveToken(String token) async {
     try {
       await _secureStorage.write(key: _tokenKey, value: token);
-      print('✅ Token guardado en secure storage');
+      dlog('✅ Token guardado en secure storage');
     } catch (e) {
-      print('❌ Error guardando token: $e');
+      dlog('❌ Error guardando token: $e');
       rethrow;
     }
   }
@@ -37,13 +38,13 @@ class StorageService {
     try {
       final token = await _secureStorage.read(key: _tokenKey);
       if (token != null) {
-        print('✅ Token recuperado de secure storage');
+        dlog('✅ Token recuperado de secure storage');
       } else {
-        print('⚠️ No hay token almacenado');
+        dlog('⚠️ No hay token almacenado');
       }
       return token;
     } catch (e) {
-      print('❌ Error obteniendo token: $e');
+      dlog('❌ Error obteniendo token: $e');
       return null;
     }
   }
@@ -52,9 +53,9 @@ class StorageService {
   static Future<void> saveRefreshToken(String refreshToken) async {
     try {
       await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
-      print('✅ Refresh token guardado');
+      dlog('✅ Refresh token guardado');
     } catch (e) {
-      print('❌ Error guardando refresh token: $e');
+      dlog('❌ Error guardando refresh token: $e');
       rethrow;
     }
   }
@@ -64,7 +65,7 @@ class StorageService {
     try {
       return await _secureStorage.read(key: _refreshTokenKey);
     } catch (e) {
-      print('❌ Error obteniendo refresh token: $e');
+      dlog('❌ Error obteniendo refresh token: $e');
       return null;
     }
   }
@@ -79,9 +80,9 @@ class StorageService {
       final prefs = await SharedPreferences.getInstance();
       final userJson = jsonEncode(user.toJson());
       await prefs.setString(_userKey, userJson);
-      print('✅ Usuario guardado: ${user.nombre} ${user.apellidos}');
+      dlog('✅ Usuario guardado: ${user.nombre} ${user.apellidos}');
     } catch (e) {
-      print('❌ Error guardando usuario: $e');
+      dlog('❌ Error guardando usuario: $e');
       rethrow;
     }
   }
@@ -93,16 +94,16 @@ class StorageService {
       final userJson = prefs.getString(_userKey);
 
       if (userJson == null) {
-        print('⚠️ No hay usuario almacenado');
+        dlog('⚠️ No hay usuario almacenado');
         return null;
       }
 
       final userMap = jsonDecode(userJson) as Map<String, dynamic>;
       final user = Usuario.fromJson(userMap);
-      print('✅ Usuario recuperado: ${user.nombre} ${user.apellidos}');
+      dlog('✅ Usuario recuperado: ${user.nombre} ${user.apellidos}');
       return user;
     } catch (e) {
-      print('❌ Error obteniendo usuario: $e');
+      dlog('❌ Error obteniendo usuario: $e');
       return null;
     }
   }
@@ -114,7 +115,7 @@ class StorageService {
   /// Limpiar todos los datos de autenticación
   static Future<void> clearAll() async {
     try {
-      print('🧹 Limpiando datos de autenticación...');
+      dlog('🧹 Limpiando datos de autenticación...');
 
       // Limpiar secure storage
       await _secureStorage.delete(key: _tokenKey);
@@ -124,9 +125,9 @@ class StorageService {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_userKey);
 
-      print('✅ Datos limpiados correctamente');
+      dlog('✅ Datos limpiados correctamente');
     } catch (e) {
-      print('❌ Error limpiando datos: $e');
+      dlog('❌ Error limpiando datos: $e');
       rethrow;
     }
   }
@@ -136,9 +137,9 @@ class StorageService {
     try {
       await _secureStorage.delete(key: _tokenKey);
       await _secureStorage.delete(key: _refreshTokenKey);
-      print('✅ Tokens limpiados');
+      dlog('✅ Tokens limpiados');
     } catch (e) {
-      print('❌ Error limpiando tokens: $e');
+      dlog('❌ Error limpiando tokens: $e');
       rethrow;
     }
   }
@@ -154,27 +155,27 @@ class StorageService {
       final user = await getUser();
       final hasSession = token != null && user != null;
 
-      print('🔍 ¿Sesión válida? ${hasSession ? "SÍ" : "NO"}');
+      dlog('🔍 ¿Sesión válida? ${hasSession ? "SÍ" : "NO"}');
       return hasSession;
     } catch (e) {
-      print('❌ Error verificando sesión: $e');
+      dlog('❌ Error verificando sesión: $e');
       return false;
     }
   }
 
   /// Debug: mostrar estado actual del storage
-  static Future<void> debugPrint() async {
-    print('\n📦 ===== STORAGE DEBUG =====');
+  static Future<void> debugState() async {
+    dlog('\n📦 ===== STORAGE DEBUG =====');
 
     final token = await getToken();
     final refreshToken = await getRefreshToken();
     final user = await getUser();
 
-    print(
+    dlog(
         '🔑 Token: ${token != null ? "EXISTS (${token.substring(0, 20)}...)" : "NULL"}');
-    print('🔑 Refresh Token: ${refreshToken != null ? "EXISTS" : "NULL"}');
-    print(
+    dlog('🔑 Refresh Token: ${refreshToken != null ? "EXISTS" : "NULL"}');
+    dlog(
         '👤 Usuario: ${user != null ? "${user.nombre} (${user.tipo})" : "NULL"}');
-    print('===========================\n');
+    dlog('===========================\n');
   }
 }

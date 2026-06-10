@@ -1,6 +1,7 @@
 // lib/screens/usuarios/users_management_screen.dart
 // 👥 PANTALLA DE GESTIÓN DE USUARIOS - FIX CONTADORES
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -17,29 +18,30 @@ class UsersManagementScreen extends StatefulWidget {
 
 class _UsersManagementScreenState extends State<UsersManagementScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
 
-  // 🎨 COLORES POR ROL (igual que React Native)
+  // 🎨 COLORES POR ROL
   static const Map<UserRole, Color> _roleColors = {
-    UserRole.superAdmin: Color(0xFF7C3AED),
+    UserRole.superAdmin: Color(0xFF0F766E),
     UserRole.admin: Color(0xFF059669),
     UserRole.rector: Color(0xFF0284C7),
     UserRole.coordinador: Color(0xFF0891B2),
     UserRole.administrativo: Color(0xFF10B981),
     UserRole.docente: Color(0xFFF59E0B),
-    UserRole.estudiante: Color(0xFFEC4899),
+    UserRole.estudiante: Color(0xFF2563EB),
     UserRole.acudiente: Color(0xFFEF4444),
   };
 
   // 🎨 ICONOS POR ROL
-  static const Map<UserRole, String> _roleIcons = {
-    UserRole.superAdmin: '⚡',
-    UserRole.admin: '⚙️',
-    UserRole.rector: '🏛️',
-    UserRole.coordinador: '📊',
-    UserRole.administrativo: '📋',
-    UserRole.docente: '👩‍🏫',
-    UserRole.estudiante: '🎓',
-    UserRole.acudiente: '👨‍👩‍👧‍👦',
+  static const Map<UserRole, IconData> _roleIconData = {
+    UserRole.superAdmin: Icons.bolt,
+    UserRole.admin: Icons.settings,
+    UserRole.rector: Icons.account_balance,
+    UserRole.coordinador: Icons.bar_chart,
+    UserRole.administrativo: Icons.assignment,
+    UserRole.docente: Icons.school,
+    UserRole.estudiante: Icons.person_outline,
+    UserRole.acudiente: Icons.group,
   };
 
   @override
@@ -50,13 +52,18 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   void _loadData() {
+    final provider = context.read<UsuarioProvider>();
+    if (provider.usuarios.isEmpty) {
+      provider.prepareLoading();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<UsuarioProvider>().loadUsuarios(refresh: true);
+      if (mounted) context.read<UsuarioProvider>().loadUsuarios(refresh: true);
     });
   }
 
@@ -65,12 +72,15 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   }
 
   void _onSearch(String query) {
-    final provider = context.read<UsuarioProvider>();
-    if (query.isEmpty) {
-      provider.clearSearch();
-    } else {
-      provider.search(query);
-    }
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      final provider = context.read<UsuarioProvider>();
+      if (query.isEmpty) {
+        provider.clearSearch();
+      } else {
+        provider.search(query);
+      }
+    });
   }
 
   String _getInitials(String nombre, String apellidos) {
@@ -137,13 +147,17 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                     icon: const Icon(Icons.arrow_back, color: Colors.white),
                     onPressed: () => Navigator.pop(context),
                   ),
+                  const Icon(Icons.people, color: Colors.white, size: 22),
                   const SizedBox(width: 8),
-                  const Text(
-                    '👥 Gestión de Usuarios',
-                    style: TextStyle(
-                      fontSize: 24,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
+                  const Expanded(
+                    child: Text(
+                      'Gestión de Usuarios',
+                      style: TextStyle(
+                        fontSize: 22,
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                 ],
@@ -185,7 +199,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
         controller: _searchController,
         onChanged: _onSearch,
         decoration: InputDecoration(
-          hintText: '🔍 Buscar por nombre, email...',
+          hintText: 'Buscar por nombre, email...',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
@@ -222,43 +236,43 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
         final filtros = [
           _FiltroChip(
             label: 'Todos',
-            icon: '👥',
+            icon: Icons.people,
             count: usuarioProvider.totalUsuarios,
             rol: null,
           ),
           _FiltroChip(
             label: 'Rectores',
-            icon: _roleIcons[UserRole.rector]!,
+            icon: _roleIconData[UserRole.rector]!,
             count: contadores[UserRole.rector] ?? 0,
             rol: UserRole.rector,
           ),
           _FiltroChip(
             label: 'Admins',
-            icon: _roleIcons[UserRole.admin]!,
+            icon: _roleIconData[UserRole.admin]!,
             count: contadores[UserRole.admin] ?? 0,
             rol: UserRole.admin,
           ),
           _FiltroChip(
             label: 'Admin.',
-            icon: _roleIcons[UserRole.administrativo]!,
+            icon: _roleIconData[UserRole.administrativo]!,
             count: contadores[UserRole.administrativo] ?? 0,
             rol: UserRole.administrativo,
           ),
           _FiltroChip(
             label: 'Docentes',
-            icon: _roleIcons[UserRole.docente]!,
+            icon: _roleIconData[UserRole.docente]!,
             count: contadores[UserRole.docente] ?? 0,
             rol: UserRole.docente,
           ),
           _FiltroChip(
             label: 'Acudientes',
-            icon: _roleIcons[UserRole.acudiente]!,
+            icon: _roleIconData[UserRole.acudiente]!,
             count: contadores[UserRole.acudiente] ?? 0,
             rol: UserRole.acudiente,
           ),
           _FiltroChip(
             label: 'Estudiantes',
-            icon: _roleIcons[UserRole.estudiante]!,
+            icon: _roleIconData[UserRole.estudiante]!,
             count: contadores[UserRole.estudiante] ?? 0,
             rol: UserRole.estudiante,
           ),
@@ -282,21 +296,12 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                   label: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(filtro.icon),
-                      const SizedBox(width: 6),
-                      Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Text(
-                            filtro.label,
-                            style: const TextStyle(fontSize: 13),
-                          ),
-                          Text(
-                            '${filtro.count}',
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                        ],
+                      Icon(filtro.icon, size: 14,
+                          color: isActive ? Colors.white : Colors.grey[700]),
+                      const SizedBox(width: 5),
+                      Text(
+                        '${filtro.label} (${filtro.count})',
+                        style: const TextStyle(fontSize: 12),
                       ),
                     ],
                   ),
@@ -359,7 +364,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
 
   Widget _buildUserCard(Usuario usuario) {
     final roleColor = _roleColors[usuario.tipo] ?? const Color(0xFF059669);
-    final roleIcon = _roleIcons[usuario.tipo] ?? '👤';
+    final roleIcon = _roleIconData[usuario.tipo] ?? Icons.person_outline;
 
     return GestureDetector(
       onTap: () => context.push('/usuarios/${usuario.id}'),
@@ -429,7 +434,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Text(roleIcon, style: const TextStyle(fontSize: 10)),
+                      Icon(roleIcon, size: 12, color: roleColor),
                       const SizedBox(width: 4),
                       Text(
                         usuario.tipo.displayName,
@@ -485,7 +490,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('👥', style: TextStyle(fontSize: 64)),
+          Icon(Icons.people, size: 64, color: Color(0xFF059669)),
           SizedBox(height: 16),
           Text(
             'No se encontraron usuarios',
@@ -512,10 +517,15 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
   // ========================================
 
   Widget _buildFAB() {
-    return FloatingActionButton(
+    return FloatingActionButton.extended(
       onPressed: () => context.push('/usuarios/create'),
       backgroundColor: const Color(0xFF059669),
-      child: const Icon(Icons.add, size: 28),
+      icon: const Icon(Icons.person_add, color: Colors.white),
+      label: const Text(
+        'Nuevo usuario',
+        style:
+            TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
@@ -526,7 +536,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
 
 class _FiltroChip {
   final String label;
-  final String icon;
+  final IconData icon;
   final int count;
   final UserRole? rol;
 

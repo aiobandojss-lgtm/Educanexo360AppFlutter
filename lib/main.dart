@@ -1,4 +1,5 @@
-// lib/main.dart
+﻿// lib/main.dart
+import 'utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +15,6 @@ import 'providers/usuario_provider.dart';
 import 'providers/curso_provider.dart';
 import 'providers/asistencia_provider.dart'; // ✅ NUEVO IMPORT
 import 'providers/tarea_provider.dart'; // ✅ NUEVO IMPORT
-import 'services/storage_service.dart';
 import 'services/api_service.dart';
 
 void main() async {
@@ -26,27 +26,27 @@ void main() async {
   // Mostrar configuración
   AppConfig.printConfig();
 
-  print('\n🧪 ===== VERIFICANDO SERVICIOS =====\n');
+  dlog('\n🧪 ===== VERIFICANDO SERVICIOS =====\n');
 
   // Test rápido de conectividad
   await _testBackendConnection();
 
-  print('\n🚀 Iniciando aplicación...\n');
+  dlog('\n🚀 Iniciando aplicación...\n');
 
   runApp(const MyApp());
 }
 
 Future<void> _testBackendConnection() async {
-  print('🌐 === TEST CONEXIÓN BACKEND ===');
+  dlog('🌐 === TEST CONEXIÓN BACKEND ===');
 
   final isConnected = await apiService.checkConnection();
-  print('📡 Backend disponible: $isConnected');
+  dlog('📡 Backend disponible: $isConnected');
 
   if (!isConnected) {
-    print('⚠️  Backend no disponible - Verifica que esté corriendo');
-    print('⚠️  URL: ${AppConfig.baseUrl}');
+    dlog('⚠️  Backend no disponible - Verifica que esté corriendo');
+    dlog('⚠️  URL: ${AppConfig.baseUrl}');
   } else {
-    print('✅ Backend conectado correctamente\n');
+    dlog('✅ Backend conectado correctamente\n');
   }
 }
 

@@ -288,15 +288,15 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [const Color(0xFF047857), const Color(0xFF14B8A6)],
+        gradient: const LinearGradient(
+          colors: [Color(0xFF047857), Color(0xFF14B8A6)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Color(0xFF059669).withOpacity(0.3),
+            color: const Color(0xFF059669).withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -430,18 +430,21 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text(
-                      'Porcentaje de Asistencia',
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
+                    const Expanded(
+                      child: Text(
+                        'Porcentaje de Asistencia',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                     Text(
                       '${estadisticas.porcentajeAsistencia.toStringAsFixed(1)}%',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: 20,
                         fontWeight: FontWeight.bold,
                         color: _getColorPorcentaje(
                           estadisticas.porcentajeAsistencia,
@@ -624,8 +627,7 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
             padding: const EdgeInsets.all(16),
             child: Row(
               children: [
-                const Icon(Icons.people,
-                    color: const Color(0xFF059669), size: 24),
+                const Icon(Icons.people, color: Color(0xFF059669), size: 24),
                 const SizedBox(width: 8),
                 Text(
                   'Estudiantes (${registro.estudiantes.length})',

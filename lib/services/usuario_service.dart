@@ -1,4 +1,5 @@
-// lib/services/usuario_service.dart
+﻿// lib/services/usuario_service.dart
+import '../utils/logger.dart';
 import '../config/app_config.dart';
 import '../models/usuario.dart';
 import 'api_service.dart';
@@ -11,7 +12,7 @@ class UsuarioService {
     String? query,
   }) async {
     try {
-      print('👥 UsuarioService: Obteniendo usuarios...');
+      dlog('👥 UsuarioService: Obteniendo usuarios...');
 
       final queryParams = <String, dynamic>{};
       if (tipo != null) queryParams['tipo'] = tipo.value;
@@ -25,20 +26,20 @@ class UsuarioService {
       if (response['success'] == true) {
         final List<dynamic> data = response['data'] ?? [];
         final users = data.map((json) => Usuario.fromJson(json)).toList();
-        print('✅ ${users.length} usuarios obtenidos');
+        dlog('✅ ${users.length} usuarios obtenidos');
         return users;
       }
 
       return [];
     } catch (e) {
-      print('❌ Error obteniendo usuarios: $e');
+      dlog('❌ Error obteniendo usuarios: $e');
       rethrow;
     }
   }
 
   Future<Usuario> getUserById(String userId) async {
     try {
-      print('👤 UsuarioService: Obteniendo usuario $userId...');
+      dlog('👤 UsuarioService: Obteniendo usuario $userId...');
 
       final response = await _apiService.get(
         AppConfig.usuarioDetail(userId),
@@ -46,13 +47,13 @@ class UsuarioService {
 
       if (response['success'] == true) {
         final user = Usuario.fromJson(response['data']);
-        print('✅ Usuario obtenido: ${user.nombreCompleto}');
+        dlog('✅ Usuario obtenido: ${user.nombreCompleto}');
         return user;
       }
 
       throw Exception('Usuario no encontrado');
     } catch (e) {
-      print('❌ Error obteniendo usuario: $e');
+      dlog('❌ Error obteniendo usuario: $e');
       rethrow;
     }
   }
@@ -68,7 +69,7 @@ class UsuarioService {
     UserStatus? estado, // ✅ AGREGAR ESTA LÍNEA
   }) async {
     try {
-      print('✏️ UsuarioService: Actualizando usuario $userId...');
+      dlog('✏️ UsuarioService: Actualizando usuario $userId...');
 
       final data = <String, dynamic>{};
       if (nombre != null) data['nombre'] = nombre;
@@ -90,13 +91,13 @@ class UsuarioService {
 
       if (response['success'] == true) {
         final updatedUser = Usuario.fromJson(response['data']);
-        print('✅ Usuario actualizado: ${updatedUser.nombreCompleto}');
+        dlog('✅ Usuario actualizado: ${updatedUser.nombreCompleto}');
         return updatedUser;
       }
 
       throw Exception('Error actualizando usuario');
     } catch (e) {
-      print('❌ Error actualizando usuario: $e');
+      dlog('❌ Error actualizando usuario: $e');
       rethrow;
     }
   }
@@ -107,7 +108,7 @@ class UsuarioService {
     required String newPassword,
   }) async {
     try {
-      print('🔒 UsuarioService: Cambiando contraseña para usuario $userId...');
+      dlog('🔒 UsuarioService: Cambiando contraseña para usuario $userId...');
 
       final data = {
         'passwordActual': currentPassword,
@@ -120,13 +121,13 @@ class UsuarioService {
       );
 
       if (response['success'] == true) {
-        print('✅ Contraseña cambiada exitosamente');
+        dlog('✅ Contraseña cambiada exitosamente');
         return;
       }
 
       throw Exception(response['message'] ?? 'Error cambiando contraseña');
     } catch (e) {
-      print('❌ Error cambiando contraseña: $e');
+      dlog('❌ Error cambiando contraseña: $e');
       rethrow;
     }
   }
@@ -143,8 +144,8 @@ class UsuarioService {
     UserStatus estado = UserStatus.activo,
   }) async {
     try {
-      print('➕ UsuarioService: Creando usuario $email...');
-      print('🏫 EscuelaId: $escuelaId');
+      dlog('➕ UsuarioService: Creando usuario $email...');
+      dlog('🏫 EscuelaId: $escuelaId');
 
       final data = {
         'nombre': nombre,
@@ -157,19 +158,19 @@ class UsuarioService {
         if (telefono != null) 'perfil': {'telefono': telefono},
       };
 
-      print('📤 Enviando datos: ${data.keys.toList()}');
+      dlog('📤 Enviando datos: ${data.keys.toList()}');
 
       final response = await _apiService.post(
         AppConfig.authRegister,
         data: data,
       );
 
-      print('📦 Respuesta recibida: ${response.keys.toList()}');
+      dlog('📦 Respuesta recibida: ${response.keys.toList()}');
 
       if (response['success'] == true) {
         final userData = response['data'];
         if (userData == null) {
-          print('⚠️ Backend no devolvió datos del usuario');
+          dlog('⚠️ Backend no devolvió datos del usuario');
           throw Exception('Backend no devolvió los datos del usuario creado');
         }
 
@@ -181,42 +182,42 @@ class UsuarioService {
         if (userData['tipo'] == null) userData['tipo'] = tipo.value;
         if (userData['estado'] == null) userData['estado'] = estado.value;
 
-        print('✅ Parseando usuario...');
+        dlog('✅ Parseando usuario...');
         final newUser = Usuario.fromJson(userData);
-        print('✅ Usuario creado: ${newUser.nombreCompleto} (${newUser.id})');
+        dlog('✅ Usuario creado: ${newUser.nombreCompleto} (${newUser.id})');
         return newUser;
       }
 
       throw Exception(response['message'] ?? 'Error creando usuario');
     } catch (e) {
-      print('❌ Error creando usuario: $e');
+      dlog('❌ Error creando usuario: $e');
       rethrow;
     }
   }
 
   Future<void> deactivateUser(String userId) async {
     try {
-      print('🗑️ UsuarioService: Desactivando usuario $userId...');
+      dlog('🗑️ UsuarioService: Desactivando usuario $userId...');
 
       final response = await _apiService.delete(
         AppConfig.usuarioDelete(userId),
       );
 
       if (response['success'] == true) {
-        print('✅ Usuario desactivado');
+        dlog('✅ Usuario desactivado');
         return;
       }
 
       throw Exception('Error desactivando usuario');
     } catch (e) {
-      print('❌ Error desactivando usuario: $e');
+      dlog('❌ Error desactivando usuario: $e');
       rethrow;
     }
   }
 
   Future<List<Usuario>> getAssociatedStudents(String acudienteId) async {
     try {
-      print('👨‍👩‍👧‍👦 UsuarioService: Obteniendo estudiantes asociados...');
+      dlog('👨‍👩‍👧‍👦 UsuarioService: Obteniendo estudiantes asociados...');
 
       final response = await _apiService.get(
         AppConfig.usuarioAssociatedStudents(acudienteId),
@@ -225,13 +226,13 @@ class UsuarioService {
       if (response['success'] == true) {
         final List<dynamic> data = response['data'] ?? [];
         final students = data.map((json) => Usuario.fromJson(json)).toList();
-        print('✅ ${students.length} estudiantes asociados');
+        dlog('✅ ${students.length} estudiantes asociados');
         return students;
       }
 
       return [];
     } catch (e) {
-      print('❌ Error obteniendo estudiantes asociados: $e');
+      dlog('❌ Error obteniendo estudiantes asociados: $e');
       return [];
     }
   }
@@ -241,9 +242,9 @@ class UsuarioService {
     String? query,
   }) async {
     try {
-      print('🔍 UsuarioService: Buscando estudiantes para asociar...');
-      print('   Escuela: $escuelaId');
-      print('   Query: $query');
+      dlog('🔍 UsuarioService: Buscando estudiantes para asociar...');
+      dlog('   Escuela: $escuelaId');
+      dlog('   Query: $query');
 
       final queryParams = <String, dynamic>{
         'tipo': UserRole.estudiante.value,
@@ -262,13 +263,13 @@ class UsuarioService {
       if (response['success'] == true) {
         final List<dynamic> data = response['data'] ?? [];
         final estudiantes = data.map((json) => Usuario.fromJson(json)).toList();
-        print('✅ ${estudiantes.length} estudiantes encontrados');
+        dlog('✅ ${estudiantes.length} estudiantes encontrados');
         return estudiantes;
       }
 
       return [];
     } catch (e) {
-      print('❌ Error buscando estudiantes: $e');
+      dlog('❌ Error buscando estudiantes: $e');
       rethrow;
     }
   }
@@ -279,9 +280,9 @@ class UsuarioService {
     required String estudianteId,
   }) async {
     try {
-      print('➕ UsuarioService: Asociando estudiante...');
-      print('   Acudiente: $acudienteId');
-      print('   Estudiante: $estudianteId');
+      dlog('➕ UsuarioService: Asociando estudiante...');
+      dlog('   Acudiente: $acudienteId');
+      dlog('   Estudiante: $estudianteId');
 
       final response = await _apiService.post(
         AppConfig.usuarioAssociateStudent(acudienteId),
@@ -289,13 +290,13 @@ class UsuarioService {
       );
 
       if (response['success'] == true) {
-        print('✅ Estudiante asociado correctamente');
+        dlog('✅ Estudiante asociado correctamente');
         return;
       }
 
       throw Exception('Error asociando estudiante');
     } catch (e) {
-      print('❌ Error asociando estudiante: $e');
+      dlog('❌ Error asociando estudiante: $e');
       rethrow;
     }
   }
@@ -306,22 +307,22 @@ class UsuarioService {
     required String estudianteId,
   }) async {
     try {
-      print('➖ UsuarioService: Desasociando estudiante...');
-      print('   Acudiente: $acudienteId');
-      print('   Estudiante: $estudianteId');
+      dlog('➖ UsuarioService: Desasociando estudiante...');
+      dlog('   Acudiente: $acudienteId');
+      dlog('   Estudiante: $estudianteId');
 
       final response = await _apiService.delete(
         AppConfig.usuarioDisassociateStudent(acudienteId, estudianteId),
       );
 
       if (response['success'] == true) {
-        print('✅ Estudiante desasociado correctamente');
+        dlog('✅ Estudiante desasociado correctamente');
         return;
       }
 
       throw Exception('Error desasociando estudiante');
     } catch (e) {
-      print('❌ Error desasociando estudiante: $e');
+      dlog('❌ Error desasociando estudiante: $e');
       rethrow;
     }
   }

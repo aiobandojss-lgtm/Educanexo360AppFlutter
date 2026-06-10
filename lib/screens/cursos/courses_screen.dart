@@ -1,6 +1,7 @@
 // lib/screens/cursos/courses_screen.dart
 // 📚 PANTALLA DE GESTIÓN DE CURSOS - SIGUIENDO PATRÓN DE USUARIOS
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
@@ -17,21 +18,30 @@ class CoursesScreen extends StatefulWidget {
 
 class _CoursesScreenState extends State<CoursesScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounceTimer;
 
   // 🎨 COLORES POR NIVEL
   static const Map<NivelEducativo, Color> _nivelColors = {
-    NivelEducativo.preescolar: Color(0xFFFF6B6B),
-    NivelEducativo.primaria: Color(0xFF4ECDC4),
-    NivelEducativo.secundaria: Color(0xFF45B7D1),
-    NivelEducativo.media: Color(0xFF96CEB4),
+    NivelEducativo.preescolar: Color(0xFF10B981),
+    NivelEducativo.primaria: Color(0xFF0D9488),
+    NivelEducativo.secundaria: Color(0xFF0284C7),
+    NivelEducativo.media: Color(0xFF059669),
   };
 
   // 🎨 ICONOS POR NIVEL
-  static const Map<NivelEducativo, String> _nivelIcons = {
-    NivelEducativo.preescolar: '🧸',
-    NivelEducativo.primaria: '📚',
-    NivelEducativo.secundaria: '🎓',
-    NivelEducativo.media: '🎯',
+  static const Map<NivelEducativo, IconData> _nivelIcons = {
+    NivelEducativo.preescolar: Icons.child_friendly,
+    NivelEducativo.primaria: Icons.menu_book,
+    NivelEducativo.secundaria: Icons.school,
+    NivelEducativo.media: Icons.emoji_events,
+  };
+
+  // 🎨 ICONOS POR JORNADA
+  static const Map<Jornada, IconData> _jornadaIconData = {
+    Jornada.matutina: Icons.wb_sunny,
+    Jornada.vespertina: Icons.wb_twilight,
+    Jornada.nocturna: Icons.nights_stay,
+    Jornada.completa: Icons.calendar_today,
   };
 
   @override
@@ -42,13 +52,18 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
   @override
   void dispose() {
+    _debounceTimer?.cancel();
     _searchController.dispose();
     super.dispose();
   }
 
   void _loadData() {
+    final provider = context.read<CursoProvider>();
+    if (provider.cursos.isEmpty) {
+      provider.prepareLoading();
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<CursoProvider>().loadCursos(refresh: true);
+      if (mounted) context.read<CursoProvider>().loadCursos(refresh: true);
     });
   }
 
@@ -57,12 +72,15 @@ class _CoursesScreenState extends State<CoursesScreen> {
   }
 
   void _onSearch(String query) {
-    final provider = context.read<CursoProvider>();
-    if (query.isEmpty) {
-      provider.clearSearch();
-    } else {
-      provider.search(query);
-    }
+    _debounceTimer?.cancel();
+    _debounceTimer = Timer(const Duration(milliseconds: 400), () {
+      final provider = context.read<CursoProvider>();
+      if (query.isEmpty) {
+        provider.clearSearch();
+      } else {
+        provider.search(query);
+      }
+    });
   }
 
   @override
@@ -74,7 +92,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF059669),
           foregroundColor: Colors.white,
-          title: const Text('📚 Gestión de Cursos'),
+          title: const Text('Gestión de Cursos'),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context),
@@ -84,7 +102,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text('🔒', style: TextStyle(fontSize: 64)),
+              Icon(Icons.lock_outline, size: 64, color: Color(0xFF059669)),
               SizedBox(height: 16),
               Text(
                 'Acceso Restringido',
@@ -107,18 +125,57 @@ class _CoursesScreenState extends State<CoursesScreen> {
         backgroundColor: const Color(0xFF059669),
         foregroundColor: Colors.white,
         elevation: 0,
-        title: const Text('📚 Gestión de Cursos'),
+        title: const Text('Gestión de Cursos'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          Consumer<CursoProvider>(
+            builder: (context, provider, _) {
+              final cantFiltros =
+                  (provider.currentNivelFilter != null ? 1 : 0) +
+                      (provider.currentJornadaFilter != null ? 1 : 0);
+              return Stack(
+                alignment: Alignment.center,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.filter_list),
+                    onPressed: _mostrarFiltros,
+                    tooltip: 'Filtros',
+                  ),
+                  if (cantFiltros > 0)
+                    Positioned(
+                      right: 6,
+                      top: 6,
+                      child: Container(
+                        width: 16,
+                        height: 16,
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$cantFiltros',
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
           _buildHeader(),
           _buildSearchBar(),
-          _buildNivelFilters(),
-          _buildJornadaFilters(),
           Expanded(child: _buildCoursesList()),
         ],
       ),
@@ -184,7 +241,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
         controller: _searchController,
         onChanged: _onSearch,
         decoration: InputDecoration(
-          hintText: '🔍 Buscar cursos, docentes...',
+          hintText: 'Buscar cursos, docentes...',
           prefixIcon: const Icon(Icons.search),
           suffixIcon: _searchController.text.isNotEmpty
               ? IconButton(
@@ -209,236 +266,182 @@ class _CoursesScreenState extends State<CoursesScreen> {
   }
 
   // ========================================
+  // 🎛️ FILTROS — BOTTOM SHEET (Nivel + Jornada)
+  // ========================================
+
+  void _mostrarFiltros() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => Consumer<CursoProvider>(
+        builder: (ctx, provider, _) {
+          return Padding(
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Título + limpiar
+                Row(
+                  children: [
+                    const Text(
+                      'Filtros',
+                      style: TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const Spacer(),
+                    if (provider.currentNivelFilter != null ||
+                        provider.currentJornadaFilter != null)
+                      TextButton.icon(
+                        onPressed: () {
+                          provider.changeNivelFilter(null);
+                          provider.changeJornadaFilter(null);
+                          Navigator.pop(ctx);
+                        },
+                        icon: const Icon(Icons.clear_all, size: 18),
+                        label: const Text('Limpiar'),
+                        style: TextButton.styleFrom(
+                            foregroundColor: Colors.red),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                // Filtro por Nivel
+                const Text(
+                  'Nivel educativo',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildFiltroChip(
+                      label: 'Todos',
+                      icon: Icons.menu_book,
+                      count: provider.totalCursos,
+                      isActive: provider.currentNivelFilter == null,
+                      onTap: () => provider.changeNivelFilter(null),
+                    ),
+                    ...NivelEducativo.values.map((nivel) => _buildFiltroChip(
+                          label: nivel.displayName,
+                          icon: _nivelIcons[nivel] ?? Icons.menu_book,
+                          count: provider.cursosPorNivel[nivel] ?? 0,
+                          isActive: provider.currentNivelFilter == nivel,
+                          onTap: () => provider.changeNivelFilter(nivel),
+                        )),
+                  ],
+                ),
+
+                const SizedBox(height: 20),
+
+                // Filtro por Jornada
+                const Text(
+                  'Jornada',
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.grey,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    _buildFiltroChip(
+                      label: 'Todas',
+                      icon: Icons.access_time,
+                      count: provider.totalCursos,
+                      isActive: provider.currentJornadaFilter == null,
+                      onTap: () => provider.changeJornadaFilter(null),
+                    ),
+                    ...Jornada.values.map((jornada) => _buildFiltroChip(
+                          label: jornada.displayName,
+                          icon: _jornadaIconData[jornada] ?? Icons.schedule,
+                          count: provider.cursosPorJornada[jornada] ?? 0,
+                          isActive:
+                              provider.currentJornadaFilter == jornada,
+                          onTap: () =>
+                              provider.changeJornadaFilter(jornada),
+                        )),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildFiltroChip({
+    required String label,
+    required IconData icon,
+    required int count,
+    required bool isActive,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isActive ? const Color(0xFF059669) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isActive ? const Color(0xFF059669) : Colors.grey[300]!,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: isActive ? Colors.white : Colors.grey[700]),
+            const SizedBox(width: 5),
+            Text(
+              '$label ($count)',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: isActive ? Colors.white : Colors.grey[700],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ========================================
   // 🎯 FILTROS POR NIVEL
   // ========================================
-
-  Widget _buildNivelFilters() {
-    return Consumer<CursoProvider>(
-      builder: (context, cursoProvider, _) {
-        final contadores = cursoProvider.cursosPorNivel;
-        final activeFilter = cursoProvider.currentNivelFilter;
-
-        final filtros = [
-          _FiltroChip(
-            label: 'Todos',
-            icon: '📚',
-            count: cursoProvider.totalCursos,
-            nivel: null,
-          ),
-          _FiltroChip(
-            label: 'Preescolar',
-            icon: _nivelIcons[NivelEducativo.preescolar]!,
-            count: contadores[NivelEducativo.preescolar] ?? 0,
-            nivel: NivelEducativo.preescolar,
-          ),
-          _FiltroChip(
-            label: 'Primaria',
-            icon: _nivelIcons[NivelEducativo.primaria]!,
-            count: contadores[NivelEducativo.primaria] ?? 0,
-            nivel: NivelEducativo.primaria,
-          ),
-          _FiltroChip(
-            label: 'Secundaria',
-            icon: _nivelIcons[NivelEducativo.secundaria]!,
-            count: contadores[NivelEducativo.secundaria] ?? 0,
-            nivel: NivelEducativo.secundaria,
-          ),
-          _FiltroChip(
-            label: 'Media',
-            icon: _nivelIcons[NivelEducativo.media]!,
-            count: contadores[NivelEducativo.media] ?? 0,
-            nivel: NivelEducativo.media,
-          ),
-        ];
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                'Filtrar por Nivel:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 60,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filtros.length,
-                itemBuilder: (context, index) {
-                  final filtro = filtros[index];
-                  final isActive = activeFilter == filtro.nivel;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      selected: isActive,
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(filtro.icon),
-                          const SizedBox(width: 6),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                filtro.label,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              Text(
-                                '${filtro.count}',
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      onSelected: (_) =>
-                          cursoProvider.changeNivelFilter(filtro.nivel),
-                      backgroundColor: Colors.white,
-                      selectedColor: const Color(0xFF6366F1),
-                      labelStyle: TextStyle(
-                        color: isActive ? Colors.white : Colors.grey[700],
-                        fontWeight: FontWeight.w600,
-                      ),
-                      side: BorderSide(
-                        color: isActive
-                            ? const Color(0xFF6366F1)
-                            : Colors.grey[300]!,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  // ========================================
-  // 🕐 FILTROS POR JORNADA
-  // ========================================
-
-  Widget _buildJornadaFilters() {
-    return Consumer<CursoProvider>(
-      builder: (context, cursoProvider, _) {
-        final contadores = cursoProvider.cursosPorJornada;
-        final activeFilter = cursoProvider.currentJornadaFilter;
-
-        final filtros = [
-          _FiltroJornadaChip(
-            label: 'Todas',
-            icon: '🕐',
-            count: cursoProvider.totalCursos,
-            jornada: null,
-          ),
-          _FiltroJornadaChip(
-            label: 'Matutina',
-            icon: Jornada.matutina.icono,
-            count: contadores[Jornada.matutina] ?? 0,
-            jornada: Jornada.matutina,
-          ),
-          _FiltroJornadaChip(
-            label: 'Vespertina',
-            icon: Jornada.vespertina.icono,
-            count: contadores[Jornada.vespertina] ?? 0,
-            jornada: Jornada.vespertina,
-          ),
-          _FiltroJornadaChip(
-            label: 'Nocturna',
-            icon: Jornada.nocturna.icono,
-            count: contadores[Jornada.nocturna] ?? 0,
-            jornada: Jornada.nocturna,
-          ),
-          _FiltroJornadaChip(
-            label: 'Completa',
-            icon: Jornada.completa.icono,
-            count: contadores[Jornada.completa] ?? 0,
-            jornada: Jornada.completa,
-          ),
-        ];
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Text(
-                'Filtrar por Jornada:',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-            SizedBox(
-              height: 60,
-              child: ListView.builder(
-                scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: filtros.length,
-                itemBuilder: (context, index) {
-                  final filtro = filtros[index];
-                  final isActive = activeFilter == filtro.jornada;
-
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      selected: isActive,
-                      label: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(filtro.icon),
-                          const SizedBox(width: 6),
-                          Column(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Text(
-                                filtro.label,
-                                style: const TextStyle(fontSize: 13),
-                              ),
-                              Text(
-                                '${filtro.count}',
-                                style: const TextStyle(fontSize: 11),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      onSelected: (_) =>
-                          cursoProvider.changeJornadaFilter(filtro.jornada),
-                      backgroundColor: Colors.white,
-                      selectedColor: const Color(0xFF6366F1),
-                      labelStyle: TextStyle(
-                        color: isActive ? Colors.white : Colors.grey[700],
-                        fontWeight: FontWeight.w600,
-                      ),
-                      side: BorderSide(
-                        color: isActive
-                            ? const Color(0xFF6366F1)
-                            : Colors.grey[300]!,
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
 
   // ========================================
   // 📋 LISTA DE CURSOS
@@ -478,8 +481,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
   // ========================================
 
   Widget _buildCourseCard(Curso curso) {
-    final nivelColor = _nivelColors[curso.nivel] ?? const Color(0xFF6366F1);
-    final nivelIcon = _nivelIcons[curso.nivel] ?? '📚';
+    final nivelColor = _nivelColors[curso.nivel] ?? const Color(0xFF059669);
+    final nivelIcon = _nivelIcons[curso.nivel] ?? Icons.menu_book;
 
     return GestureDetector(
       onTap: () => context.push('/cursos/${curso.id}'),
@@ -490,7 +493,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.06),
+              color: Colors.black.withValues(alpha: 0.06),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),
@@ -503,7 +506,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
             // Header
             Row(
               children: [
-                Text(nivelIcon, style: const TextStyle(fontSize: 20)),
+                Icon(nivelIcon, size: 20, color: nivelColor),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -552,7 +555,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
             // Detalles
             Row(
               children: [
-                const Text('👩‍🏫', style: TextStyle(fontSize: 14)),
+                Icon(Icons.person, size: 14, color: Colors.grey[700]),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
@@ -572,14 +575,14 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
             Row(
               children: [
-                const Text('👥', style: TextStyle(fontSize: 14)),
+                Icon(Icons.people, size: 14, color: Colors.grey[700]),
                 const SizedBox(width: 6),
                 Text(
                   '${curso.totalEstudiantes} estudiantes',
                   style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                 ),
                 const SizedBox(width: 16),
-                const Text('📚', style: TextStyle(fontSize: 14)),
+                Icon(Icons.menu_book, size: 14, color: Colors.grey[700]),
                 const SizedBox(width: 6),
                 Text(
                   '${curso.totalAsignaturas} asignaturas',
@@ -592,8 +595,8 @@ class _CoursesScreenState extends State<CoursesScreen> {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Text(curso.jornada!.icono,
-                      style: const TextStyle(fontSize: 14)),
+                  Icon(_jornadaIconData[curso.jornada!] ?? Icons.schedule,
+                      size: 14, color: Colors.grey[700]),
                   const SizedBox(width: 6),
                   Text(
                     curso.jornada!.displayName,
@@ -609,9 +612,15 @@ class _CoursesScreenState extends State<CoursesScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  '📅 ${curso.anoAcademico ?? 'Año no especificado'}',
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                Row(
+                  children: [
+                    Icon(Icons.calendar_today, size: 11, color: Colors.grey[600]),
+                    const SizedBox(width: 4),
+                    Text(
+                      curso.anoAcademico ?? 'Año no especificado',
+                      style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                    ),
+                  ],
                 ),
                 Container(
                   padding:
@@ -653,7 +662,7 @@ class _CoursesScreenState extends State<CoursesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('📚', style: TextStyle(fontSize: 64)),
+          const Icon(Icons.menu_book, size: 64, color: Color(0xFF059669)),
           const SizedBox(height: 16),
           const Text(
             'No se encontraron cursos',
@@ -685,43 +694,11 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
               ),
-              child: const Text('🧹 Limpiar filtros'),
+              child: const Text('Limpiar filtros'),
             ),
           ],
         ],
       ),
     );
   }
-}
-
-// ========================================
-// 🎯 CLASES AUXILIARES PARA FILTROS
-// ========================================
-
-class _FiltroChip {
-  final String label;
-  final String icon;
-  final int count;
-  final NivelEducativo? nivel;
-
-  _FiltroChip({
-    required this.label,
-    required this.icon,
-    required this.count,
-    this.nivel,
-  });
-}
-
-class _FiltroJornadaChip {
-  final String label;
-  final String icon;
-  final int count;
-  final Jornada? jornada;
-
-  _FiltroJornadaChip({
-    required this.label,
-    required this.icon,
-    required this.count,
-    this.jornada,
-  });
 }

@@ -1,5 +1,6 @@
-// lib/providers/calendario_provider.dart
+﻿// lib/providers/calendario_provider.dart
 
+import '../utils/logger.dart';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/evento.dart';
@@ -56,9 +57,9 @@ class CalendarioProvider extends ChangeNotifier {
   ///
   /// Todos ordenados por tipo
   List<Evento> getEventosDelDia(DateTime dia, String? tipoUsuario) {
-    print('🔍 Buscando eventos para: ${dia.day}/${dia.month}/${dia.year}');
-    print('   Rol del usuario: $tipoUsuario');
-    print('   Total eventos del mes: ${_todosLosEventosDelMes.length}');
+    dlog('🔍 Buscando eventos para: ${dia.day}/${dia.month}/${dia.year}');
+    dlog('   Rol del usuario: $tipoUsuario');
+    dlog('   Total eventos del mes: ${_todosLosEventosDelMes.length}');
 
     // Roles que pueden ver TODOS los estados
     final rolesAdmin = [
@@ -97,10 +98,21 @@ class CalendarioProvider extends ChangeNotifier {
       return a.fechaInicio.compareTo(b.fechaInicio);
     });
 
-    print('   ✅ Eventos del día encontrados: ${eventosDia.length}');
-    print('   Es admin: $esAdmin');
+    dlog('   ✅ Eventos del día encontrados: ${eventosDia.length}');
+    dlog('   Es admin: $esAdmin');
 
     return eventosDia;
+  }
+
+  // ==========================================
+  // ⚡ PREPARAR ESTADO DE CARGA (para initState)
+  // ==========================================
+
+  /// Marca el estado como cargando SIN notifyListeners.
+  /// Llamar desde initState antes del primer frame para que el spinner
+  /// aparezca desde la primera renderización (evita flash de pantalla vacía).
+  void prepareLoading() {
+    _isLoading = true;
   }
 
   // ==========================================
@@ -113,7 +125,7 @@ class CalendarioProvider extends ChangeNotifier {
     bool silent = false,
   }) async {
     if (_isLoading && !refresh) {
-      print('⏳ Ya hay una carga en proceso');
+      dlog('⏳ Ya hay una carga en proceso');
       return;
     }
 
@@ -124,7 +136,7 @@ class CalendarioProvider extends ChangeNotifier {
         notifyListeners();
       }
 
-      print(
+      dlog(
           '📅 Cargando TODOS los eventos del mes: ${_mesActual.month}/${_mesActual.year}');
 
       // Calcular inicio y fin del mes
@@ -140,12 +152,12 @@ class CalendarioProvider extends ChangeNotifier {
       );
 
       _todosLosEventosDelMes = todosLosEventos;
-      print('   ✅ Total eventos cargados: ${_todosLosEventosDelMes.length}');
+      dlog('   ✅ Total eventos cargados: ${_todosLosEventosDelMes.length}');
 
       _errorMessage = null;
     } catch (e) {
       _errorMessage = 'Error al cargar eventos: $e';
-      print('❌ $_errorMessage');
+      dlog('❌ $_errorMessage');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -154,7 +166,7 @@ class CalendarioProvider extends ChangeNotifier {
 
   /// Refrescar eventos
   Future<void> refresh() async {
-    print('🔄 Refrescando eventos...');
+    dlog('🔄 Refrescando eventos...');
     await loadEventos(refresh: true);
   }
 
@@ -165,28 +177,28 @@ class CalendarioProvider extends ChangeNotifier {
   /// Ir al mes anterior
   Future<void> mesAnterior() async {
     _mesActual = DateTime(_mesActual.year, _mesActual.month - 1);
-    print('◀️ Mes anterior: ${_mesActual.month}/${_mesActual.year}');
+    dlog('◀️ Mes anterior: ${_mesActual.month}/${_mesActual.year}');
     await loadEventos();
   }
 
   /// Ir al mes siguiente
   Future<void> mesSiguiente() async {
     _mesActual = DateTime(_mesActual.year, _mesActual.month + 1);
-    print('▶️ Mes siguiente: ${_mesActual.month}/${_mesActual.year}');
+    dlog('▶️ Mes siguiente: ${_mesActual.month}/${_mesActual.year}');
     await loadEventos();
   }
 
   /// Ir al mes actual (hoy)
   Future<void> mesActualHoy() async {
     _mesActual = DateTime.now();
-    print('🏠 Mes actual: ${_mesActual.month}/${_mesActual.year}');
+    dlog('🏠 Mes actual: ${_mesActual.month}/${_mesActual.year}');
     await loadEventos();
   }
 
   /// Ir a un mes específico
   Future<void> irAMes(DateTime mes) async {
     _mesActual = DateTime(mes.year, mes.month);
-    print('📅 Ir a mes: ${_mesActual.month}/${_mesActual.year}');
+    dlog('📅 Ir a mes: ${_mesActual.month}/${_mesActual.year}');
     await loadEventos();
   }
 
@@ -209,7 +221,7 @@ class CalendarioProvider extends ChangeNotifier {
     File? archivoAdjunto,
   }) async {
     try {
-      print('📝 Creando evento: $titulo');
+      dlog('📝 Creando evento: $titulo');
 
       final evento = await _calendarioService.crearEvento(
         titulo: titulo,
@@ -225,7 +237,7 @@ class CalendarioProvider extends ChangeNotifier {
         archivoAdjunto: archivoAdjunto,
       );
 
-      print('✅ Evento creado: ${evento.id}');
+      dlog('✅ Evento creado: ${evento.id}');
 
       // Agregar a cache
       _eventosCache[evento.id] = evento;
@@ -235,7 +247,7 @@ class CalendarioProvider extends ChangeNotifier {
 
       return evento;
     } catch (e) {
-      print('❌ Error creando evento: $e');
+      dlog('❌ Error creando evento: $e');
       rethrow;
     }
   }
@@ -256,9 +268,9 @@ class CalendarioProvider extends ChangeNotifier {
     File? archivoAdjunto,
   }) async {
     try {
-      print('✏️ Actualizando evento: $eventoId');
+      dlog('✏️ Actualizando evento: $eventoId');
       if (estado != null) {
-        print('   Nuevo estado: ${estado.value}');
+        dlog('   Nuevo estado: ${estado.value}');
       }
 
       final evento = await _calendarioService.actualizarEvento(
@@ -276,7 +288,7 @@ class CalendarioProvider extends ChangeNotifier {
         archivoAdjunto: archivoAdjunto,
       );
 
-      print('✅ Evento actualizado: ${evento.id}');
+      dlog('✅ Evento actualizado: ${evento.id}');
 
       // Actualizar cache
       _eventosCache[evento.id] = evento;
@@ -286,7 +298,7 @@ class CalendarioProvider extends ChangeNotifier {
 
       return evento;
     } catch (e) {
-      print('❌ Error actualizando evento: $e');
+      dlog('❌ Error actualizando evento: $e');
       rethrow;
     }
   }
@@ -294,7 +306,7 @@ class CalendarioProvider extends ChangeNotifier {
   /// Eliminar un evento
   Future<void> eliminarEvento(String eventoId) async {
     try {
-      print('🗑️ Eliminando evento: $eventoId');
+      dlog('🗑️ Eliminando evento: $eventoId');
 
       // Optimistic update: remover de la lista inmediatamente
       final index = _todosLosEventosDelMes.indexWhere((e) => e.id == eventoId);
@@ -310,7 +322,7 @@ class CalendarioProvider extends ChangeNotifier {
         // Llamar al servicio
         await _calendarioService.eliminarEvento(eventoId);
 
-        print('✅ Evento eliminado exitosamente');
+        dlog('✅ Evento eliminado exitosamente');
 
         // Remover del cache
         _eventosCache.remove(eventoId);
@@ -326,7 +338,7 @@ class CalendarioProvider extends ChangeNotifier {
         rethrow;
       }
     } catch (e) {
-      print('❌ Error eliminando evento: $e');
+      dlog('❌ Error eliminando evento: $e');
       rethrow;
     }
   }
@@ -338,11 +350,11 @@ class CalendarioProvider extends ChangeNotifier {
   /// Obtener un evento por ID (primero busca en cache, luego en API)
   Future<Evento?> getEventoById(String id) async {
     try {
-      print('🔍 Buscando evento por ID: $id');
+      dlog('🔍 Buscando evento por ID: $id');
 
       // Buscar primero en cache local
       if (_eventosCache.containsKey(id)) {
-        print('✅ Evento encontrado en cache');
+        dlog('✅ Evento encontrado en cache');
         return _eventosCache[id];
       }
 
@@ -350,7 +362,7 @@ class CalendarioProvider extends ChangeNotifier {
       try {
         final eventoEnLista =
             _todosLosEventosDelMes.firstWhere((e) => e.id == id);
-        print('✅ Evento encontrado en lista del mes');
+        dlog('✅ Evento encontrado en lista del mes');
         _eventosCache[id] = eventoEnLista;
         return eventoEnLista;
       } catch (e) {
@@ -358,14 +370,14 @@ class CalendarioProvider extends ChangeNotifier {
       }
 
       // Si no está, buscar en API
-      print('🌐 Buscando evento en API...');
+      dlog('🌐 Buscando evento en API...');
       final evento = await _calendarioService.obtenerEventoPorId(id);
       _eventosCache[id] = evento;
 
-      print('✅ Evento encontrado en API');
+      dlog('✅ Evento encontrado en API');
       return evento;
     } catch (e) {
-      print('❌ Error obteniendo evento: $e');
+      dlog('❌ Error obteniendo evento: $e');
       return null;
     }
   }
@@ -377,7 +389,7 @@ class CalendarioProvider extends ChangeNotifier {
   /// Limpiar cache
   void limpiarCache() {
     _eventosCache.clear();
-    print('🧹 Cache limpiado');
+    dlog('🧹 Cache limpiado');
   }
 
   /// Limpiar todo el estado
@@ -386,19 +398,19 @@ class CalendarioProvider extends ChangeNotifier {
     _eventosCache.clear();
     _mesActual = DateTime.now();
     _errorMessage = null;
-    print('🧹 Estado completo limpiado');
+    dlog('🧹 Estado completo limpiado');
     notifyListeners();
   }
 
   /// Debug: Imprimir estado actual
-  void debugPrint() {
-    print('\n📅 ===== CALENDARIO PROVIDER DEBUG =====');
-    print('Total eventos del mes: ${_todosLosEventosDelMes.length}');
-    print('Próximos eventos: ${proximosEventos.length}');
-    print('Mes actual: ${_mesActual.month}/${_mesActual.year}');
-    print('Loading: $_isLoading');
-    print('Error: $_errorMessage');
-    print('Cache size: ${_eventosCache.length}');
-    print('=========================================\n');
+  void debugState() {
+    dlog('\n📅 ===== CALENDARIO PROVIDER DEBUG =====');
+    dlog('Total eventos del mes: ${_todosLosEventosDelMes.length}');
+    dlog('Próximos eventos: ${proximosEventos.length}');
+    dlog('Mes actual: ${_mesActual.month}/${_mesActual.year}');
+    dlog('Loading: $_isLoading');
+    dlog('Error: $_errorMessage');
+    dlog('Cache size: ${_eventosCache.length}');
+    dlog('=========================================\n');
   }
 }

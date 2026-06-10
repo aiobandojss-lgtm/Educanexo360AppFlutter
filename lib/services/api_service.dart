@@ -1,4 +1,5 @@
-// lib/services/api_service.dart
+﻿// lib/services/api_service.dart
+import '../utils/logger.dart';
 import 'dart:async';
 import 'package:dio/dio.dart';
 import '../config/app_config.dart';
@@ -8,6 +9,10 @@ class ApiService {
   late final Dio _dio;
   bool _isRefreshing = false;
   final List<Function> _refreshSubscribers = [];
+
+  /// Callback registrado por AuthProvider para manejar sesión expirada.
+  /// Se invoca cuando el refreshToken falla y no hay forma de recuperar la sesión.
+  static Function? onSessionExpired;
 
   // Singleton
   static final ApiService _instance = ApiService._internal();
@@ -41,19 +46,19 @@ class ApiService {
 
           if (token != null) {
             options.headers['Authorization'] = 'Bearer $token';
-            print('📤 ${options.method} ${options.path} (con token)');
+            dlog('📤 ${options.method} ${options.path} (con token)');
           } else {
-            print('📤 ${options.method} ${options.path} (sin token)');
+            dlog('📤 ${options.method} ${options.path} (sin token)');
           }
 
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          print('✅ ${response.statusCode} ${response.requestOptions.path}');
+          dlog('✅ ${response.statusCode} ${response.requestOptions.path}');
           return handler.next(response);
         },
         onError: (error, handler) async {
-          print(
+          dlog(
               '❌ Error ${error.response?.statusCode} ${error.requestOptions.path}');
 
           // Si es 401 (no autorizado) y no es la ruta de login
@@ -95,12 +100,12 @@ class ApiService {
     _isRefreshing = true;
 
     try {
-      print('🔄 Refrescando token...');
+      dlog('🔄 Refrescando token...');
 
       final refreshToken = await StorageService.getRefreshToken();
 
       if (refreshToken == null) {
-        print('❌ No hay refresh token');
+        dlog('❌ No hay refresh token');
         await _clearAuthAndNotify();
         return null;
       }
@@ -115,7 +120,7 @@ class ApiService {
         final newToken = response.data['data']['token'] as String;
         await StorageService.saveToken(newToken);
 
-        print('✅ Token refrescado exitosamente');
+        dlog('✅ Token refrescado exitosamente');
 
         // Notificar a subscribers que el token está listo
         _notifyRefreshSubscribers(newToken);
@@ -126,7 +131,7 @@ class ApiService {
         return null;
       }
     } catch (e) {
-      print('❌ Error refrescando token: $e');
+      dlog('❌ Error refrescando token: $e');
       await _clearAuthAndNotify();
       return null;
     } finally {
@@ -151,8 +156,8 @@ class ApiService {
 
   Future<void> _clearAuthAndNotify() async {
     await StorageService.clearAll();
-    // Aquí podrías emitir un evento para que la app redirija al login
-    print('🚪 Sesión expirada - redirigir a login');
+    dlog('🚪 Sesión expirada - redirigiendo a login');
+    onSessionExpired?.call();
   }
 
   // ==========================================
@@ -183,15 +188,15 @@ class ApiService {
   }) async {
     try {
       // ✅ LOGS DE DEBUG
-      print('🌐 ========== POST DEBUG ==========');
-      print('📍 BaseURL: ${_dio.options.baseUrl}');
-      print('📍 Endpoint: $endpoint');
-      print('📍 URL Final: ${_dio.options.baseUrl}$endpoint');
-      print('📦 Data type: ${data.runtimeType}');
+      dlog('🌐 ========== POST DEBUG ==========');
+      dlog('📍 BaseURL: ${_dio.options.baseUrl}');
+      dlog('📍 Endpoint: $endpoint');
+      dlog('📍 URL Final: ${_dio.options.baseUrl}$endpoint');
+      dlog('📦 Data type: ${data.runtimeType}');
       if (data is Map) {
-        print('📦 Data keys: ${(data as Map).keys}');
+        dlog('📦 Data keys: ${(data).keys}');
       }
-      print('==================================\n');
+      dlog('==================================\n');
 
       final response = await _dio.post(
         endpoint,
@@ -295,10 +300,10 @@ class ApiService {
   }
 
   Exception _handleError(DioException error) {
-    print('🔍 Error details:');
-    print('   Type: ${error.type}');
-    print('   Message: ${error.message}');
-    print('   Response: ${error.response?.data}');
+    dlog('🔍 Error details:');
+    dlog('   Type: ${error.type}');
+    dlog('   Message: ${error.message}');
+    dlog('   Response: ${error.response?.data}');
 
     if (error.response != null) {
       // Error de respuesta del servidor
@@ -340,7 +345,7 @@ class ApiService {
   /// Verificar conectividad con el backend
   Future<bool> checkConnection() async {
     try {
-      print('🔍 Verificando conexión con backend...');
+      dlog('🔍 Verificando conexión con backend...');
       final response = await _dio.get(
         '/health',
         options: Options(
@@ -348,10 +353,10 @@ class ApiService {
           receiveTimeout: const Duration(seconds: 5),
         ),
       );
-      print('✅ Backend disponible');
+      dlog('✅ Backend disponible');
       return response.statusCode == 200;
     } catch (e) {
-      print('❌ Backend no disponible: $e');
+      dlog('❌ Backend no disponible: $e');
       return false;
     }
   }
@@ -359,9 +364,9 @@ class ApiService {
   // Agregar al final de la clase ApiService
   Future<Response> download(String endpoint, String savePath) async {
     try {
-      print('⬇️ Descargando archivo...');
-      print('   Endpoint: $endpoint');
-      print('   Destino: $savePath');
+      dlog('⬇️ Descargando archivo...');
+      dlog('   Endpoint: $endpoint');
+      dlog('   Destino: $savePath');
 
       final response = await _dio.download(
         endpoint,
@@ -369,15 +374,15 @@ class ApiService {
         onReceiveProgress: (received, total) {
           if (total != -1) {
             final progress = (received / total * 100).toStringAsFixed(0);
-            print('📥 Progreso: $progress%');
+            dlog('📥 Progreso: $progress%');
           }
         },
       );
 
-      print('✅ Descarga completada');
+      dlog('✅ Descarga completada');
       return response;
     } catch (e) {
-      print('❌ Error en descarga: $e');
+      dlog('❌ Error en descarga: $e');
       rethrow;
     }
   }

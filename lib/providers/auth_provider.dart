@@ -1,8 +1,10 @@
-// lib/providers/auth_provider.dart
+﻿// lib/providers/auth_provider.dart
+import '../utils/logger.dart';
 import 'package:flutter/material.dart';
 import '../models/usuario.dart';
 import '../services/auth_service.dart';
 import '../services/permission_service.dart';
+import '../services/api_service.dart';
 
 /// Provider para gestión del estado de autenticación
 /// Wrapper sobre AuthService con notificaciones automáticas a la UI
@@ -33,6 +35,10 @@ class AuthProvider extends ChangeNotifier {
 
   /// Inicializar - verificar si hay sesión guardada
   Future<void> _initializeAuth() async {
+    // Registrar callback para cuando el token expire y no se pueda renovar.
+    // ApiService lo invoca desde _clearAuthAndNotify() tras un 401 irrecuperable.
+    ApiService.onSessionExpired = _handleSessionExpired;
+
     _setLoading(true);
     try {
       final hasSession = await _authService.checkSession();
@@ -41,15 +47,15 @@ class AuthProvider extends ChangeNotifier {
       _errorMessage = null;
 
       if (hasSession) {
-        print('🔐 AuthProvider: Sesión existente encontrada');
-        print('   Usuario: ${_currentUser?.nombreCompleto}');
-        print('   Rol: ${_currentUser?.tipo.value}');
+        dlog('🔐 AuthProvider: Sesión existente encontrada');
+        dlog('   Usuario: ${_currentUser?.nombreCompleto}');
+        dlog('   Rol: ${_currentUser?.tipo.value}');
       } else {
-        print('🔐 AuthProvider: No hay sesión activa');
+        dlog('🔐 AuthProvider: No hay sesión activa');
       }
     } catch (e) {
       _errorMessage = 'Error al verificar sesión: $e';
-      print('❌ AuthProvider: $_errorMessage');
+      dlog('❌ AuthProvider: $_errorMessage');
     } finally {
       _setLoading(false);
     }
@@ -61,49 +67,50 @@ class AuthProvider extends ChangeNotifier {
     _clearError();
 
     try {
-      print('🔐 AuthProvider: Intentando login...');
-      print('   Email: $email');
+      dlog('🔐 AuthProvider: Intentando login...');
+      dlog('   Email: $email');
 
       final response = await _authService.login(email, password);
 
       if (response.success) {
         _isAuthenticated = true;
         _currentUser = _authService.currentUser;
-        print('✅ AuthProvider: Login exitoso');
-        print('   Usuario: ${_currentUser?.nombreCompleto}');
-        print('   Rol: ${_currentUser?.tipo.value}');
+        dlog('✅ AuthProvider: Login exitoso');
+        dlog('   Usuario: ${_currentUser?.nombreCompleto}');
+        dlog('   Rol: ${_currentUser?.tipo.value}');
         _setLoading(false);
         return true;
       } else {
         _errorMessage = response.message.isNotEmpty
             ? response.message
             : 'Credenciales incorrectas';
-        print('❌ AuthProvider: $_errorMessage');
+        dlog('❌ AuthProvider: $_errorMessage');
         _setLoading(false);
         return false;
       }
     } catch (e) {
       _errorMessage = _getErrorMessage(e);
-      print('❌ AuthProvider: Error en login - $_errorMessage');
+      dlog('❌ AuthProvider: Error en login - $_errorMessage');
       _setLoading(false);
       return false;
     }
   }
 
-  /// Logout
+  /// Logout — cierra sesión localmente de inmediato para respuesta instantánea
   Future<void> logout() async {
-    _setLoading(true);
+    dlog('🔐 AuthProvider: Cerrando sesión...');
+    _isAuthenticated = false;
+    _currentUser = null;
+    _errorMessage = null;
+    _isLoading = false;
+    notifyListeners(); // GoRouter redirige a /login en este instante
+
+    // Avisar al servidor en background (no bloquea la UI)
     try {
-      print('🔐 AuthProvider: Cerrando sesión...');
       await _authService.logout();
-      _isAuthenticated = false;
-      _currentUser = null;
-      _clearError();
-      print('✅ AuthProvider: Sesión cerrada');
+      dlog('✅ AuthProvider: Sesión cerrada en servidor');
     } catch (e) {
-      print('❌ AuthProvider: Error en logout - $e');
-    } finally {
-      _setLoading(false);
+      dlog('⚠️ AuthProvider: Error al cerrar sesión en servidor - $e');
     }
   }
 
@@ -117,9 +124,9 @@ class AuthProvider extends ChangeNotifier {
       );
       _currentUser = updatedUser;
       notifyListeners();
-      print('✅ AuthProvider: Usuario actualizado');
+      dlog('✅ AuthProvider: Usuario actualizado');
     } catch (e) {
-      print('❌ AuthProvider: Error al actualizar usuario - $e');
+      dlog('❌ AuthProvider: Error al actualizar usuario - $e');
     }
   }
 
@@ -138,12 +145,12 @@ class AuthProvider extends ChangeNotifier {
         newPassword: newPassword,
       );
 
-      print('✅ AuthProvider: Contraseña cambiada');
+      dlog('✅ AuthProvider: Contraseña cambiada');
       _setLoading(false);
       return true;
     } catch (e) {
       _errorMessage = _getErrorMessage(e);
-      print('❌ AuthProvider: Error al cambiar contraseña - $_errorMessage');
+      dlog('❌ AuthProvider: Error al cambiar contraseña - $_errorMessage');
       _setLoading(false);
       return false;
     }
@@ -157,18 +164,28 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authService.forgotPassword(email);
 
-      print('✅ AuthProvider: Email de recuperación enviado');
+      dlog('✅ AuthProvider: Email de recuperación enviado');
       _setLoading(false);
       return true;
     } catch (e) {
       _errorMessage = _getErrorMessage(e);
-      print('❌ AuthProvider: Error en recuperación - $_errorMessage');
+      dlog('❌ AuthProvider: Error en recuperación - $_errorMessage');
       _setLoading(false);
       return false;
     }
   }
 
   // === MÉTODOS PRIVADOS ===
+
+  /// Maneja la expiración de sesión invocada por ApiService.
+  /// Limpia el estado y notifica al GoRouter para redirigir al login.
+  void _handleSessionExpired() {
+    _isAuthenticated = false;
+    _currentUser = null;
+    _errorMessage = null;
+    notifyListeners();
+    dlog('🚪 AuthProvider: sesión expirada, redirigiendo a login');
+  }
 
   void _setLoading(bool value) {
     _isLoading = value;
@@ -209,12 +226,12 @@ class AuthProvider extends ChangeNotifier {
 
   /// Debug
   void printDebug() {
-    print('\n📱 === AUTH PROVIDER STATE ===');
-    print('Autenticado: $_isAuthenticated');
-    print('Cargando: $_isLoading');
-    print('Usuario: ${_currentUser?.nombreCompleto ?? "ninguno"}');
-    print('Rol: ${_currentUser?.tipo.value ?? "ninguno"}');
-    print('Error: ${_errorMessage ?? "ninguno"}');
-    print('============================\n');
+    dlog('\n📱 === AUTH PROVIDER STATE ===');
+    dlog('Autenticado: $_isAuthenticated');
+    dlog('Cargando: $_isLoading');
+    dlog('Usuario: ${_currentUser?.nombreCompleto ?? "ninguno"}');
+    dlog('Rol: ${_currentUser?.tipo.value ?? "ninguno"}');
+    dlog('Error: ${_errorMessage ?? "ninguno"}');
+    dlog('============================\n');
   }
 }

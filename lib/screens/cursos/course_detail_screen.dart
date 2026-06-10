@@ -31,18 +31,18 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
 
   // 🎨 COLORES POR NIVEL
   static const Map<NivelEducativo, Color> _nivelColors = {
-    NivelEducativo.preescolar: Color(0xFFFF6B6B),
-    NivelEducativo.primaria: Color(0xFF4ECDC4),
-    NivelEducativo.secundaria: Color(0xFF45B7D1),
-    NivelEducativo.media: Color(0xFF96CEB4),
+    NivelEducativo.preescolar: Color(0xFF10B981),
+    NivelEducativo.primaria: Color(0xFF0D9488),
+    NivelEducativo.secundaria: Color(0xFF0284C7),
+    NivelEducativo.media: Color(0xFF059669),
   };
 
   // 🎨 ICONOS POR NIVEL
-  static const Map<NivelEducativo, String> _nivelIcons = {
-    NivelEducativo.preescolar: '🧸',
-    NivelEducativo.primaria: '📚',
-    NivelEducativo.secundaria: '🎓',
-    NivelEducativo.media: '🎯',
+  static const Map<NivelEducativo, IconData> _nivelIcons = {
+    NivelEducativo.preescolar: Icons.child_friendly,
+    NivelEducativo.primaria: Icons.menu_book,
+    NivelEducativo.secundaria: Icons.school,
+    NivelEducativo.media: Icons.emoji_events,
   };
 
   @override
@@ -159,7 +159,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
 
     final nivelColor = _nivelColors[_curso!.nivel] ?? const Color(0xFF059669);
-    final nivelIcon = _nivelIcons[_curso!.nivel] ?? '📚';
+    final nivelIcon = _nivelIcons[_curso!.nivel] ?? Icons.menu_book;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -179,7 +179,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   // 📋 HEADER
   // ========================================
 
-  Widget _buildHeader(Color nivelColor, String nivelIcon) {
+  Widget _buildHeader(Color nivelColor, IconData nivelIcon) {
     return Container(
       decoration: BoxDecoration(color: nivelColor),
       padding: const EdgeInsets.all(16),
@@ -190,7 +190,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             onPressed: () => context.pop(),
           ),
           const SizedBox(width: 8),
-          Text(nivelIcon, style: const TextStyle(fontSize: 24)),
+          Icon(nivelIcon, size: 24, color: Colors.white),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -230,23 +230,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
       child: Row(
         children: [
           Expanded(
-            child: _buildTab(
-              0,
-              'ℹ️ Información',
-              _selectedTabIndex == 0,
-            ),
+            child: _buildTab(0, Icons.info_outline, 'Info', _selectedTabIndex == 0),
           ),
           Expanded(
             child: _buildTab(
               1,
-              '👥 Estudiantes (${_curso!.estudiantesCount ?? _estudiantes.length})',
+              Icons.people,
+              'Estudiantes (${_curso!.estudiantesCount ?? _estudiantes.length})',
               _selectedTabIndex == 1,
             ),
           ),
           Expanded(
             child: _buildTab(
               2,
-              '📚 Asignaturas (${_curso!.asignaturasCount ?? _asignaturas.length})',
+              Icons.menu_book,
+              'Asignaturas (${_curso!.asignaturasCount ?? _asignaturas.length})',
               _selectedTabIndex == 2,
             ),
           ),
@@ -255,27 +253,38 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     );
   }
 
-  Widget _buildTab(int index, String label, bool isActive) {
+  Widget _buildTab(int index, IconData icon, String label, bool isActive) {
+    final color = isActive ? const Color(0xFF059669) : Colors.grey[500]!;
     return InkWell(
       onTap: () => _handleTabChange(index),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        constraints: const BoxConstraints(minHeight: 52),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
         decoration: BoxDecoration(
           border: Border(
             bottom: BorderSide(
               color: isActive ? const Color(0xFF059669) : Colors.transparent,
-              width: 2,
+              width: 3,
             ),
           ),
         ),
-        child: Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: isActive ? const Color(0xFF059669) : Colors.grey[600],
-          ),
-          textAlign: TextAlign.center,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: color,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
@@ -298,6 +307,16 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     }
   }
 
+  Widget _buildSectionTitle(IconData icon, String title) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: Colors.black87),
+        const SizedBox(width: 8),
+        Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.black87)),
+      ],
+    );
+  }
+
   // ========================================
   // ℹ️ PESTAÑA INFORMACIÓN
   // ========================================
@@ -309,39 +328,21 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Información General
-          const Text(
-            '📊 Información General',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          _buildSectionTitle(Icons.info_outline, 'Información General'),
           const SizedBox(height: 12),
           _buildInfoCard(),
 
           const SizedBox(height: 16),
 
           // Director de Grupo
-          const Text(
-            '👩‍🏫 Director de Grupo',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          _buildSectionTitle(Icons.person, 'Director de Grupo'),
           const SizedBox(height: 12),
           _buildDirectorCard(),
 
           const SizedBox(height: 16),
 
           // Estadísticas
-          const Text(
-            '📊 Estadísticas',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          _buildSectionTitle(Icons.bar_chart, 'Estadísticas'),
           const SizedBox(height: 12),
           _buildStatsCards(),
         ],
@@ -545,7 +546,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('👥', style: TextStyle(fontSize: 48)),
+            Icon(Icons.people, size: 48, color: Color(0xFF059669)),
             SizedBox(height: 16),
             Text(
               'No hay estudiantes',
@@ -587,7 +588,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             width: 45,
             height: 45,
             decoration: BoxDecoration(
-              color: const Color(0xFFEC4899),
+              color: const Color(0xFF0D9488),
               borderRadius: BorderRadius.circular(22.5),
             ),
             child: Center(
@@ -621,14 +622,15 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
                   ),
                 ),
                 if (estudiante.genero != null)
-                  Text(
-                    estudiante.genero == 'M'
-                        ? '👨‍🎓 Masculino'
-                        : '👩‍🎓 Femenino',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.grey[600],
-                    ),
+                  Row(
+                    children: [
+                      Icon(Icons.person_outline, size: 12, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        estudiante.genero == 'M' ? 'Masculino' : 'Femenino',
+                        style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                      ),
+                    ],
                   ),
               ],
             ),
@@ -652,7 +654,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('📚', style: TextStyle(fontSize: 48)),
+            Icon(Icons.menu_book, size: 48, color: Color(0xFF059669)),
             SizedBox(height: 16),
             Text(
               'No hay asignaturas',
@@ -739,7 +741,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
           const SizedBox(height: 12),
           Row(
             children: [
-              const Text('👩‍🏫', style: TextStyle(fontSize: 14)),
+              Icon(Icons.person, size: 14, color: Colors.grey[700]),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -758,7 +760,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
             const SizedBox(height: 6),
             Row(
               children: [
-                const Text('⏰', style: TextStyle(fontSize: 14)),
+                Icon(Icons.access_time, size: 14, color: Colors.grey[700]),
                 const SizedBox(width: 6),
                 Text(
                   '${asignatura.intensidadHoraria} horas semanales',

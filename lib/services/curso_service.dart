@@ -1,5 +1,5 @@
-// lib/services/curso_service.dart
-import '../config/app_config.dart';
+﻿// lib/services/curso_service.dart
+import '../utils/logger.dart';
 import '../models/curso.dart';
 import 'api_service.dart';
 
@@ -17,7 +17,7 @@ class CursoService {
     int? limite = 1000, // Obtener todos por defecto para filtrar localmente
   }) async {
     try {
-      print('📚 CursoService: Obteniendo cursos...');
+      dlog('📚 CursoService: Obteniendo cursos...');
 
       final queryParams = <String, dynamic>{};
 
@@ -43,7 +43,7 @@ class CursoService {
         queryParams['limite'] = limite.toString();
       }
 
-      print('🔗 Query params: $queryParams');
+      dlog('🔗 Query params: $queryParams');
 
       final response = await _apiService.get(
         '/cursos',
@@ -63,7 +63,7 @@ class CursoService {
               final count = await _getAsignaturasCount(curso.id);
               return curso.copyWith(asignaturasCount: count);
             } catch (e) {
-              print('⚠️ Error obteniendo conteo asignaturas: $e');
+              dlog('⚠️ Error obteniendo conteo asignaturas: $e');
               return curso;
             }
           }
@@ -71,13 +71,13 @@ class CursoService {
           return curso;
         }).toList());
 
-        print('✅ ${cursos.length} cursos obtenidos');
+        dlog('✅ ${cursos.length} cursos obtenidos');
         return cursos;
       }
 
       return [];
     } catch (e) {
-      print('❌ Error obteniendo cursos: $e');
+      dlog('❌ Error obteniendo cursos: $e');
       rethrow;
     }
   }
@@ -85,7 +85,7 @@ class CursoService {
   /// 📖 Obtener curso específico por ID
   Future<Curso?> getCursoById(String cursoId) async {
     try {
-      print('🔍 CursoService: Obteniendo curso $cursoId...');
+      dlog('🔍 CursoService: Obteniendo curso $cursoId...');
 
       final response = await _apiService.get('/cursos/$cursoId');
 
@@ -102,17 +102,17 @@ class CursoService {
             asignaturasCount: asignaturas.length,
           );
 
-          print('✅ Curso obtenido: ${cursoConConteos.nombre}');
+          dlog('✅ Curso obtenido: ${cursoConConteos.nombre}');
           return cursoConConteos;
         } catch (e) {
-          print('⚠️ Error obteniendo conteos del curso');
+          dlog('⚠️ Error obteniendo conteos del curso');
           return curso;
         }
       }
 
       return null;
     } catch (e) {
-      print('❌ Error obteniendo curso: $e');
+      dlog('❌ Error obteniendo curso: $e');
       rethrow;
     }
   }
@@ -120,7 +120,7 @@ class CursoService {
   /// 👥 Obtener estudiantes de un curso
   Future<List<EstudianteCurso>> getCursoEstudiantes(String cursoId) async {
     try {
-      print('🔍 CursoService: Obteniendo estudiantes del curso $cursoId...');
+      dlog('🔍 CursoService: Obteniendo estudiantes del curso $cursoId...');
 
       final response = await _apiService.get('/cursos/$cursoId/estudiantes');
 
@@ -129,13 +129,13 @@ class CursoService {
         final estudiantes =
             data.map((json) => EstudianteCurso.fromJson(json)).toList();
 
-        print('✅ ${estudiantes.length} estudiantes obtenidos');
+        dlog('✅ ${estudiantes.length} estudiantes obtenidos');
         return estudiantes;
       }
 
       return [];
     } catch (e) {
-      print('❌ Error obteniendo estudiantes: $e');
+      dlog('❌ Error obteniendo estudiantes: $e');
       return [];
     }
   }
@@ -143,7 +143,7 @@ class CursoService {
   /// 📚 Obtener asignaturas de un curso
   Future<List<AsignaturaCurso>> getCursoAsignaturas(String cursoId) async {
     try {
-      print('🔍 CursoService: Obteniendo asignaturas del curso $cursoId...');
+      dlog('🔍 CursoService: Obteniendo asignaturas del curso $cursoId...');
 
       final response = await _apiService.get(
         '/asignaturas',
@@ -157,7 +157,7 @@ class CursoService {
         final List<dynamic> data = response['data'] ?? [];
 
         if (data.isEmpty) {
-          print('⚠️ Lista de asignaturas vacía del backend');
+          dlog('⚠️ Lista de asignaturas vacía del backend');
           return [];
         }
 
@@ -165,20 +165,20 @@ class CursoService {
           try {
             return AsignaturaCurso.fromJson(json);
           } catch (e) {
-            print('❌ Error parseando asignatura: ${json['nombre']}');
-            print('   Error: $e');
+            dlog('❌ Error parseando asignatura: ${json['nombre']}');
+            dlog('   Error: $e');
             rethrow;
           }
         }).toList();
 
-        print('✅ ${asignaturas.length} asignaturas obtenidas');
+        dlog('✅ ${asignaturas.length} asignaturas obtenidas');
         return asignaturas;
       }
 
-      print('❌ Backend respondió con success: false');
+      dlog('❌ Backend respondió con success: false');
       return [];
     } catch (e) {
-      print('❌ Error obteniendo asignaturas: $e');
+      dlog('❌ Error obteniendo asignaturas: $e');
       return [];
     }
   }
@@ -222,7 +222,7 @@ class CursoService {
 
       return 0;
     } catch (e) {
-      print('⚠️ Error obteniendo conteo de asignaturas: $e');
+      dlog('⚠️ Error obteniendo conteo de asignaturas: $e');
       return 0;
     }
   }

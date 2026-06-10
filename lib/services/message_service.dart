@@ -1,5 +1,6 @@
-// lib/services/message_service.dart
+﻿// lib/services/message_service.dart
 
+import '../utils/logger.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import '../models/message.dart';
@@ -22,7 +23,7 @@ class MessageService {
     String? search,
   }) async {
     try {
-      print('📥 Obteniendo mensajes de bandeja: ${bandeja.name}');
+      dlog('📥 Obteniendo mensajes de bandeja: ${bandeja.name}');
 
       final queryParams = {
         'bandeja': bandeja.name,
@@ -50,14 +51,14 @@ class MessageService {
             'totalPaginas': 1,
           };
 
-      print('✅ Mensajes obtenidos: ${messages.length}');
+      dlog('✅ Mensajes obtenidos: ${messages.length}');
 
       return {
         'messages': messages,
         'meta': meta,
       };
     } catch (e) {
-      print('❌ Error obteniendo mensajes: $e');
+      dlog('❌ Error obteniendo mensajes: $e');
       return {
         'messages': <Message>[],
         'meta': {
@@ -76,7 +77,7 @@ class MessageService {
 
   Future<Message?> getMessageById(String id) async {
     try {
-      print('📥 Obteniendo mensaje: $id');
+      dlog('📥 Obteniendo mensaje: $id');
       final response = await _apiService.get('/mensajes/$id');
 
       if (response['data'] != null) {
@@ -85,7 +86,7 @@ class MessageService {
 
       return null;
     } catch (e) {
-      print('❌ Error obteniendo mensaje: $e');
+      dlog('❌ Error obteniendo mensaje: $e');
       rethrow;
     }
   }
@@ -96,7 +97,7 @@ class MessageService {
 
   Future<Message?> getDraftById(String id) async {
     try {
-      print('📥 Obteniendo borrador: $id');
+      dlog('📥 Obteniendo borrador: $id');
 
       // ✅ AGREGAR populate para destinatarios
       final response = await _apiService.get('/mensajes/borradores/$id',
@@ -109,7 +110,7 @@ class MessageService {
 
       return null;
     } catch (e) {
-      print('❌ Error obteniendo borrador: $e');
+      dlog('❌ Error obteniendo borrador: $e');
       rethrow;
     }
   }
@@ -127,10 +128,10 @@ class MessageService {
     List<File>? adjuntos,
   }) async {
     try {
-      print('📤 Creando mensaje...');
-      print('   Destinatarios: ${destinatarios?.length ?? 0}');
-      print('   Cursos: ${cursoIds?.length ?? 0}');
-      print('   Adjuntos: ${adjuntos?.length ?? 0}');
+      dlog('📤 Creando mensaje...');
+      dlog('   Destinatarios: ${destinatarios?.length ?? 0}');
+      dlog('   Cursos: ${cursoIds?.length ?? 0}');
+      dlog('   Adjuntos: ${adjuntos?.length ?? 0}');
 
       // Validar que haya al menos destinatarios o cursos
       if ((destinatarios == null || destinatarios.isEmpty) &&
@@ -174,10 +175,10 @@ class MessageService {
         data: formData,
       );
 
-      print('✅ Mensaje creado exitosamente');
+      dlog('✅ Mensaje creado exitosamente');
       return Message.fromJson(response['data']);
     } catch (e) {
-      print('❌ Error creando mensaje: $e');
+      dlog('❌ Error creando mensaje: $e');
       rethrow;
     }
   }
@@ -195,7 +196,7 @@ class MessageService {
     List<File>? adjuntos,
   }) async {
     try {
-      print('💾 Guardando borrador...');
+      dlog('💾 Guardando borrador...');
 
       // Validación mínima
       if (asunto.trim().isEmpty && contenido.trim().isEmpty) {
@@ -238,7 +239,7 @@ class MessageService {
           data: formData,
         );
 
-        print('✅ Borrador guardado con adjuntos');
+        dlog('✅ Borrador guardado con adjuntos');
         return Message.fromJson(response['data']);
       } else {
         // Sin adjuntos, usar JSON
@@ -253,11 +254,11 @@ class MessageService {
           },
         );
 
-        print('✅ Borrador guardado sin adjuntos');
+        dlog('✅ Borrador guardado sin adjuntos');
         return Message.fromJson(response['data']);
       }
     } catch (e) {
-      print('❌ Error guardando borrador: $e');
+      dlog('❌ Error guardando borrador: $e');
       rethrow;
     }
   }
@@ -277,7 +278,7 @@ class MessageService {
     bool clearExistingAttachments = false,
   }) async {
     try {
-      print('📝 Actualizando borrador: $draftId');
+      dlog('📝 Actualizando borrador: $draftId');
 
       // Si hay adjuntos nuevos, usar FormData
       if (adjuntos != null && adjuntos.isNotEmpty) {
@@ -316,7 +317,7 @@ class MessageService {
           data: formData,
         );
 
-        print('✅ Borrador actualizado con adjuntos');
+        dlog('✅ Borrador actualizado con adjuntos');
         return Message.fromJson(response['data']);
       } else {
         // Sin adjuntos nuevos
@@ -332,11 +333,11 @@ class MessageService {
           },
         );
 
-        print('✅ Borrador actualizado');
+        dlog('✅ Borrador actualizado');
         return Message.fromJson(response['data']);
       }
     } catch (e) {
-      print('❌ Error actualizando borrador: $e');
+      dlog('❌ Error actualizando borrador: $e');
       rethrow;
     }
   }
@@ -347,11 +348,11 @@ class MessageService {
 
   Future<void> deleteDraft(String draftId) async {
     try {
-      print('🗑️ Eliminando borrador: $draftId');
+      dlog('🗑️ Eliminando borrador: $draftId');
       await _apiService.delete('/mensajes/borradores/$draftId');
-      print('✅ Borrador eliminado');
+      dlog('✅ Borrador eliminado');
     } catch (e) {
-      print('❌ Error eliminando borrador: $e');
+      dlog('❌ Error eliminando borrador: $e');
       rethrow;
     }
   }
@@ -362,7 +363,7 @@ class MessageService {
 
   Future<Message> sendDraft(String draftId) async {
     try {
-      print('🚀 Enviando borrador: $draftId');
+      dlog('🚀 Enviando borrador: $draftId');
 
       // Obtener datos completos del borrador
       final draft = await getDraftById(draftId);
@@ -378,17 +379,17 @@ class MessageService {
         'prioridad': draft.prioridad.name.toUpperCase(),
       };
 
-      print('📤 Creando mensaje desde borrador...');
+      dlog('📤 Creando mensaje desde borrador...');
       final response = await _apiService.post('/mensajes', data: messageData);
 
       // Eliminar el borrador original
-      print('🗑️ Eliminando borrador original...');
+      dlog('🗑️ Eliminando borrador original...');
       await deleteDraft(draftId);
 
-      print('✅ Borrador enviado exitosamente');
+      dlog('✅ Borrador enviado exitosamente');
       return Message.fromJson(response['data']);
     } catch (e) {
-      print('❌ Error enviando borrador: $e');
+      dlog('❌ Error enviando borrador: $e');
       rethrow;
     }
   }
@@ -404,7 +405,7 @@ class MessageService {
     List<File>? adjuntos,
   }) async {
     try {
-      print('💬 Respondiendo mensaje: $originalId');
+      dlog('💬 Respondiendo mensaje: $originalId');
 
       if (adjuntos != null && adjuntos.isNotEmpty) {
         // Con adjuntos
@@ -426,7 +427,7 @@ class MessageService {
           data: formData,
         );
 
-        print('✅ Respuesta enviada con adjuntos');
+        dlog('✅ Respuesta enviada con adjuntos');
         return Message.fromJson(response['data']);
       } else {
         // Sin adjuntos
@@ -438,11 +439,11 @@ class MessageService {
           },
         );
 
-        print('✅ Respuesta enviada');
+        dlog('✅ Respuesta enviada');
         return Message.fromJson(response['data']);
       }
     } catch (e) {
-      print('❌ Error respondiendo mensaje: $e');
+      dlog('❌ Error respondiendo mensaje: $e');
       rethrow;
     }
   }
@@ -453,11 +454,11 @@ class MessageService {
 
   Future<void> markAsRead(String messageId) async {
     try {
-      print('👁️ Marcando como leído: $messageId');
+      dlog('👁️ Marcando como leído: $messageId');
       await _apiService.put('/mensajes/$messageId/leer');
-      print('✅ Mensaje marcado como leído');
+      dlog('✅ Mensaje marcado como leído');
     } catch (e) {
-      print('❌ Error marcando como leído: $e');
+      dlog('❌ Error marcando como leído: $e');
       // No lanzar error, es una operación secundaria
     }
   }
@@ -468,11 +469,11 @@ class MessageService {
 
   Future<void> archiveMessage(String messageId) async {
     try {
-      print('🗂️ Archivando mensaje: $messageId');
+      dlog('🗂️ Archivando mensaje: $messageId');
       await _apiService.put('/mensajes/$messageId/archivar');
-      print('✅ Mensaje archivado');
+      dlog('✅ Mensaje archivado');
     } catch (e) {
-      print('❌ Error archivando mensaje: $e');
+      dlog('❌ Error archivando mensaje: $e');
       rethrow;
     }
   }
@@ -483,11 +484,11 @@ class MessageService {
 
   Future<void> unarchiveMessage(String messageId) async {
     try {
-      print('📤 Desarchivando mensaje: $messageId');
+      dlog('📤 Desarchivando mensaje: $messageId');
       await _apiService.put('/mensajes/$messageId/desarchivar');
-      print('✅ Mensaje desarchivado');
+      dlog('✅ Mensaje desarchivado');
     } catch (e) {
-      print('❌ Error desarchivando mensaje: $e');
+      dlog('❌ Error desarchivando mensaje: $e');
       rethrow;
     }
   }
@@ -498,11 +499,11 @@ class MessageService {
 
   Future<void> deleteMessage(String messageId) async {
     try {
-      print('🗑️ Eliminando mensaje: $messageId');
+      dlog('🗑️ Eliminando mensaje: $messageId');
       await _apiService.put('/mensajes/$messageId/eliminar');
-      print('✅ Mensaje movido a papelera');
+      dlog('✅ Mensaje movido a papelera');
     } catch (e) {
-      print('❌ Error eliminando mensaje: $e');
+      dlog('❌ Error eliminando mensaje: $e');
       rethrow;
     }
   }
@@ -513,11 +514,11 @@ class MessageService {
 
   Future<void> restoreMessage(String messageId) async {
     try {
-      print('♻️ Restaurando mensaje: $messageId');
+      dlog('♻️ Restaurando mensaje: $messageId');
       await _apiService.put('/mensajes/$messageId/restaurar');
-      print('✅ Mensaje restaurado');
+      dlog('✅ Mensaje restaurado');
     } catch (e) {
-      print('❌ Error restaurando mensaje: $e');
+      dlog('❌ Error restaurando mensaje: $e');
       rethrow;
     }
   }
@@ -528,11 +529,11 @@ class MessageService {
 
   Future<void> deletePermanently(String messageId) async {
     try {
-      print('💥 Eliminando permanentemente: $messageId');
+      dlog('💥 Eliminando permanentemente: $messageId');
       await _apiService.delete('/mensajes/$messageId');
-      print('✅ Mensaje eliminado definitivamente');
+      dlog('✅ Mensaje eliminado definitivamente');
     } catch (e) {
-      print('❌ Error eliminando permanentemente: $e');
+      dlog('❌ Error eliminando permanentemente: $e');
       rethrow;
     }
   }
@@ -551,24 +552,20 @@ class MessageService {
     String fileName,
   ) async {
     try {
-      print('📎 Descargando adjunto: $fileName');
-      print('   Mensaje ID: $messageId');
-      print('   Adjunto ID: $attachmentId');
+      dlog('📎 Descargando adjunto: $fileName');
+      dlog('   Mensaje ID: $messageId');
+      dlog('   Adjunto ID: $attachmentId');
 
       // 1️⃣ Obtener la ruta de descarga
+      // Android 10+: no se puede escribir en /Download sin permiso WRITE_EXTERNAL_STORAGE
+      // (removido en Android 13+). Usamos el directorio privado de la app en
+      // almacenamiento externo: /storage/emulated/0/Android/data/<package>/files/
+      // No requiere ningún permiso y es accesible desde el administrador de archivos.
       Directory? directory;
 
       if (Platform.isAndroid) {
         directory = await getExternalStorageDirectory();
-        if (directory != null) {
-          final downloadsPath =
-              directory.path.split('/Android')[0] + '/Download';
-          directory = Directory(downloadsPath);
-
-          if (!await directory.exists()) {
-            await directory.create(recursive: true);
-          }
-        }
+        directory ??= await getApplicationDocumentsDirectory();
       } else if (Platform.isIOS) {
         directory = await getApplicationDocumentsDirectory();
       }
@@ -577,16 +574,20 @@ class MessageService {
         throw Exception('No se pudo obtener el directorio de descarga');
       }
 
+      if (!await directory.exists()) {
+        await directory.create(recursive: true);
+      }
+
       final filePath = '${directory.path}/$fileName';
-      print('💾 Ruta de descarga: $filePath');
+      dlog('💾 Ruta de descarga: $filePath');
 
       // 2️⃣ Descargar el archivo
       final url = '/mensajes/$messageId/adjuntos/$attachmentId';
-      print('🌐 URL: $url');
+      dlog('🌐 URL: $url');
 
       await _apiService.download(url, filePath);
 
-      print('✅ Archivo descargado exitosamente en: $filePath');
+      dlog('✅ Archivo descargado exitosamente en: $filePath');
 
       // 3️⃣ Retornar resultado exitoso
       return {
@@ -595,7 +596,7 @@ class MessageService {
         'path': filePath,
       };
     } catch (e) {
-      print('❌ Error descargando adjunto: $e');
+      dlog('❌ Error descargando adjunto: $e');
       return {
         'success': false,
         'message': 'Error al descargar: $e',
@@ -607,10 +608,10 @@ class MessageService {
     try {
       final file = File(path);
       if (await file.exists()) {
-        print('📱 Archivo guardado correctamente');
+        dlog('📱 Archivo guardado correctamente');
       }
     } catch (e) {
-      print('⚠️ Error: $e');
+      dlog('⚠️ Error: $e');
     }
   }
 
@@ -620,7 +621,7 @@ class MessageService {
 
   Future<List<User>> getAvailableRecipients() async {
     try {
-      print('👥 Obteniendo destinatarios disponibles...');
+      dlog('👥 Obteniendo destinatarios disponibles...');
 
       final response =
           await _apiService.get('/mensajes/destinatarios-disponibles');
@@ -628,10 +629,10 @@ class MessageService {
       final data = response['data'] as List<dynamic>? ?? [];
       final recipients = data.map((json) => User.fromJson(json)).toList();
 
-      print('✅ Destinatarios obtenidos: ${recipients.length}');
+      dlog('✅ Destinatarios obtenidos: ${recipients.length}');
       return recipients;
     } catch (e) {
-      print('❌ Error obteniendo destinatarios: $e');
+      dlog('❌ Error obteniendo destinatarios: $e');
       return [];
     }
   }
@@ -642,17 +643,17 @@ class MessageService {
 
   Future<List<Course>> getAvailableCourses() async {
     try {
-      print('📚 Obteniendo cursos disponibles...');
+      dlog('📚 Obteniendo cursos disponibles...');
 
       final response = await _apiService.get('/mensajes/cursos-disponibles');
 
       final data = response['data'] as List<dynamic>? ?? [];
       final courses = data.map((json) => Course.fromJson(json)).toList();
 
-      print('✅ Cursos obtenidos: ${courses.length}');
+      dlog('✅ Cursos obtenidos: ${courses.length}');
       return courses;
     } catch (e) {
-      print('❌ Error obteniendo cursos: $e');
+      dlog('❌ Error obteniendo cursos: $e');
       return [];
     }
   }

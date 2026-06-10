@@ -1,10 +1,12 @@
-// lib/services/permission_service.dart
+﻿// lib/services/permission_service.dart
 
 /// ⭐ SERVICIO CRÍTICO DE PERMISOS - VERSIÓN CORREGIDA
 ///
 /// Permisos actualizados según implementación de React Native en producción
+library;
 
 import '../models/usuario.dart';
+import '../utils/logger.dart';
 
 class PermissionService {
   // ==========================================
@@ -133,11 +135,14 @@ class PermissionService {
       'calificaciones.ver',
       'calificaciones.crear',
       'calificaciones.editar',
+      'usuarios.ver', // ✅ DOCENTE puede consultar usuarios (ver estudiantes)
+      'cursos.ver', // ✅ DOCENTE puede consultar cursos
       'calendario.ver',
       'calendario.crear',
       'asistencia.ver',
       'asistencia.editar',
       'asistencia.registrar',
+      'asistencia.reportes', // ✅ DOCENTE puede ver informes de asistencia
       'anuncios.ver',
       'anuncios.crear', // ✅ DOCENTE puede crear
       'anuncios.editar', // ✅ DOCENTE puede editar
@@ -160,11 +165,13 @@ class PermissionService {
 
   // Usuario actual (se setea desde AuthService)
   static String? _currentUserRole;
-  static List<String>? _currentUserPermissions; // Para sistema futuro
+  static String? _currentUserPerfilRolId; // ID del perfil personalizado (null = rol base puro)
+  static List<String>? _currentUserPermissions; // Permisos dinámicos del perfil
 
   /// Limpiar usuario (logout)
   static void clearUser() {
     _currentUserRole = null;
+    _currentUserPerfilRolId = null;
     _currentUserPermissions = null;
   }
 
@@ -184,12 +191,14 @@ class PermissionService {
     // Si no hay usuario, no tiene permisos
     if (_currentUserRole == null) return false;
 
-    // AHORA: Usa mapeo local rol → permisos
+    // Si tiene permisos dinámicos del perfil personalizado, usarlos
+    if (_currentUserPermissions != null && _currentUserPermissions!.isNotEmpty) {
+      return _currentUserPermissions!.contains(permission);
+    }
+
+    // Sin perfil personalizado: usar mapa estático por tipo de rol
     final permissions = _rolePermissions[_currentUserRole] ?? [];
     return permissions.contains(permission);
-
-    // DESPUÉS (cuando backend cambie): Solo cambiar a esto ↓
-    // return _currentUserPermissions?.contains(permission) ?? false;
   }
 
   // ==========================================
@@ -209,6 +218,12 @@ class PermissionService {
   /// Obtiene lista completa de permisos del usuario actual
   static List<String> getUserPermissions() {
     if (_currentUserRole == null) return [];
+
+    // Si tiene permisos dinámicos, retornarlos
+    if (_currentUserPermissions != null && _currentUserPermissions!.isNotEmpty) {
+      return _currentUserPermissions!;
+    }
+
     return _rolePermissions[_currentUserRole] ?? [];
   }
 
@@ -233,13 +248,25 @@ class PermissionService {
     return _currentUserRole == 'ACUDIENTE';
   }
 
+  /// Indica si el usuario tiene un perfil de rol personalizado asignado
+  static bool get hasCustomProfile =>
+      _currentUserPerfilRolId != null && _currentUserPerfilRolId!.isNotEmpty;
+
+  /// ID del perfil personalizado actual (null si usa rol base puro)
+  static String? get currentPerfilRolId => _currentUserPerfilRolId;
+
   /// Debug: Ver estado actual
   static void debugPermissions() {
-    print('🔍 === PERMISSION SERVICE DEBUG ===');
-    print('Current Role: $_currentUserRole');
-    print('Permissions: ${getUserPermissions().length}');
-    print('Is Admin: ${isAdmin()}');
-    print('================================');
+    final usingDynamic =
+        _currentUserPermissions != null && _currentUserPermissions!.isNotEmpty;
+    dlog('🔍 === PERMISSION SERVICE DEBUG ===');
+    dlog('Current Role: $_currentUserRole');
+    dlog('PerfilRolId: ${_currentUserPerfilRolId ?? "(ninguno - rol base puro)"}');
+    dlog('Fuente: ${usingDynamic ? "🟢 DINÁMICA (perfil personalizado)" : "🔵 ESTÁTICA (mapa por rol)"}');
+    dlog('Permissions count: ${getUserPermissions().length}');
+    if (usingDynamic) dlog('Permisos: $_currentUserPermissions');
+    dlog('Is Admin: ${isAdmin()}');
+    dlog('================================');
   }
 
   // ==========================================
@@ -251,16 +278,20 @@ class PermissionService {
   /// Establecer usuario actual (llamado desde AuthService)
   static void setCurrentUser(Usuario user) {
     _currentUser = user;
-    _currentUserRole = user.tipo.toString().split('.').last.toUpperCase();
+    _currentUserRole = user.tipo.value;
+    _currentUserPerfilRolId = user.perfilRolId;
     _currentUserPermissions = user.permisos;
-    print(
+    dlog(
         '✅ PermissionService - Usuario establecido: ${user.nombre} (${user.tipo})');
   }
 
   /// Limpiar usuario actual
   static void clearCurrentUser() {
     _currentUser = null;
-    print('🧹 PermissionService - Usuario limpiado');
+    _currentUserRole = null;
+    _currentUserPerfilRolId = null;
+    _currentUserPermissions = null;
+    dlog('🧹 PermissionService - Usuario limpiado');
   }
 
   /// Obtener usuario actual

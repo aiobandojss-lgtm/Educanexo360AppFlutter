@@ -2,6 +2,7 @@
 
 /// 📋 MODELO DE ASISTENCIA COMPLETO
 /// Basado en la estructura de React Native y backend
+library;
 
 // ==========================================
 // CONSTANTES - Estados de Asistencia
@@ -245,10 +246,12 @@ class EstudianteAsistencia {
   });
 
   factory EstudianteAsistencia.fromJson(Map<String, dynamic> json) {
+    final raw = json['estudianteId'];
+    final esObjeto = raw is Map<String, dynamic>;
     return EstudianteAsistencia(
-      estudianteId: json['estudianteId'] ?? '',
-      nombre: json['nombre'],
-      apellidos: json['apellidos'],
+      estudianteId: esObjeto ? (raw['_id'] ?? '').toString() : (raw ?? '').toString(),
+      nombre: json['nombre'] ?? (esObjeto ? raw['nombre'] : null),
+      apellidos: json['apellidos'] ?? (esObjeto ? raw['apellidos'] : null),
       estado: json['estado'] ?? EstadosAsistencia.presente,
       justificacion: json['justificacion'],
       observaciones: json['observaciones'],
@@ -595,4 +598,181 @@ class AsignaturaDisponible {
     }
     return nombre;
   }
+}
+
+// ==========================================
+// ALERTA DE ASISTENCIA
+// ==========================================
+
+class AlertaAsistencia {
+  final String id;
+  final String estudianteNombre;
+  final String estudianteApellidos;
+  final String estudianteId;
+  final String cursoNombre;
+  final String cursoId;
+  final String nivel; // ALERTA | CRITICO | INMINENTE
+  final double porcentajeAusencias;
+  final String periodoId;
+  final DateTime fechaEnvio;
+
+  AlertaAsistencia({
+    required this.id,
+    required this.estudianteNombre,
+    required this.estudianteApellidos,
+    required this.estudianteId,
+    required this.cursoNombre,
+    required this.cursoId,
+    required this.nivel,
+    required this.porcentajeAusencias,
+    required this.periodoId,
+    required this.fechaEnvio,
+  });
+
+  factory AlertaAsistencia.fromJson(Map<String, dynamic> json) {
+    final estudiante = json['estudianteId'];
+    final curso = json['cursoId'];
+
+    return AlertaAsistencia(
+      id: json['_id'] ?? '',
+      estudianteNombre: estudiante is Map ? estudiante['nombre'] ?? '' : '',
+      estudianteApellidos: estudiante is Map ? estudiante['apellidos'] ?? '' : '',
+      estudianteId: estudiante is Map ? estudiante['_id'] ?? '' : (estudiante ?? ''),
+      cursoNombre: curso is Map ? curso['nombre'] ?? '' : '',
+      cursoId: curso is Map ? curso['_id'] ?? '' : (curso ?? ''),
+      nivel: json['nivel'] ?? 'ALERTA',
+      porcentajeAusencias: (json['porcentajeAusencias'] ?? 0.0).toDouble(),
+      periodoId: json['periodoId'] ?? '',
+      fechaEnvio: json['fechaEnvio'] != null
+          ? DateTime.parse(json['fechaEnvio'])
+          : DateTime.now(),
+    );
+  }
+
+  String get estudianteNombreCompleto => '$estudianteNombre $estudianteApellidos'.trim();
+}
+
+class NivelesAlerta {
+  static const String alerta = 'ALERTA';
+  static const String critico = 'CRITICO';
+  static const String inminente = 'INMINENTE';
+}
+
+// ==========================================
+// ESTADÍSTICAS DE UN ESTUDIANTE (endpoint /estadisticas/estudiante/:id)
+// ==========================================
+
+class EstadisticasEstudiante {
+  final int totalClases;
+  final int presentes;
+  final int ausentes;
+  final int tardanzas;
+  final int justificados;
+  final int permisos;
+  final double porcentajeAsistencia;
+
+  EstadisticasEstudiante({
+    required this.totalClases,
+    required this.presentes,
+    required this.ausentes,
+    required this.tardanzas,
+    required this.justificados,
+    required this.permisos,
+    required this.porcentajeAsistencia,
+  });
+
+  factory EstadisticasEstudiante.fromJson(Map<String, dynamic> json) {
+    return EstadisticasEstudiante(
+      // Backend devuelve 'clasesTotales'; se acepta 'totalClases' como fallback
+      totalClases: json['clasesTotales'] ?? json['totalClases'] ?? 0,
+      presentes: json['presentes'] ?? 0,
+      ausentes: json['ausentes'] ?? 0,
+      tardanzas: json['tardanzas'] ?? 0,
+      justificados: json['justificados'] ?? 0,
+      permisos: json['permisos'] ?? 0,
+      porcentajeAsistencia: (json['porcentajeAsistencia'] ?? 0.0).toDouble(),
+    );
+  }
+
+  factory EstadisticasEstudiante.vacia() {
+    return EstadisticasEstudiante(
+      totalClases: 0,
+      presentes: 0,
+      ausentes: 0,
+      tardanzas: 0,
+      justificados: 0,
+      permisos: 0,
+      porcentajeAsistencia: 0,
+    );
+  }
+}
+
+// ==========================================
+// HISTORIAL DE ASISTENCIA (endpoint /informes/historial/:id)
+// ==========================================
+
+class HistorialRegistro {
+  final DateTime fecha;
+  final String diaSemana;
+  final String cursoNombre;
+  final String? asignaturaNombre;
+  final String estado;
+  final String? justificacion;
+  final String? observaciones;
+
+  HistorialRegistro({
+    required this.fecha,
+    required this.diaSemana,
+    required this.cursoNombre,
+    this.asignaturaNombre,
+    required this.estado,
+    this.justificacion,
+    this.observaciones,
+  });
+
+  factory HistorialRegistro.fromJson(Map<String, dynamic> json) {
+    final curso = json['curso'];
+    final asignatura = json['asignatura'];
+
+    return HistorialRegistro(
+      fecha: DateTime.parse(json['fecha']),
+      diaSemana: json['diaSemana'] ?? '',
+      cursoNombre: curso is Map ? curso['nombre'] ?? '' : '',
+      asignaturaNombre: asignatura is Map ? asignatura['nombre'] : null,
+      estado: json['estado'] ?? EstadosAsistencia.presente,
+      justificacion: json['justificacion'],
+      observaciones: json['observaciones'],
+    );
+  }
+}
+
+class HistorialEstudiante {
+  final String nombre;
+  final String apellidos;
+  final EstadisticasEstudiante resumen;
+  final List<HistorialRegistro> registros;
+
+  HistorialEstudiante({
+    required this.nombre,
+    required this.apellidos,
+    required this.resumen,
+    required this.registros,
+  });
+
+  factory HistorialEstudiante.fromJson(Map<String, dynamic> json) {
+    final estudiante = json['estudiante'] as Map<String, dynamic>? ?? {};
+    final resumenJson = json['resumen'] as Map<String, dynamic>? ?? {};
+    final registrosJson = json['registros'] as List<dynamic>? ?? [];
+
+    return HistorialEstudiante(
+      nombre: estudiante['nombre'] ?? '',
+      apellidos: estudiante['apellidos'] ?? '',
+      resumen: EstadisticasEstudiante.fromJson(resumenJson),
+      registros: registrosJson
+          .map((r) => HistorialRegistro.fromJson(r as Map<String, dynamic>))
+          .toList(),
+    );
+  }
+
+  String get nombreCompleto => '$nombre $apellidos'.trim();
 }

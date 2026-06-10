@@ -1,5 +1,6 @@
-// lib/providers/asistencia_provider.dart
+﻿// lib/providers/asistencia_provider.dart
 
+import '../utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import '../models/asistencia.dart';
 import '../services/asistencia_service.dart';
@@ -18,6 +19,12 @@ class AsistenciaProvider extends ChangeNotifier {
   List<CursoDisponible> _cursos = [];
   List<EstudianteAsistencia> _estudiantes = [];
   List<AsignaturaDisponible> _asignaturas = [];
+
+  // Phase 2: alertas, estadísticas de estudiante, historial
+  List<AlertaAsistencia> _alertas = [];
+  EstadisticasEstudiante _estadisticasEstudiante = EstadisticasEstudiante.vacia();
+  HistorialEstudiante? _historialEstudiante;
+  bool _isLoadingMiAsistencia = false;
 
   bool _isLoading = false;
   bool _isLoadingCursos = false;
@@ -44,11 +51,32 @@ class AsistenciaProvider extends ChangeNotifier {
   bool get isLoadingCursos => _isLoadingCursos;
   bool get isLoadingEstudiantes => _isLoadingEstudiantes;
   bool get isLoadingAsignaturas => _isLoadingAsignaturas;
+  bool get isLoadingMiAsistencia => _isLoadingMiAsistencia;
   String? get error => _error;
+
+  // Phase 2 getters
+  List<AlertaAsistencia> get alertas => _alertas;
+  EstadisticasEstudiante get estadisticasEstudiante => _estadisticasEstudiante;
+  HistorialEstudiante? get historialEstudiante => _historialEstudiante;
 
   String? get cursoSeleccionado => _cursoSeleccionado;
   String? get fechaInicio => _fechaInicio;
   String? get fechaFin => _fechaFin;
+
+  // ========================================
+  // ⚡ PREPARAR ESTADO DE CARGA (para initState)
+  // ========================================
+
+  /// Marca el estado como cargando SIN notifyListeners.
+  /// Llamar desde initState antes del primer frame para que el spinner
+  /// aparezca desde la primera renderización (evita flash de pantalla vacía).
+  void prepareLoading() {
+    _isLoading = true;
+  }
+
+  void prepareLoadingMiAsistencia() {
+    _isLoadingMiAsistencia = true;
+  }
 
   // ========================================
   // 📋 CARGAR RESUMEN DE ASISTENCIA
@@ -59,6 +87,7 @@ class AsistenciaProvider extends ChangeNotifier {
     String? cursoId,
     String? fechaInicio,
     String? fechaFin,
+    String? estudianteId,
   }) async {
     if (_isLoading && !refresh) return;
 
@@ -77,13 +106,14 @@ class AsistenciaProvider extends ChangeNotifier {
         fechaInicio: fechaInicio,
         fechaFin: fechaFin,
         cursoId: cursoId,
+        estudianteId: estudianteId,
       );
 
       _resumenes = resumenes;
-      print('✅ Provider: ${_resumenes.length} resumenes cargados');
+      dlog('✅ Provider: ${_resumenes.length} resumenes cargados');
     } catch (e) {
       _error = 'Error al cargar asistencia: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -103,10 +133,10 @@ class AsistenciaProvider extends ChangeNotifier {
       final registro = await _asistenciaService.obtenerRegistroAsistencia(id);
       _registroActual = registro;
 
-      print('✅ Provider: Registro cargado');
+      dlog('✅ Provider: Registro cargado');
     } catch (e) {
       _error = 'Error al cargar registro: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -128,10 +158,10 @@ class AsistenciaProvider extends ChangeNotifier {
       final cursos = await _asistenciaService.obtenerCursosDisponibles();
       _cursos = cursos;
 
-      print('✅ Provider: ${_cursos.length} cursos cargados');
+      dlog('✅ Provider: ${_cursos.length} cursos cargados');
     } catch (e) {
       _error = 'Error al cargar cursos: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
     } finally {
       _isLoadingCursos = false;
       notifyListeners();
@@ -154,10 +184,10 @@ class AsistenciaProvider extends ChangeNotifier {
           await _asistenciaService.obtenerEstudiantesPorCurso(cursoId);
       _estudiantes = estudiantes;
 
-      print('✅ Provider: ${_estudiantes.length} estudiantes cargados');
+      dlog('✅ Provider: ${_estudiantes.length} estudiantes cargados');
     } catch (e) {
       _error = 'Error al cargar estudiantes: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
       _estudiantes = [];
     } finally {
       _isLoadingEstudiantes = false;
@@ -181,10 +211,10 @@ class AsistenciaProvider extends ChangeNotifier {
           await _asistenciaService.obtenerAsignaturasPorCurso(cursoId);
       _asignaturas = asignaturas;
 
-      print('✅ Provider: ${_asignaturas.length} asignaturas cargadas');
+      dlog('✅ Provider: ${_asignaturas.length} asignaturas cargadas');
     } catch (e) {
       _error = 'Error al cargar asignaturas: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
       _asignaturas = [];
     } finally {
       _isLoadingAsignaturas = false;
@@ -208,7 +238,7 @@ class AsistenciaProvider extends ChangeNotifier {
     String? observacionesGenerales,
   }) async {
     try {
-      print('📝 Provider: Creando registro...');
+      dlog('📝 Provider: Creando registro...');
 
       final registro = await _asistenciaService.crearRegistroAsistencia(
         fecha: fecha,
@@ -232,11 +262,11 @@ class AsistenciaProvider extends ChangeNotifier {
         fechaFin: _fechaFin,
       );
 
-      print('✅ Provider: Registro creado');
+      dlog('✅ Provider: Registro creado');
       return registro;
     } catch (e) {
       _error = 'Error al crear registro: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
       notifyListeners();
       return null;
     }
@@ -259,7 +289,7 @@ class AsistenciaProvider extends ChangeNotifier {
     String? observacionesGenerales,
   }) async {
     try {
-      print('✏️ Provider: Actualizando registro...');
+      dlog('✏️ Provider: Actualizando registro...');
 
       final registro = await _asistenciaService.actualizarRegistroAsistencia(
         id: id,
@@ -288,11 +318,11 @@ class AsistenciaProvider extends ChangeNotifier {
         );
       }
 
-      print('✅ Provider: Registro actualizado');
+      dlog('✅ Provider: Registro actualizado');
       return registro;
     } catch (e) {
       _error = 'Error al actualizar registro: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
       notifyListeners();
       return null;
     }
@@ -304,12 +334,12 @@ class AsistenciaProvider extends ChangeNotifier {
 
   Future<bool> finalizarRegistro(String id) async {
     try {
-      print('✅ Provider: Finalizando registro...');
+      dlog('✅ Provider: Finalizando registro...');
 
       final registro = await _asistenciaService.finalizarRegistroAsistencia(id);
       _registroActual = registro;
+      notifyListeners(); // siempre notificar para que la pantalla de detalle actualice
 
-      // Actualizar en lista local
       final index = _resumenes.indexWhere((r) => r.id == id);
       if (index != -1) {
         await cargarResumen(
@@ -320,12 +350,11 @@ class AsistenciaProvider extends ChangeNotifier {
         );
       }
 
-      print('✅ Provider: Registro finalizado');
-      notifyListeners();
+      dlog('✅ Provider: Registro finalizado');
       return true;
     } catch (e) {
       _error = 'Error al finalizar registro: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
       notifyListeners();
       return false;
     }
@@ -337,7 +366,7 @@ class AsistenciaProvider extends ChangeNotifier {
 
   Future<bool> eliminarRegistro(String id) async {
     try {
-      print('🗑️ Provider: Eliminando registro...');
+      dlog('🗑️ Provider: Eliminando registro...');
 
       await _asistenciaService.eliminarRegistroAsistencia(id);
 
@@ -348,12 +377,12 @@ class AsistenciaProvider extends ChangeNotifier {
         _registroActual = null;
       }
 
-      print('✅ Provider: Registro eliminado');
+      dlog('✅ Provider: Registro eliminado');
       notifyListeners();
       return true;
     } catch (e) {
       _error = 'Error al eliminar registro: ${e.toString()}';
-      print('❌ Provider error: $_error');
+      dlog('❌ Provider error: $_error');
       notifyListeners();
       return false;
     }
@@ -430,7 +459,71 @@ class AsistenciaProvider extends ChangeNotifier {
   void establecerEstudiantes(List<EstudianteAsistencia> estudiantes) {
     _estudiantes = estudiantes;
     notifyListeners();
-    print(
+    dlog(
         '✅ Provider: ${_estudiantes.length} estudiantes establecidos con sus estados');
+  }
+
+  // ========================================
+  // 🚨 CARGAR ALERTAS + ESTADÍSTICAS + HISTORIAL
+  // (para vista ESTUDIANTE / ACUDIENTE)
+  // ========================================
+
+  Future<void> cargarMiAsistencia({
+    required String estudianteId,
+    required String desde,
+    required String hasta,
+    bool refresh = false,
+  }) async {
+    if (_isLoadingMiAsistencia && !refresh) return;
+
+    try {
+      _isLoadingMiAsistencia = true;
+      _error = null;
+      notifyListeners();
+
+      // GET /asistencia/estadisticas/estudiante/:id?desde=...&hasta=...
+      // Devuelve datos del estudiante específico (no del salón completo).
+      final data = await _asistenciaService.obtenerEstadisticasPorEstudiante(
+        estudianteId: estudianteId,
+        desde: desde,
+        hasta: hasta,
+      );
+
+      final estudianteJson = data['estudiante'] as Map<String, dynamic>? ?? {};
+      final estadisticasJson = data['estadisticas'] as Map<String, dynamic>? ?? {};
+      final registrosJson = data['registros'] as List<dynamic>? ?? [];
+
+      _estadisticasEstudiante = EstadisticasEstudiante.fromJson(estadisticasJson);
+
+      final historialRegistros = registrosJson
+          .map((r) => HistorialRegistro.fromJson(r as Map<String, dynamic>))
+          .toList();
+
+      _historialEstudiante = HistorialEstudiante(
+        nombre: estudianteJson['nombre'] ?? '',
+        apellidos: estudianteJson['apellidos'] ?? '',
+        resumen: _estadisticasEstudiante,
+        registros: historialRegistros,
+      );
+      _alertas = [];
+
+      dlog('✅ Asistencia cargada: ${_estadisticasEstudiante.totalClases} clases | '
+          '${_estadisticasEstudiante.presentes} presentes | '
+          '${_estadisticasEstudiante.ausentes} ausentes | '
+          '${_estadisticasEstudiante.porcentajeAsistencia.toStringAsFixed(1)}%');
+    } catch (e) {
+      _error = 'Error al cargar asistencia: ${e.toString()}';
+      dlog('❌ Provider error: $_error');
+    } finally {
+      _isLoadingMiAsistencia = false;
+      notifyListeners();
+    }
+  }
+
+  void limpiarMiAsistencia() {
+    _alertas = [];
+    _estadisticasEstudiante = EstadisticasEstudiante.vacia();
+    _historialEstudiante = null;
+    notifyListeners();
   }
 }

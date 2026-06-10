@@ -1,6 +1,7 @@
-// lib/providers/anuncio_provider.dart
+﻿// lib/providers/anuncio_provider.dart
 // ✅ MEJORADO: Refrescamiento automático después de crear/editar/eliminar
 
+import '../utils/logger.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -49,6 +50,14 @@ class AnuncioProvider with ChangeNotifier {
   }
 
   // ========================================
+  // ⚡ PREPARAR ESTADO DE CARGA (para initState)
+  // ========================================
+
+  void prepareLoading() {
+    _isLoading = true;
+  }
+
+  // ========================================
   // 📋 CARGAR ANUNCIOS
   // ========================================
 
@@ -64,7 +73,7 @@ class AnuncioProvider with ChangeNotifier {
         notifyListeners();
       }
 
-      print(
+      dlog(
           '📥 Cargando anuncios... (página $page, refresh: $refresh, silent: $silent)');
 
       final result = await _anuncioService.getAnuncios(
@@ -85,12 +94,12 @@ class AnuncioProvider with ChangeNotifier {
 
       _isLoading = false;
 
-      print('✅ Anuncios cargados: ${_anuncios.length}');
+      dlog('✅ Anuncios cargados: ${_anuncios.length}');
 
       // ✅ SIEMPRE notificar, incluso en silent
       notifyListeners();
     } catch (e) {
-      print('❌ Error cargando anuncios: $e');
+      dlog('❌ Error cargando anuncios: $e');
       _isLoading = false;
       notifyListeners();
       rethrow;
@@ -105,7 +114,7 @@ class AnuncioProvider with ChangeNotifier {
       {bool soloPublicados = false}) async {
     if (_currentFilter == newFilter) return;
 
-    print('🔄 Cambiando filtro: ${newFilter.displayName}');
+    dlog('🔄 Cambiando filtro: ${newFilter.displayName}');
 
     _currentFilter = newFilter;
     _searchQuery = ''; // Limpiar búsqueda al cambiar filtro
@@ -120,7 +129,7 @@ class AnuncioProvider with ChangeNotifier {
   // ========================================
 
   Future<void> search(String query, {bool soloPublicados = false}) async {
-    print('🔍 Buscando: $query');
+    dlog('🔍 Buscando: $query');
     _searchQuery = query;
     notifyListeners();
     await loadAnuncios(refresh: true, soloPublicados: soloPublicados);
@@ -128,7 +137,7 @@ class AnuncioProvider with ChangeNotifier {
 
   void clearSearch({bool soloPublicados = false}) {
     if (_searchQuery.isNotEmpty) {
-      print('🧹 Limpiando búsqueda');
+      dlog('🧹 Limpiando búsqueda');
       _searchQuery = '';
       loadAnuncios(refresh: true, soloPublicados: soloPublicados);
     }
@@ -150,7 +159,7 @@ class AnuncioProvider with ChangeNotifier {
     File? imagenPortada,
   }) async {
     try {
-      print('📝 Creando anuncio: $titulo (publicar: $publicar)');
+      dlog('📝 Creando anuncio: $titulo (publicar: $publicar)');
 
       final anuncio = await _anuncioService.createAnuncio(
         titulo: titulo,
@@ -164,14 +173,14 @@ class AnuncioProvider with ChangeNotifier {
         imagenPortada: imagenPortada,
       );
 
-      print('✅ Anuncio creado con ID: ${anuncio.id}');
+      dlog('✅ Anuncio creado con ID: ${anuncio.id}');
 
       // ✅ REFRESCAR LISTA INMEDIATAMENTE (sin silent)
       await loadAnuncios(refresh: true, silent: false);
 
       return anuncio;
     } catch (e) {
-      print('❌ Error creando anuncio: $e');
+      dlog('❌ Error creando anuncio: $e');
       rethrow;
     }
   }
@@ -192,7 +201,7 @@ class AnuncioProvider with ChangeNotifier {
     File? nuevaImagenPortada,
   }) async {
     try {
-      print('📝 Actualizando anuncio: $anuncioId');
+      dlog('📝 Actualizando anuncio: $anuncioId');
 
       final anuncio = await _anuncioService.updateAnuncio(
         anuncioId: anuncioId,
@@ -212,12 +221,12 @@ class AnuncioProvider with ChangeNotifier {
         _anuncios[index] = anuncio;
       }
 
-      print('✅ Anuncio actualizado');
+      dlog('✅ Anuncio actualizado');
       notifyListeners();
 
       return anuncio;
     } catch (e) {
-      print('❌ Error actualizando anuncio: $e');
+      dlog('❌ Error actualizando anuncio: $e');
       rethrow;
     }
   }
@@ -228,7 +237,7 @@ class AnuncioProvider with ChangeNotifier {
 
   Future<Anuncio> publicarAnuncio(String anuncioId) async {
     try {
-      print('📢 Publicando anuncio: $anuncioId');
+      dlog('📢 Publicando anuncio: $anuncioId');
 
       final anuncio = await _anuncioService.publicarAnuncio(anuncioId);
 
@@ -238,12 +247,12 @@ class AnuncioProvider with ChangeNotifier {
         _anuncios[index] = anuncio;
       }
 
-      print('✅ Anuncio publicado');
+      dlog('✅ Anuncio publicado');
       notifyListeners();
 
       return anuncio;
     } catch (e) {
-      print('❌ Error publicando anuncio: $e');
+      dlog('❌ Error publicando anuncio: $e');
       rethrow;
     }
   }
@@ -254,19 +263,19 @@ class AnuncioProvider with ChangeNotifier {
 
   Future<Anuncio> archivarAnuncio(String anuncioId) async {
     try {
-      print('🗂️ Archivando anuncio: $anuncioId');
+      dlog('🗂️ Archivando anuncio: $anuncioId');
 
       final anuncio = await _anuncioService.archivarAnuncio(anuncioId);
 
       // ✅ Remover de lista local (se movió a archivados)
       _anuncios.removeWhere((a) => a.id == anuncioId);
 
-      print('✅ Anuncio archivado');
+      dlog('✅ Anuncio archivado');
       notifyListeners();
 
       return anuncio;
     } catch (e) {
-      print('❌ Error archivando anuncio: $e');
+      dlog('❌ Error archivando anuncio: $e');
       // En caso de error, recargar lista
       await loadAnuncios(refresh: true);
       rethrow;
@@ -279,7 +288,7 @@ class AnuncioProvider with ChangeNotifier {
 
   Future<void> deleteAnuncio(String anuncioId) async {
     try {
-      print('🗑️ Eliminando anuncio: $anuncioId');
+      dlog('🗑️ Eliminando anuncio: $anuncioId');
 
       // ✅ Optimistic update - remover inmediatamente de la UI
       _anuncios.removeWhere((a) => a.id == anuncioId);
@@ -288,9 +297,9 @@ class AnuncioProvider with ChangeNotifier {
       // Llamar al backend
       await _anuncioService.deleteAnuncio(anuncioId);
 
-      print('✅ Anuncio eliminado');
+      dlog('✅ Anuncio eliminado');
     } catch (e) {
-      print('❌ Error eliminando anuncio: $e');
+      dlog('❌ Error eliminando anuncio: $e');
       // En caso de error, recargar lista para revertir el optimistic update
       await loadAnuncios(refresh: true);
       rethrow;
@@ -303,7 +312,7 @@ class AnuncioProvider with ChangeNotifier {
 
   Future<Anuncio?> getAnuncioById(String id) async {
     try {
-      print('📥 Obteniendo anuncio: $id');
+      dlog('📥 Obteniendo anuncio: $id');
 
       // Primero buscar en lista local
       final localAnuncio = _anuncios.firstWhere(
@@ -312,21 +321,21 @@ class AnuncioProvider with ChangeNotifier {
       );
 
       if (localAnuncio.id == id) {
-        print('✅ Anuncio encontrado en cache local');
+        dlog('✅ Anuncio encontrado en cache local');
         return localAnuncio;
       }
 
       // Si no está en local, obtener del servidor
-      print('📡 Obteniendo del servidor...');
+      dlog('📡 Obteniendo del servidor...');
       final anuncio = await _anuncioService.getAnuncioById(id);
 
       if (anuncio != null) {
-        print('✅ Anuncio obtenido del servidor');
+        dlog('✅ Anuncio obtenido del servidor');
       }
 
       return anuncio;
     } catch (e) {
-      print('❌ Error obteniendo anuncio: $e');
+      dlog('❌ Error obteniendo anuncio: $e');
       rethrow;
     }
   }
@@ -336,7 +345,7 @@ class AnuncioProvider with ChangeNotifier {
   // ========================================
 
   Future<void> refresh({bool soloPublicados = false}) async {
-    print('🔄 Refrescando lista...');
+    dlog('🔄 Refrescando lista...');
     await loadAnuncios(refresh: true, soloPublicados: soloPublicados);
   }
 
@@ -347,7 +356,7 @@ class AnuncioProvider with ChangeNotifier {
   Future<void> loadMore({bool soloPublicados = false}) async {
     if (!hasMorePages || _isLoading) return;
 
-    print('📄 Cargando más anuncios... (página ${currentPage + 1})');
+    dlog('📄 Cargando más anuncios... (página ${currentPage + 1})');
 
     final nextPage = currentPage + 1;
     await loadAnuncios(
@@ -362,7 +371,7 @@ class AnuncioProvider with ChangeNotifier {
   // ========================================
 
   void clearState() {
-    print('🧹 Limpiando estado del provider');
+    dlog('🧹 Limpiando estado del provider');
     _anuncios = [];
     _meta = {
       'total': 0,
