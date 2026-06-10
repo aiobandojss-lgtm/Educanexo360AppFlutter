@@ -311,12 +311,9 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     final porcentajeEntregadas = stats['total']! > 0
         ? ((stats['entregadas']! / stats['total']!) * 100).toStringAsFixed(1)
         : '0.0';
-    final porcentajeCalificadas = stats['total']! > 0
-        ? ((stats['calificadas']! / stats['total']!) * 100).toStringAsFixed(1)
-        : '0.0';
 
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
@@ -329,21 +326,33 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
       ),
       child: Column(
         children: [
-          // Barra de progreso de entregas
+          // Barra de progreso compacta
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               const Text(
-                'Progreso de entregas',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
+                'Progreso',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: stats['total']! > 0
+                        ? stats['entregadas']! / stats['total']!
+                        : 0,
+                    minHeight: 8,
+                    backgroundColor: Colors.grey[200],
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                        Color(0xFF059669)),
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 '$porcentajeEntregadas%',
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: 13,
                   fontWeight: FontWeight.w700,
                   color: Color(0xFF059669),
                 ),
@@ -351,110 +360,59 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: LinearProgressIndicator(
-              value: stats['total']! > 0
-                  ? stats['entregadas']! / stats['total']!
-                  : 0,
-              minHeight: 10,
-              backgroundColor: Colors.grey[200],
-              valueColor:
-                  const AlwaysStoppedAnimation<Color>(Color(0xFF059669)),
+          // Chips de estadísticas compactos en fila scrolleable
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                _buildMiniStat(Icons.people, stats['total']!, 'Total',
+                    const Color(0xFF0D9488)),
+                const SizedBox(width: 8),
+                _buildMiniStat(Icons.check_circle_outline,
+                    stats['entregadas']!, 'Entregadas', Colors.green),
+                const SizedBox(width: 8),
+                _buildMiniStat(Icons.star_outline, stats['calificadas']!,
+                    'Calificadas', Colors.amber),
+                const SizedBox(width: 8),
+                _buildMiniStat(Icons.hourglass_empty, stats['pendientes']!,
+                    'Pendientes', Colors.grey),
+                const SizedBox(width: 8),
+                _buildMiniStat(Icons.warning_amber_rounded, stats['atrasadas']!,
+                    'Atrasadas', Colors.red),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-
-          // Cards de estadísticas
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.people,
-                  label: 'Total',
-                  value: stats['total'].toString(),
-                  color: const Color(0xFF0D9488),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.check_circle,
-                  label: 'Entregadas',
-                  value: stats['entregadas'].toString(),
-                  color: Colors.green,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.star,
-                  label: 'Calificadas',
-                  value: stats['calificadas'].toString(),
-                  color: Colors.amber,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.hourglass_empty,
-                  label: 'Pendientes',
-                  value: stats['pendientes'].toString(),
-                  color: Colors.grey,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildStatCard(
-                  icon: Icons.warning,
-                  label: 'Atrasadas',
-                  value: stats['atrasadas'].toString(),
-                  color: Colors.red,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Espacio vacío para mantener el diseño
-              const Expanded(child: SizedBox()),
-            ],
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatCard({
-    required IconData icon,
-    required String label,
-    required String value,
-    required Color color,
-  }) {
+  Widget _buildMiniStat(IconData icon, int value, String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withOpacity(0.3)),
       ),
-      child: Column(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(height: 2),
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
           Text(
-            value,
+            '$value',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w800,
               color: color,
             ),
           ),
+          const SizedBox(width: 4),
           Text(
             label,
             style: TextStyle(
-              fontSize: 9,
+              fontSize: 11,
               color: color,
               fontWeight: FontWeight.w600,
             ),
@@ -555,7 +513,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     return RefreshIndicator(
       onRefresh: _loadData,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.fromLTRB(16, 16, 16, 16 + MediaQuery.of(context).viewPadding.bottom),
         itemCount: _entregas.length,
         itemBuilder: (context, index) {
           final entrega = _entregas[index];
