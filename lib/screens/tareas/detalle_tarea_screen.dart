@@ -498,32 +498,26 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                         children: [
                           // Calificación grande y destacada
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.star, size: 18, color: Color(0xFF059669)),
-                                  SizedBox(width: 6),
-                                  Text(
-                                    'Calificación:',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Color(0xFF059669),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Flexible(
+                              const Icon(Icons.star, size: 18, color: Color(0xFF059669)),
+                              const SizedBox(width: 6),
+                              const Expanded(
                                 child: Text(
-                                  '${_miEntrega!.calificacion?.toStringAsFixed(1) ?? '0.0'} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
-                                  style: const TextStyle(
+                                  'Calificación:',
+                                  style: TextStyle(
+                                    fontSize: 14,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 22,
                                     color: Color(0xFF059669),
                                   ),
-                                  textAlign: TextAlign.right,
+                                ),
+                              ),
+                              Text(
+                                '${_miEntrega!.calificacion?.toStringAsFixed(1) ?? '0.0'} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 20,
+                                  color: Color(0xFF059669),
                                 ),
                               ),
                             ],
