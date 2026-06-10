@@ -17,7 +17,6 @@ dependencies:
   go_router: ^14.0.0
   
   # HTTP y API
-  http: ^1.2.0
   dio: ^5.4.3
   path_provider: ^2.1.0
   permission_handler: ^11.0.0
@@ -26,15 +25,28 @@ dependencies:
   shared_preferences: ^2.2.3
   flutter_secure_storage: ^9.0.0
   
+  # Imágenes con caché
+  cached_network_image: ^3.3.1
+
   # UI y widgets
-  intl: ^0.18.1
+  intl: ^0.20.2
   table_calendar: ^3.0.9
-  file_picker: ^6.0.0
+  file_picker: ^8.0.0
   url_launcher: ^6.0.0
   image_picker: ^1.0.0
   
+  # Gráficas para informes de asistencia
+  fl_chart: ^0.69.0
+
+  # Abrir archivos con la app nativa del dispositivo
+  open_filex: ^4.7.0
+
   # Iconos
   cupertino_icons: ^1.0.6
+
+dependency_overrides:
+  # win32 5.5.0 usa UnmodifiableUint8ListView que fue removido en Dart 3.x
+  win32: ^5.9.0
 
 dev_dependencies:
   flutter_test:

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fondo de splash - color sólido para API < 21 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <solid android:color="#047857"/>
+</shape>
