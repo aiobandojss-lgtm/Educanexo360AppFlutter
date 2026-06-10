@@ -538,16 +538,17 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Row(
-                                    mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(Icons.chat_bubble_outline, size: 14, color: Color(0xFF059669)),
                                       SizedBox(width: 6),
-                                      Text(
-                                        'Retroalimentación del docente:',
-                                        style: TextStyle(
-                                          color: Color(0xFF059669),
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.bold,
+                                      Expanded(
+                                        child: Text(
+                                          'Retroalimentación del docente:',
+                                          style: TextStyle(
+                                            color: Color(0xFF059669),
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
                                       ),
                                     ],
