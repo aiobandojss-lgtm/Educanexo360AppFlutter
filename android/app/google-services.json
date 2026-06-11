@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "996674918415",
+    "project_id": "educanexo360",
+    "storage_bucket": "educanexo360.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:996674918415:android:49678e6cf2133ee5be6b7a",
+        "android_client_info": {
+          "package_name": "com.educanexo360.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPUIxBqSw0qImuBiFt4lxpHYkraza9Ge4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
