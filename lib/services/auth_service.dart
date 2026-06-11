@@ -174,6 +174,11 @@ class AuthService {
       dlog(
           '🎯 Permisos cargados: ${PermissionService.getUserPermissions().length}\n');
 
+      // Inicializar FCM y registrar/refrescar token (sesión restaurada al abrir la app)
+      FcmService.instance.initialize().then((_) {
+        FcmService.instance.registerTokenToBackend();
+      }).catchError((_) {});
+
       return true;
     } catch (e) {
       dlog('❌ Error verificando sesión: $e\n');
