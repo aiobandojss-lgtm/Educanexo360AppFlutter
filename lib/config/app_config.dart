@@ -184,7 +184,7 @@ class AppConfig {
 
   static const String notificaciones = '/notificaciones';
   static const String notificacionesLeerTodas = '/notificaciones/leer-todas';
-  static const String notificacionesFcmToken = '/notificaciones/fcm-token';
+  static const String notificacionesFcmToken = '/notificaciones/register-token';
 
   static String notificacionMarkRead(String id) => '/notificaciones/$id/leer';
   static String notificacionDelete(String id) => '/notificaciones/$id';
