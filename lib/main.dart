@@ -78,8 +78,13 @@ class _MyAppState extends State<MyApp> {
     _router = AppRoutes.createRouter(_authProvider);
 
     // Registrar callback de navegación para notificaciones push (se asigna una vez)
+    // Primero va a home para que el bottom nav quede como base del stack,
+    // luego empuja la pantalla de detalle encima.
     FcmService.instance.setNavigationCallback((route) {
-      _router.go(route);
+      _router.go('/');
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _router.push(route);
+      });
     });
   }
 
