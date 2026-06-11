@@ -5,6 +5,7 @@ import '../config/app_config.dart';
 import 'api_service.dart';
 import 'storage_service.dart';
 import 'permission_service.dart';
+import 'fcm_service.dart';
 
 class AuthService {
   // Singleton
@@ -74,6 +75,11 @@ class AuthService {
       PermissionService.setCurrentUser(user);
       dlog('✅ PermissionService actualizado');
 
+      // Inicializar FCM y registrar token en backend
+      await FcmService.instance.initialize();
+      await FcmService.instance.registerTokenToBackend();
+      dlog('✅ FCM inicializado y token registrado');
+
       dlog('🎉 Login exitoso\n');
 
       return AuthResponse(
@@ -114,6 +120,9 @@ class AuthService {
         // Ignorar errores del backend en logout
         if (!silent) dlog('⚠️ Error en logout del backend (ignorado): $e');
       }
+
+      // Limpiar token FCM del backend antes de cerrar sesión
+      await FcmService.instance.clearTokenFromBackend();
 
       // Limpiar storage local
       await StorageService.clearAll();

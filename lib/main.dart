@@ -1,9 +1,12 @@
 ﻿// lib/main.dart
 import 'utils/logger.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/date_symbol_data_local.dart';
+import 'package:go_router/go_router.dart';
 import 'config/theme.dart';
 import 'config/app_config.dart';
 import 'config/routes.dart';
@@ -13,12 +16,19 @@ import 'providers/anuncio_provider.dart';
 import 'providers/calendario_provider.dart';
 import 'providers/usuario_provider.dart';
 import 'providers/curso_provider.dart';
-import 'providers/asistencia_provider.dart'; // ✅ NUEVO IMPORT
-import 'providers/tarea_provider.dart'; // ✅ NUEVO IMPORT
+import 'providers/asistencia_provider.dart';
+import 'providers/tarea_provider.dart';
 import 'services/api_service.dart';
+import 'services/fcm_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar Firebase (requerido antes de cualquier uso de firebase_messaging)
+  await Firebase.initializeApp();
+
+  // Registrar handler para mensajes recibidos con la app cerrada/background
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // Inicializar formatos de fecha en español
   await initializeDateFormatting('es_ES', null);
@@ -50,14 +60,40 @@ Future<void> _testBackendConnection() async {
   }
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  late final AuthProvider _authProvider;
+  late final GoRouter _router;
+
+  @override
+  void initState() {
+    super.initState();
+    _authProvider = AuthProvider();
+    _router = AppRoutes.createRouter(_authProvider);
+
+    // Registrar callback de navegación para notificaciones push (se asigna una vez)
+    FcmService.instance.setNavigationCallback((route) {
+      _router.go(route);
+    });
+  }
+
+  @override
+  void dispose() {
+    _router.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider.value(value: _authProvider),
         ChangeNotifierProvider(create: (_) => MessageProvider()),
         ChangeNotifierProvider(create: (_) => AnuncioProvider()),
         ChangeNotifierProvider(create: (_) => CalendarioProvider()),
@@ -66,31 +102,24 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AsistenciaProvider()),
         ChangeNotifierProvider(create: (_) => TareaProvider()),
       ],
-      child: Builder(
-        builder: (context) {
-          final authProvider = context.watch<AuthProvider>();
+      child: MaterialApp.router(
+        title: 'EducaNexo360',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.lightTheme,
 
-          return MaterialApp.router(
-            title: 'EducaNexo360',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.lightTheme,
+        // ✅ LOCALIZACIONES EN ESPAÑOL - CRÍTICO
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('es', 'ES'),
+          Locale('en', 'US'),
+        ],
+        locale: const Locale('es', 'ES'),
 
-            // ✅ LOCALIZACIONES EN ESPAÑOL - CRÍTICO
-            localizationsDelegates: const [
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: const [
-              Locale('es', 'ES'), // Español
-              Locale('en', 'US'), // Inglés (fallback)
-            ],
-            locale: const Locale('es', 'ES'),
-
-            // Configuración de GoRouter
-            routerConfig: AppRoutes.createRouter(authProvider),
-          );
-        },
+        routerConfig: _router,
       ),
     );
   }
