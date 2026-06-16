@@ -9,6 +9,7 @@ import '../../models/message.dart';
 import '../../providers/message_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/message_service.dart';
+import '../../widgets/common/gradient_header.dart';
 import '../mensajes/create_message_screen.dart';
 
 /// ðŸ“– PANTALLA DE DETALLE DE MENSAJE
@@ -108,19 +109,34 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Mensaje')),
-        body: const Center(child: CircularProgressIndicator()),
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Mensaje',
+              showBack: true,
+              leadingIcon: Icons.mail_outline,
+            ),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
+        ),
       );
     }
 
     if (_error != null || _message == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Error')),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        body: Column(
+          children: [
+            const GradientHeader(
+              title: 'Error',
+              showBack: true,
+              leadingIcon: Icons.mail_outline,
+            ),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
               Text(
@@ -136,6 +152,9 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
             ],
           ),
         ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -143,47 +162,38 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     final primaryColor = Theme.of(context).primaryColor;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Mensaje'),
-        backgroundColor: Colors.transparent,
-        foregroundColor: Colors.white,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
-            ),
+      body: Column(
+        children: [
+          GradientHeader(
+            title: 'Mensaje',
+            showBack: true,
+            leadingIcon: Icons.mail_outline,
+            actions: [
+              // Archivar
+              if (message.archivado != true)
+                IconButton(
+                  icon: const Icon(Icons.archive_outlined, color: Colors.white),
+                  onPressed: _handleArchive,
+                  tooltip: 'Archivar',
+                ),
+
+              // Eliminar
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.white),
+                onPressed: _handleDelete,
+                tooltip: 'Eliminar',
+              ),
+            ],
           ),
-        ),
-        actions: [
-          // Archivar
-          if (message.archivado != true)
-            IconButton(
-              icon: const Icon(Icons.archive_outlined),
-              onPressed: _handleArchive,
-              tooltip: 'Archivar',
-            ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header con remitente
+                  _buildSenderHeader(message, primaryColor),
 
-          // Eliminar
-          IconButton(
-            icon: const Icon(Icons.delete_outline),
-            onPressed: _handleDelete,
-            tooltip: 'Eliminar',
-          ),
-
-          const SizedBox(width: 8),
-        ],
-      ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header con remitente
-            _buildSenderHeader(message, primaryColor),
-
-            const Divider(height: 1),
+                  const Divider(height: 1),
 
             // Destinatarios
             if (message.destinatarios.isNotEmpty)
@@ -209,6 +219,9 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
           ],
         ),
       ),
+            ),
+          ],
+        ),
       floatingActionButton: _canReply() // â† CAMBIAR ESTA CONDICIÃ“N
           ? FloatingActionButton.extended(
               onPressed: _handleReply,

@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../../../models/asistencia_informes.dart';
 import '../../../providers/asistencia_provider.dart';
 import '../../../services/asistencia_informes_service.dart';
+import '../../../widgets/common/gradient_header.dart';
 
 class InformeTendenciaScreen extends StatefulWidget {
   const InformeTendenciaScreen({super.key});
@@ -89,29 +90,20 @@ class _InformeTendenciaScreenState extends State<InformeTendenciaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Tendencia de Asistencia'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _cargar,
-              tooltip: 'Actualizar'),
-        ],
-      ),
       body: Column(
         children: [
+          GradientHeader(
+            title: 'Tendencia de Asistencia',
+            showBack: true,
+            leadingIcon: Icons.trending_up,
+            actions: [
+              HeaderAction(
+                icon: Icons.refresh,
+                onTap: _cargar,
+                tooltip: 'Actualizar',
+              ),
+            ],
+          ),
           _buildFiltros(),
           Expanded(
             child: _isLoading

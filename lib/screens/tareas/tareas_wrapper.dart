@@ -3,6 +3,7 @@ import '../../utils/logger.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common/gradient_header.dart';
 import 'mis_tareas_screen.dart';
 import 'lista_tareas_screen.dart';
 import 'selector_hijo_screen.dart';
@@ -65,16 +66,16 @@ class _TareasNoAplicaScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Tareas'),
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        elevation: 0,
-      ),
       backgroundColor: const Color(0xFFF0FDF4),
-      body: Center(
-        child: Padding(
+      body: Column(
+        children: [
+          const GradientHeader(
+            title: 'Tareas',
+            leadingIcon: Icons.assignment,
+          ),
+          Expanded(
+            child: Center(
+              child: Padding(
           padding: const EdgeInsets.all(32),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -114,6 +115,9 @@ class _TareasNoAplicaScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

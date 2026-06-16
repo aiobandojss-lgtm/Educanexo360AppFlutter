@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/usuario_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class CambiarPasswordScreen extends StatefulWidget {
   const CambiarPasswordScreen({super.key});
@@ -148,36 +149,41 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Cambiar Contraseña'),
-          backgroundColor: const Color(0xFFF59E0B), // Naranja
-          actions: [
-            TextButton(
-              onPressed: _loading ? null : _handleSave,
-              child: _loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Text(
-                      'GUARDAR',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Cambiar Contraseña',
+              showBack: true,
+              leadingIcon: Icons.lock_outline,
+              actions: [
+                TextButton(
+                  onPressed: _loading ? null : _handleSave,
+                  child: _loading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'GUARDAR',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 8),
+              ],
             ),
-            const SizedBox(width: 16),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Form(
             key: _formKey,
             child: Column(
               children: [
@@ -404,6 +410,9 @@ class _CambiarPasswordScreenState extends State<CambiarPasswordScreen> {
               ],
             ),
           ),
+        ),
+            ),
+          ],
         ),
       ),
     );

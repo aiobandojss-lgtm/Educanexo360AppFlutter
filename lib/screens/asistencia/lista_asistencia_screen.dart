@@ -10,6 +10,7 @@ import '../../models/usuario.dart';
 import '../../providers/asistencia_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class ListaAsistenciaScreen extends StatefulWidget {
   const ListaAsistenciaScreen({super.key});
@@ -172,46 +173,32 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Control de Asistencia'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF047857), // Verde Emerald-700
-                Color(0xFF14B8A6), // Teal-500
-              ],
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            if (context.canPop()) {
-              context.pop();
-            } else {
-              context.go('/');
-            }
-          },
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(
-              _filtrosVisibles ? Icons.filter_list_off : Icons.filter_list,
-              color: Colors.white,
-            ),
-            onPressed: () => setState(() => _filtrosVisibles = !_filtrosVisibles),
-            tooltip: _filtrosVisibles ? 'Ocultar filtros' : 'Mostrar filtros',
-          ),
-        ],
-      ),
       body: Column(
         children: [
+          // Header unificado (GradientHeader)
+          GradientHeader(
+            title: 'Control de Asistencia',
+            showBack: true,
+            leadingIcon: Icons.fact_check,
+            onBack: () {
+              if (context.canPop()) {
+                context.pop();
+              } else {
+                context.go('/');
+              }
+            },
+            actions: [
+              HeaderAction(
+                icon: _filtrosVisibles
+                    ? Icons.filter_list_off
+                    : Icons.filter_list,
+                onTap: () =>
+                    setState(() => _filtrosVisibles = !_filtrosVisibles),
+                tooltip: _filtrosVisibles ? 'Ocultar filtros' : 'Mostrar filtros',
+              ),
+            ],
+          ),
+
           // 🔍 PANEL DE FILTROS
           if (_filtrosVisibles) _buildFiltrosPanel(),
 

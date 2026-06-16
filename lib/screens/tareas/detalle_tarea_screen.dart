@@ -14,6 +14,7 @@ import '../../services/tarea_service.dart';
 import '../../widgets/tareas/estado_badge.dart';
 import '../../widgets/tareas/prioridad_badge.dart';
 import '../../widgets/tareas/archivo_tile.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class DetalleTareaScreen extends StatefulWidget {
   final String tareaId;
@@ -234,20 +235,31 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Detalle de Tarea'),
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Detalle de Tarea',
+              showBack: true,
+              leadingIcon: Icons.assignment,
+            ),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_error != null || _tarea == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Error'),
-        ),
-        body: Center(
+        body: Column(
+          children: [
+            const GradientHeader(
+              title: 'Error',
+              showBack: true,
+              leadingIcon: Icons.assignment,
+            ),
+            Expanded(
+              child: Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
             child: Column(
@@ -268,6 +280,9 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
               ],
             ),
           ),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -299,52 +314,66 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
             (_miEntrega!.archivos.isEmpty));
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_tarea!.titulo),
-        actions: [
-          // Acciones para docente
-          if (puedeEditar) ...[
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => context.push('/tareas/editar/${widget.tareaId}'),
+      body: Column(
+        children: [
+          GradientHeader(
+            title: _tarea!.titulo,
+            showBack: true,
+            leadingIcon: Icons.assignment,
+            onBack: () => context.pop(),
+            actions: [
+              // Acciones para docente
+              if (puedeEditar) ...[
+                HeaderAction(
+                  icon: Icons.edit,
+                  onTap: () =>
+                      context.push('/tareas/editar/${widget.tareaId}'),
+                  tooltip: 'Editar',
+                ),
+                HeaderAction(
+                  icon: Icons.lock,
+                  onTap: _handleCerrar,
+                  tooltip: 'Cerrar tarea',
+                ),
+                HeaderAction(
+                  icon: Icons.delete,
+                  onTap: _handleEliminar,
+                  tooltip: 'Eliminar',
+                ),
+              ],
+            ],
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.only(
+                bottom: (puedeEntregar ? 80 : 0) +
+                    MediaQuery.of(context).viewPadding.bottom,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Información principal
+                  _buildMainInfo(),
+
+                  // Material de referencia
+                  if (_tarea!.archivosReferencia.isNotEmpty)
+                    _buildMaterialReferencia(),
+
+                  // Mi entrega (estudiante o acudiente)
+                  if ((esEstudiante || esAcudiente) && _miEntrega != null)
+                    _buildMiEntrega(),
+
+                  // Lista de entregas (docente)
+                  if (esDocente && _entregas != null && _entregas!.isNotEmpty)
+                    _buildEntregasDocente(),
+
+                  // Detalles laterales
+                  _buildDetalles(),
+                ],
+              ),
             ),
-            IconButton(
-              icon: const Icon(Icons.lock),
-              onPressed: _handleCerrar,
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete),
-              onPressed: _handleEliminar,
-            ),
-          ],
+          ),
         ],
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.only(
-          bottom: (puedeEntregar ? 80 : 0) + MediaQuery.of(context).viewPadding.bottom,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Información principal
-            _buildMainInfo(),
-
-            // Material de referencia
-            if (_tarea!.archivosReferencia.isNotEmpty)
-              _buildMaterialReferencia(),
-
-            // Mi entrega (estudiante o acudiente)
-            if ((esEstudiante || esAcudiente) && _miEntrega != null)
-              _buildMiEntrega(),
-
-            // Lista de entregas (docente)
-            if (esDocente && _entregas != null && _entregas!.isNotEmpty)
-              _buildEntregasDocente(),
-
-            // Detalles laterales
-            _buildDetalles(),
-          ],
-        ),
       ),
 
       // Botón de entregar (solo estudiante)

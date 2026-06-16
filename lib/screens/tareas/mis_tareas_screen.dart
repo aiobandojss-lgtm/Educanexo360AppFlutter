@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/tarea_card.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class MisTareasScreen extends StatefulWidget {
   const MisTareasScreen({super.key});
@@ -82,16 +83,9 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Mis Tareas'),
-        automaticallyImplyLeading: false,
-      ),
       body: Column(
         children: [
-          // Header con estadÃ­sticas
+          // Header unificado (GradientHeader)
           _buildHeader(),
 
           // Tabs
@@ -107,43 +101,12 @@ class _MisTareasScreenState extends State<MisTareasScreen>
   Widget _buildHeader() {
     final tareaProvider = context.watch<TareaProvider>();
 
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Mis Tareas',
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            tareaProvider.isLoadingMisTareas
-                ? 'Cargando...'
-                : '${tareaProvider.misTareas.length} tareas asignadas',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+    return GradientHeader(
+      title: 'Mis Tareas',
+      leadingIcon: Icons.assignment,
+      subtitle: tareaProvider.isLoadingMisTareas
+          ? 'Cargando...'
+          : '${tareaProvider.misTareas.length} tareas asignadas',
     );
   }
 

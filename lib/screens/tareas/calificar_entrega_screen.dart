@@ -8,6 +8,7 @@ import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/estado_badge.dart';
 import '../../widgets/tareas/archivo_tile.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class CalificarEntregaScreen extends StatefulWidget {
   final String tareaId;
@@ -146,14 +147,17 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Calificar Entrega'),
-      ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Column(
+              children: [
+                GradientHeader(
+                  title: 'Calificar Entrega',
+                  showBack: true,
+                  leadingIcon: Icons.grading,
+                ),
+                Expanded(child: Center(child: CircularProgressIndicator())),
+              ],
+            )
           : AbsorbPointer(
               absorbing: _isSaving,
               child: Opacity(
@@ -213,56 +217,29 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
   // ========================================
 
   Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            children: [
-              Icon(Icons.person, size: 16, color: Colors.white),
-              SizedBox(width: 6),
-              Text(
-                'Estudiante',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
+    final nombreEstudiante =
+        '${_entrega!.estudiante?.nombre ?? ''} ${_entrega!.estudiante?.apellidos ?? ''}'
+            .trim();
+    final email = _entrega!.estudiante?.email ?? '';
+    return GradientHeader(
+      title: 'Calificar Entrega',
+      subtitle: nombreEstudiante.isNotEmpty ? nombreEstudiante : null,
+      showBack: true,
+      leadingIcon: Icons.grading,
+      bottom: email.isEmpty
+          ? null
+          : Row(
+              children: [
+                const Icon(Icons.email_outlined, size: 14, color: Colors.white),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    email,
+                    style: const TextStyle(fontSize: 14, color: Colors.white),
+                  ),
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${_entrega!.estudiante?.nombre ?? ''} ${_entrega!.estudiante?.apellidos ?? ''}',
-            style: const TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            _entrega!.estudiante?.email ?? '',
-            style: const TextStyle(
-              fontSize: 15,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

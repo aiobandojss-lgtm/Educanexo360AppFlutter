@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
+import '../../widgets/common/gradient_header.dart';
 import 'search_students_screen.dart';
 
 class ManageStudentsScreen extends StatefulWidget {
@@ -132,30 +133,36 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        title: const Text('Gestionar Estudiantes'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: _abrirBusquedaEstudiantes,
-            tooltip: 'Agregar estudiante',
+      body: Column(
+        children: [
+          GradientHeader(
+            title: 'Gestionar Estudiantes',
+            showBack: true,
+            leadingIcon: Icons.school,
+            actions: [
+              HeaderAction(
+                icon: Icons.add,
+                onTap: _abrirBusquedaEstudiantes,
+                tooltip: 'Agregar estudiante',
+              ),
+            ],
+          ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _estudiantesAsociados.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _estudiantesAsociados.length,
+                        itemBuilder: (context, index) {
+                          final estudiante = _estudiantesAsociados[index];
+                          return _buildEstudianteCard(estudiante);
+                        },
+                      ),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _estudiantesAsociados.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _estudiantesAsociados.length,
-                  itemBuilder: (context, index) {
-                    final estudiante = _estudiantesAsociados[index];
-                    return _buildEstudianteCard(estudiante);
-                  },
-                ),
     );
   }
 

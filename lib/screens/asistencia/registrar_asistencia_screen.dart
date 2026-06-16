@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/asistencia.dart';
 import '../../providers/asistencia_provider.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class RegistrarAsistenciaScreen extends StatefulWidget {
   final String? asistenciaId; // ✅ NUEVO - Para modo edición
@@ -287,77 +288,56 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
     if (_cargandoDatos) {
       return Scaffold(
         backgroundColor: Colors.grey[50],
-        appBar: AppBar(
-          title: const Text('Cargando...'),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF047857), // Verde Emerald-700
-                  Color(0xFF14B8A6), // Teal-500
-                ],
-              ),
+        body: const Column(
+          children: [
+            GradientHeader(
+              title: 'Cargando...',
+              showBack: true,
+              leadingIcon: Icons.fact_check,
             ),
-          ),
-          foregroundColor: Colors.white,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
         ),
       );
     }
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: Text(
-            widget.isEditMode ? 'Editar Asistencia' : 'Registrar Asistencia'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF047857), // Verde Emerald-700
-                Color(0xFF14B8A6), // Teal-500
-              ],
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        actions: [
-          if (_guardando)
-            const Center(
-              child: Padding(
-                padding: EdgeInsets.symmetric(horizontal: 16),
-                child: SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(Colors.white),
+      body: Column(
+        children: [
+          GradientHeader(
+            title:
+                widget.isEditMode ? 'Editar Asistencia' : 'Registrar Asistencia',
+            showBack: true,
+            leadingIcon: Icons.edit_calendar,
+            actions: [
+              if (_guardando)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    ),
                   ),
+                )
+              else
+                HeaderAction(
+                  icon: Icons.save,
+                  onTap: _guardarAsistencia,
+                  tooltip: 'Guardar',
                 ),
-              ),
-            )
-          else
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _guardarAsistencia,
-              tooltip: 'Guardar',
-            ),
-        ],
-      ),
-      body: Form(
-        key: _formKey,
-        child: Column(
-          children: [
+            ],
+          ),
+          Expanded(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                children: [
             // 📋 INFORMACIÓN GENERAL
             _buildInfoGeneralPanel(),
 
@@ -370,6 +350,9 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
             _buildGuardarButton(),
           ],
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

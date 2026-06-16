@@ -6,6 +6,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/usuario_service.dart';
 import '../../services/perfil_rol_service.dart';
 import '../../models/usuario.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class EditarPerfilScreen extends StatefulWidget {
   const EditarPerfilScreen({super.key});
@@ -170,36 +171,41 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
     return WillPopScope(
       onWillPop: _onWillPop,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Editar Perfil'),
-          backgroundColor: const Color(0xFF10B981), // Verde
-          actions: [
-            TextButton(
-              onPressed: _loading ? null : _handleSave,
-              child: _loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                      ),
-                    )
-                  : const Text(
-                      'GUARDAR',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                      ),
-                    ),
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Editar Perfil',
+              showBack: true,
+              leadingIcon: Icons.edit,
+              actions: [
+                TextButton(
+                  onPressed: _loading ? null : _handleSave,
+                  child: _loading
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor:
+                                AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'GUARDAR',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 16,
+                          ),
+                        ),
+                ),
+                const SizedBox(width: 8),
+              ],
             ),
-            const SizedBox(width: 16),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Form(
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Form(
             key: _formKey,
             child: Column(
               children: [
@@ -401,6 +407,9 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
               ],
             ),
           ),
+        ),
+            ),
+          ],
         ),
       ),
     );

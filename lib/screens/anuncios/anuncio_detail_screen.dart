@@ -9,6 +9,7 @@ import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
 import '../../services/permission_service.dart';
 import '../../utils/file_helper.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class AnuncioDetailScreen extends StatefulWidget {
   final String anuncioId;
@@ -82,25 +83,35 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Cargando...'),
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF10B981),
-          ),
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Cargando...',
+              showBack: true,
+              leadingIcon: Icons.campaign,
+            ),
+            Expanded(
+              child: Center(
+                child: CircularProgressIndicator(color: Color(0xFF10B981)),
+              ),
+            ),
+          ],
         ),
       );
     }
 
     if (_anuncio == null) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Error'),
-        ),
-        body: const Center(
-          child: Text('Anuncio no encontrado'),
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Error',
+              showBack: true,
+              leadingIcon: Icons.campaign,
+            ),
+            Expanded(child: Center(child: Text('Anuncio no encontrado'))),
+          ],
         ),
       );
     }
@@ -108,6 +119,7 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             _buildHeader(context),
@@ -137,49 +149,31 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      // ✅ CAMBIO AQUÍ: Gradiente disfuminado (consistente con calendario)
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
+    return GradientHeader(
+      title: 'Anuncio',
+      showBack: true,
+      leadingIcon: Icons.campaign,
+      onBack: () => context.pop(),
+      actions: [
+        IconButton(
+          icon: const Icon(Icons.share, color: Colors.white),
+          onPressed: _shareAnuncio,
         ),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        children: [
-          Row(
-            children: [
-              IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: () => context.pop(),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.share, color: Colors.white),
-                onPressed: _shareAnuncio,
-              ),
-              if (_canEdit())
-                IconButton(
-                  icon: const Icon(Icons.edit, color: Colors.white),
-                  onPressed: () {
-                    context.push('/anuncios/create', extra: _anuncio);
-                  },
-                ),
-              if (_canDelete())
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.white),
-                  onPressed: _confirmDelete,
-                ),
-            ],
+        if (_canEdit())
+          IconButton(
+            icon: const Icon(Icons.edit, color: Colors.white),
+            onPressed: () {
+              context.push('/anuncios/create', extra: _anuncio);
+            },
           ),
-          if (_anuncio!.destacado)
-            Container(
-              margin: const EdgeInsets.only(top: 8),
+        if (_canDelete())
+          IconButton(
+            icon: const Icon(Icons.delete, color: Colors.white),
+            onPressed: _confirmDelete,
+          ),
+      ],
+      bottom: _anuncio!.destacado
+          ? Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.2),
@@ -200,9 +194,8 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
                   ),
                 ],
               ),
-            ),
-        ],
-      ),
+            )
+          : null,
     );
   }
 

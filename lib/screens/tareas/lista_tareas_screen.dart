@@ -10,6 +10,7 @@ import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/tareas/tarea_card.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class ListaTareasScreen extends StatefulWidget {
   const ListaTareasScreen({super.key});
@@ -95,58 +96,6 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
         tipoUsuario == 'COORDINADOR';
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Mis Tareas'),
-        automaticallyImplyLeading: false,
-        actions: [
-          Consumer<TareaProvider>(
-            builder: (context, provider, _) {
-              final cantFiltros = [
-                provider.estadoFilter,
-                provider.prioridadFilter,
-                provider.cursoFilter,
-                provider.asignaturaFilter,
-              ].where((f) => f != null).length;
-
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.filter_list),
-                    onPressed: _mostrarFiltros,
-                    tooltip: 'Filtros',
-                  ),
-                  if (cantFiltros > 0)
-                    Positioned(
-                      right: 6,
-                      top: 6,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '$cantFiltros',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
       body: Column(
         children: [
           // Header con estadísticas
@@ -182,59 +131,44 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
     final totalCerradas =
         tareas.where((t) => t.estado == EstadoTarea.cerrada).length;
 
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
+    final cantFiltros = [
+      tareaProvider.estadoFilter,
+      tareaProvider.prioridadFilter,
+      tareaProvider.cursoFilter,
+      tareaProvider.asignaturaFilter,
+    ].where((f) => f != null).length;
+
+    return GradientHeader(
+      title: 'Gestión de Tareas',
+      leadingIcon: Icons.assignment,
+      actions: [
+        HeaderAction(
+          icon: Icons.filter_list,
+          onTap: _mostrarFiltros,
+          tooltip: 'Filtros',
+          badgeCount: cantFiltros,
         ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      ],
+      bottom: Row(
         children: [
-          const Row(
-            children: [
-              Icon(Icons.assignment, color: Colors.white, size: 28),
-              SizedBox(width: 10),
-              Text(
-                'Gestión de Tareas',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
+          _buildEstadisticaChip(
+            icon: Icons.assignment,
+            label: 'Total',
+            valor: '${tareaProvider.totalTareas}',
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              _buildEstadisticaChip(
-                icon: Icons.assignment,
-                label: 'Total',
-                valor: '${tareaProvider.totalTareas}',
-              ),
-              const SizedBox(width: 12),
-              _buildEstadisticaChip(
-                icon: Icons.check_circle,
-                label: 'Activas',
-                valor: '$totalActivas',
-                color: Colors.green,
-              ),
-              const SizedBox(width: 12),
-              _buildEstadisticaChip(
-                icon: Icons.lock,
-                label: 'Cerradas',
-                valor: '$totalCerradas',
-                color: Colors.grey,
-              ),
-            ],
+          const SizedBox(width: 12),
+          _buildEstadisticaChip(
+            icon: Icons.check_circle,
+            label: 'Activas',
+            valor: '$totalActivas',
+            color: Colors.green,
+          ),
+          const SizedBox(width: 12),
+          _buildEstadisticaChip(
+            icon: Icons.lock,
+            label: 'Cerradas',
+            valor: '$totalCerradas',
+            color: Colors.grey,
           ),
         ],
       ),

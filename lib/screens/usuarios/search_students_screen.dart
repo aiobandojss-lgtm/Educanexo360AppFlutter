@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class SearchStudentsScreen extends StatefulWidget {
   final String acudienteId;
@@ -141,13 +142,13 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        title: const Text('Buscar Estudiantes'),
-      ),
       body: Column(
         children: [
+          const GradientHeader(
+            title: 'Buscar Estudiantes',
+            showBack: true,
+            leadingIcon: Icons.person_search,
+          ),
           // Barra de búsqueda
           Container(
             padding: const EdgeInsets.all(16),

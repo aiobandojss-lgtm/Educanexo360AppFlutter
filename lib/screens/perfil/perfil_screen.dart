@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/usuario.dart';
 import '../../services/perfil_rol_service.dart';
+import '../../widgets/common/gradient_header.dart';
 import 'editar_perfil_screen.dart';
 import 'cambiar_password_screen.dart';
 
@@ -49,35 +50,39 @@ class _PerfilScreenState extends State<PerfilScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text('👤 Mi Perfil'),
-        centerTitle: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Tarjeta de perfil principal
-            _buildProfileCard(user),
-            const SizedBox(height: 16),
+      body: Column(
+        children: [
+          // Header unificado (GradientHeader)
+          const GradientHeader(
+            title: 'Mi Perfil',
+            showBack: true,
+            leadingIcon: Icons.person,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Tarjeta de perfil principal
+                  _buildProfileCard(user),
+                  const SizedBox(height: 16),
 
-            // Configuración de la cuenta
-            _buildAccountSettings(context, user),
-            const SizedBox(height: 16),
+                  // Configuración de la cuenta
+                  _buildAccountSettings(context, user),
+                  const SizedBox(height: 16),
 
-            // Configuración de notificaciones
-            _buildNotificationsSettings(),
-            const SizedBox(height: 16),
+                  // Configuración de notificaciones
+                  _buildNotificationsSettings(),
+                  const SizedBox(height: 16),
 
-            // Información de la cuenta
-            _buildCuentaInfo(user),
-            const SizedBox(height: 32),
-          ],
-        ),
+                  // Información de la cuenta
+                  _buildCuentaInfo(user),
+                  const SizedBox(height: 32),
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

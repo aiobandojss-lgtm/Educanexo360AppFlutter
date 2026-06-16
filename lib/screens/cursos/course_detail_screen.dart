@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/curso.dart';
 import '../../providers/curso_provider.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class CourseDetailScreen extends StatefulWidget {
   final String cursoId;
@@ -148,13 +149,17 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _curso == null) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF059669),
-          foregroundColor: Colors.white,
-          title: const Text('Cargando...'),
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Cargando...',
+              showBack: true,
+              leadingIcon: Icons.school,
+            ),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -164,6 +169,7 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             _buildHeader(nivelColor, nivelIcon),
@@ -180,43 +186,12 @@ class _CourseDetailScreenState extends State<CourseDetailScreen> {
   // ========================================
 
   Widget _buildHeader(Color nivelColor, IconData nivelIcon) {
-    return Container(
-      decoration: BoxDecoration(color: nivelColor),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => context.pop(),
-          ),
-          const SizedBox(width: 8),
-          Icon(nivelIcon, size: 24, color: Colors.white),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  _curso!.nombre,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                Text(
-                  '${_curso!.nivel.displayName} • ${_curso!.gradoDisplay}',
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+    return GradientHeader(
+      title: _curso!.nombre,
+      subtitle: '${_curso!.nivel.displayName} • ${_curso!.gradoDisplay}',
+      showBack: true,
+      leadingIcon: nivelIcon,
+      onBack: () => context.pop(),
     );
   }
 

@@ -7,6 +7,7 @@ import '../../models/evento.dart';
 import '../../providers/calendario_provider.dart';
 import '../../services/permission_service.dart';
 import '../../utils/file_helper.dart';
+import '../../widgets/common/gradient_header.dart';
 import 'create_evento_screen.dart';
 
 class EventoDetailScreen extends StatefulWidget {
@@ -54,27 +55,34 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor:
-              const Color(0xFF059669), // ✅ CAMBIO 1: púrpura → verde
-          elevation: 0,
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Cargando...',
+              showBack: true,
+              leadingIcon: Icons.event,
+            ),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_evento == null) {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor:
-              const Color(0xFF059669), // ✅ CAMBIO 2: púrpura → verde
-          elevation: 0,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+        body: Column(
+          children: [
+            const GradientHeader(
+              title: 'Evento',
+              showBack: true,
+              leadingIcon: Icons.event,
+            ),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
               const Text(
                 '❌',
                 style: TextStyle(fontSize: 80),
@@ -92,6 +100,9 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
             ],
           ),
         ),
+            ),
+          ],
+        ),
       );
     }
 
@@ -102,15 +113,16 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      body: CustomScrollView(
-        slivers: [
+      body: Column(
+        children: [
           // HEADER
           _buildHeader(evento),
 
           // CONTENIDO
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -163,6 +175,7 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
               ),
             ),
           ),
+          ),
         ],
       ),
     );
@@ -173,60 +186,25 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
   // ==========================================
 
   Widget _buildHeader(Evento evento) {
-    final color = _getEventTypeColor(evento.tipo);
-
-    return SliverAppBar(
-      expandedHeight: 185,
-      pinned: true,
-      backgroundColor: color,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
+    return GradientHeader(
+      title: evento.titulo,
+      showBack: true,
+      leadingIcon: Icons.event,
+      onBack: () => Navigator.pop(context),
+      bottom: Align(
+        alignment: Alignment.centerLeft,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [color, color.withOpacity(0.8)],
-            ),
+            color: Colors.white.withOpacity(0.25),
+            borderRadius: BorderRadius.circular(20),
           ),
-          child: SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  // CHIP DE TIPO
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.25),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      '${evento.tipo.icon} ${evento.tipo.displayName}',
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // TÍTULO
-                  Text(
-                    evento.titulo,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
+          child: Text(
+            '${evento.tipo.icon} ${evento.tipo.displayName}',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
         ),
@@ -724,12 +702,6 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
   // ==========================================
   // UTILIDADES
   // ==========================================
-
-  Color _getEventTypeColor(EventType type) {
-    return Color(
-      int.parse(type.colorHex.substring(1), radix: 16) + 0xFF000000,
-    );
-  }
 
   Color _getStatusColor(EventStatus status) {
     return Color(

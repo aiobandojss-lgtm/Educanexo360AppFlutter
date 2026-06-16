@@ -9,6 +9,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
 import '../../services/auth_service.dart'; // ✅ AGREGADO
+import '../../widgets/common/gradient_header.dart';
 
 class EditUserScreen extends StatefulWidget {
   final String? userId; // null = crear, con valor = editar
@@ -236,13 +237,17 @@ class _EditUserScreenState extends State<EditUserScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF059669),
-          foregroundColor: Colors.white,
-          title: const Text('Cargando...'),
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Cargando...',
+              showBack: true,
+              leadingIcon: Icons.person,
+            ),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -252,6 +257,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
         Scaffold(
           backgroundColor: const Color(0xFFF5F5F5),
           body: SafeArea(
+            top: false,
             child: Column(
               children: [
                 _buildHeader(),
@@ -290,37 +296,11 @@ class _EditUserScreenState extends State<EditUserScreen> {
   // ========================================
 
   Widget _buildHeader() {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => context.pop(),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _isEditing ? 'Editar Usuario' : 'Crear Usuario',
-              style: const TextStyle(
-                fontSize: 20,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+    return GradientHeader(
+      title: _isEditing ? 'Editar Usuario' : 'Crear Usuario',
+      showBack: true,
+      leadingIcon: _isEditing ? Icons.edit : Icons.person_add,
+      onBack: () => context.pop(),
     );
   }
 

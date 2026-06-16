@@ -10,6 +10,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../models/message.dart';
 import '../../providers/message_provider.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class CreateMessageScreen extends StatefulWidget {
   final Message? originalMessage;
@@ -392,40 +393,27 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       },
       child: Scaffold(
         backgroundColor: Colors.white,
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          foregroundColor: Colors.white,
-          title: Text(title),
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  Color(0xFF047857), // Verde Emerald-700
-                  Color(0xFF14B8A6), // Teal-500
-                ],
-              ),
-            ),
-          ),
-          actions: [
-            if (!widget.isReply)
-              Padding(
-                padding: const EdgeInsets.only(right: 8),
-                child: TextButton.icon(
-                  onPressed: _loading ? null : _handleSaveDraft,
-                  icon: const Icon(Icons.save_outlined, size: 18),
-                  label: const Text('Borrador'),
-                  style: TextButton.styleFrom(
-                    foregroundColor: Colors.orange[700],
+        body: Column(
+          children: [
+            GradientHeader(
+              title: title,
+              showBack: true,
+              leadingIcon: Icons.mail_outline,
+              actions: [
+                if (!widget.isReply)
+                  TextButton.icon(
+                    onPressed: _loading ? null : _handleSaveDraft,
+                    icon: const Icon(Icons.save_outlined,
+                        size: 18, color: Colors.white),
+                    label: const Text('Borrador',
+                        style: TextStyle(color: Colors.white)),
                   ),
-                ),
-              ),
-          ],
-        ),
-        body: _loading
-            ? const Center(child: CircularProgressIndicator())
-            : SafeArea(
+              ],
+            ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : SafeArea(
                 // Ã¢Å“â€¦ ESTRUCTURA ANTI-OVERFLOW (igual al login)
                 child: Center(
                   child: SingleChildScrollView(
@@ -478,6 +466,9 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                   ),
                 ),
               ),
+            ),
+          ],
+        ),
         floatingActionButton: _loading
             ? null
             : FloatingActionButton.extended(

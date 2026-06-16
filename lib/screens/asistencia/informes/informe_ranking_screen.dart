@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../models/asistencia_informes.dart';
 import '../../../services/asistencia_informes_service.dart';
+import '../../../widgets/common/gradient_header.dart';
 
 class InformeRankingScreen extends StatefulWidget {
   const InformeRankingScreen({super.key});
@@ -78,29 +79,20 @@ class _InformeRankingScreenState extends State<InformeRankingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Ranking de Cursos'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        actions: [
-          IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _cargar,
-              tooltip: 'Actualizar'),
-        ],
-      ),
       body: Column(
         children: [
+          GradientHeader(
+            title: 'Ranking de Cursos',
+            showBack: true,
+            leadingIcon: Icons.leaderboard,
+            actions: [
+              HeaderAction(
+                icon: Icons.refresh,
+                onTap: _cargar,
+                tooltip: 'Actualizar',
+              ),
+            ],
+          ),
           _buildFiltros(),
           Expanded(
             child: _isLoading

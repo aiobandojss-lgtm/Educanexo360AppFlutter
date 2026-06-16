@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class AnunciosScreen extends StatefulWidget {
   const AnunciosScreen({super.key});
@@ -103,26 +104,9 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
     final canCreate = PermissionService.canAccess('anuncios.crear');
 
     return Scaffold(
-      // ✅ AGREGAR AppBar con navegación
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF10B981),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: Icon(
-              _vistaCompacta ? Icons.view_agenda : Icons.view_list,
-              color: Colors.white,
-            ),
-            tooltip: _vistaCompacta ? 'Vista completa' : 'Vista compacta',
-            onPressed: () => setState(() => _vistaCompacta = !_vistaCompacta),
-          ),
-        ],
-      ),
       body: Column(
         children: [
-          // ✅ HEADER CON COLOR SÓLIDO - Sin gradient
+          // Header unificado (GradientHeader)
           _buildHeader(),
 
           // Barra de búsqueda
@@ -144,45 +128,21 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
     );
   }
 
-  // ✅ HEADER CON COLOR SÓLIDO (sin gradient)
+  // HEADER UNIFICADO (GradientHeader)
   Widget _buildHeader() {
     final anuncioProvider = context.watch<AnuncioProvider>();
 
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
+    return GradientHeader(
+      title: 'Tablero de Anuncios',
+      subtitle: '${anuncioProvider.totalAnuncios} anuncios disponibles',
+      leadingIcon: Icons.campaign,
+      actions: [
+        HeaderAction(
+          icon: _vistaCompacta ? Icons.view_agenda : Icons.view_list,
+          tooltip: _vistaCompacta ? 'Vista completa' : 'Vista compacta',
+          onTap: () => setState(() => _vistaCompacta = !_vistaCompacta),
         ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '📢 Tablero de Anuncios',
-            style: TextStyle(
-              fontSize: 24,
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            '${anuncioProvider.totalAnuncios} anuncios disponibles',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 

@@ -10,6 +10,7 @@ import '../../models/evento.dart';
 import '../../providers/calendario_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 import 'evento_detail_screen.dart';
 import 'create_evento_screen.dart';
 
@@ -51,6 +52,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
           return RefreshIndicator(
             onRefresh: () => calendarProvider.refresh(),
             child: SafeArea(
+              top: false,
               child: Column(
                 children: [
                   // Header
@@ -110,41 +112,10 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   // ==========================================
 
   Widget _buildHeader(CalendarioProvider provider) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // ← VERDE OSCURO (cambio 2/10)
-            Color(0xFF14B8A6), // ← TEAL (cambio 3/10)
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Calendario',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Eventos y actividades escolares',
-            style: TextStyle(
-              fontSize: 16,
-              color: Colors.white.withOpacity(0.9),
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+    return const GradientHeader(
+      title: 'Calendario',
+      subtitle: 'Eventos y actividades escolares',
+      leadingIcon: Icons.calendar_month,
     );
   }
 

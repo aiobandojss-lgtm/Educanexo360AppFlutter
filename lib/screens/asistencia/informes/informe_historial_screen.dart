@@ -11,6 +11,7 @@ import '../../../models/asistencia.dart';
 import '../../../models/asistencia_informes.dart';
 import '../../../providers/asistencia_provider.dart';
 import '../../../services/asistencia_informes_service.dart';
+import '../../../widgets/common/gradient_header.dart';
 
 class InformeHistorialScreen extends StatefulWidget {
   const InformeHistorialScreen({super.key});
@@ -111,31 +112,21 @@ class _InformeHistorialScreenState extends State<InformeHistorialScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Historial de Estudiante'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        actions: [
-          if (_estudianteId != null)
-            IconButton(
-              icon: const Icon(Icons.refresh),
-              onPressed: _cargar,
-              tooltip: 'Actualizar',
-            ),
-        ],
-      ),
       body: Column(
         children: [
+          GradientHeader(
+            title: 'Historial de Estudiante',
+            showBack: true,
+            leadingIcon: Icons.person_search,
+            actions: [
+              if (_estudianteId != null)
+                HeaderAction(
+                  icon: Icons.refresh,
+                  onTap: _cargar,
+                  tooltip: 'Actualizar',
+                ),
+            ],
+          ),
           _buildFiltros(),
           Expanded(
             child: _buildCuerpo(),

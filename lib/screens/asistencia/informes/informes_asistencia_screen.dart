@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../services/permission_service.dart';
+import '../../../widgets/common/gradient_header.dart';
 
 class InformesAsistenciaScreen extends StatelessWidget {
   const InformesAsistenciaScreen({super.key});
@@ -15,24 +16,17 @@ class InformesAsistenciaScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Informes de Asistencia'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: Column(
         children: [
+          const GradientHeader(
+            title: 'Informes de Asistencia',
+            showBack: true,
+            leadingIcon: Icons.insights,
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
           // Banner informativo
           Container(
             padding: const EdgeInsets.all(16),
@@ -136,6 +130,9 @@ class InformesAsistenciaScreen extends StatelessWidget {
             color: const Color(0xFF0EA5E9),
             colorFondo: const Color(0xFFE0F2FE),
             onTap: () => context.push('/asistencia/informes/historial'),
+          ),
+        ],
+      ),
           ),
         ],
       ),

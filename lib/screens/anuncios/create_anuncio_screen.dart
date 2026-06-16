@@ -9,6 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class CreateAnuncioScreen extends StatefulWidget {
   final Anuncio? anuncio; // Si viene con anuncio, es modo edición
@@ -71,6 +72,7 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             _buildHeader(context),
@@ -107,51 +109,25 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Container(
-      // ✅ CAMBIO AQUÍ: Gradiente disfuminado (consistente con calendario)
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
+    return GradientHeader(
+      title: _isEditing ? 'Editar Anuncio' : 'Nuevo Anuncio',
+      showBack: true,
+      leadingIcon: _isEditing ? Icons.edit : Icons.campaign,
+      onBack: () => context.pop(),
+      actions: [
+        TextButton.icon(
+          onPressed: _isSubmitting ? null : () => _handleSave(publicar: false),
+          style: TextButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          ),
+          icon: const Icon(Icons.save, color: Colors.white, size: 20),
+          label: const Text(
+            'Borrador',
+            style: TextStyle(color: Colors.white),
+          ),
         ),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: Colors.white),
-            onPressed: () => context.pop(),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              _isEditing ? 'Editar Anuncio' : 'Nuevo Anuncio',
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          TextButton.icon(
-            onPressed:
-                _isSubmitting ? null : () => _handleSave(publicar: false),
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            icon: const Icon(Icons.save, color: Colors.white, size: 20),
-            label: const Text(
-              'Borrador',
-              style: TextStyle(color: Colors.white),
-            ),
-          ),
-        ],
-      ),
+      ],
     );
   }
 
@@ -534,15 +510,20 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
 
   Widget _buildNoAccessScreen() {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Acceso Restringido'),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
+      body: Column(
+        children: [
+          const GradientHeader(
+            title: 'Acceso Restringido',
+            showBack: true,
+            leadingIcon: Icons.campaign,
+          ),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
               const Text('🚫', style: TextStyle(fontSize: 64)),
               const SizedBox(height: 16),
               const Text(
@@ -569,6 +550,9 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
             ],
           ),
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

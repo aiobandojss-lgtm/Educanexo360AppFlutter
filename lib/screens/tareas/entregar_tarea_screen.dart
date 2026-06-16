@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/file_uploader_widget.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class EntregarTareaScreen extends StatefulWidget {
   final String tareaId;
@@ -143,21 +144,32 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(
-        appBar: AppBar(
-          title: const Text('Entregar Tarea'),
+      return const Scaffold(
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Entregar Tarea',
+              showBack: true,
+              leadingIcon: Icons.upload_file,
+            ),
+            Expanded(child: Center(child: CircularProgressIndicator())),
+          ],
         ),
-        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
     if (_error != null && _tarea == null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Error'),
-        ),
-        body: Center(
-          child: Padding(
+        body: Column(
+          children: [
+            const GradientHeader(
+              title: 'Error',
+              showBack: true,
+              leadingIcon: Icons.upload_file,
+            ),
+            Expanded(
+              child: Center(
+                child: Padding(
             padding: const EdgeInsets.all(32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
@@ -178,21 +190,38 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
             ),
           ),
         ),
+            ),
+          ],
+        ),
       );
     }
 
     if (_tarea == null) {
       return const Scaffold(
-        body: Center(child: Text('Tarea no encontrada')),
+        body: Column(
+          children: [
+            GradientHeader(
+              title: 'Entregar Tarea',
+              showBack: true,
+              leadingIcon: Icons.upload_file,
+            ),
+            Expanded(child: Center(child: Text('Tarea no encontrada'))),
+          ],
+        ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Entregar Tarea'),
-      ),
-      body: SingleChildScrollView(
-        child: Padding(
+      body: Column(
+        children: [
+          const GradientHeader(
+            title: 'Entregar Tarea',
+            showBack: true,
+            leadingIcon: Icons.upload_file,
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              child: Padding(
           padding: EdgeInsets.fromLTRB(20, 20, 20, 20 + MediaQuery.of(context).viewPadding.bottom),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,6 +390,9 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
             ],
           ),
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

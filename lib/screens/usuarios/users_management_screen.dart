@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class UsersManagementScreen extends StatefulWidget {
   const UsersManagementScreen({super.key});
@@ -95,6 +96,7 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
 
     return Scaffold(
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
             // Header con info
@@ -125,54 +127,12 @@ class _UsersManagementScreenState extends State<UsersManagementScreen> {
     // ✅ FIX: Usar Consumer para actualizar cuando cambien los usuarios
     return Consumer<UsuarioProvider>(
       builder: (context, usuarioProvider, _) {
-        return Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF047857), // Verde Emerald-700
-                Color(0xFF14B8A6), // Teal-500
-              ],
-            ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Icon(Icons.people, color: Colors.white, size: 22),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'Gestión de Usuarios',
-                      style: TextStyle(
-                        fontSize: 22,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
-              Text(
-                '${usuarioProvider.totalUsuarios} usuario${usuarioProvider.totalUsuarios != 1 ? 's' : ''} registrado${usuarioProvider.totalUsuarios != 1 ? 's' : ''}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+        return GradientHeader(
+          title: 'Gestión de Usuarios',
+          subtitle:
+              '${usuarioProvider.totalUsuarios} usuario${usuarioProvider.totalUsuarios != 1 ? 's' : ''} registrado${usuarioProvider.totalUsuarios != 1 ? 's' : ''}',
+          showBack: true,
+          leadingIcon: Icons.people,
         );
       },
     );

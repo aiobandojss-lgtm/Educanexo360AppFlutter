@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/curso.dart';
 import '../../providers/curso_provider.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class CoursesScreen extends StatefulWidget {
   const CoursesScreen({super.key});
@@ -89,89 +90,42 @@ class _CoursesScreenState extends State<CoursesScreen> {
 
     if (!canView) {
       return Scaffold(
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF059669),
-          foregroundColor: Colors.white,
-          title: const Text('Gestión de Cursos'),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ),
-        body: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.lock_outline, size: 64, color: Color(0xFF059669)),
-              SizedBox(height: 16),
-              Text(
-                'Acceso Restringido',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+        body: const Column(
+          children: [
+            GradientHeader(
+              title: 'Gestión de Cursos',
+              showBack: true,
+              leadingIcon: Icons.school,
+            ),
+            Expanded(
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.lock_outline,
+                        size: 64, color: Color(0xFF059669)),
+                    SizedBox(height: 16),
+                    Text(
+                      'Acceso Restringido',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Esta sección está disponible solo para\npersonal administrativo y docente.',
+                      style: TextStyle(fontSize: 14, color: Colors.grey),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 8),
-              Text(
-                'Esta sección está disponible solo para\npersonal administrativo y docente.',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       );
     }
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Gestión de Cursos'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          Consumer<CursoProvider>(
-            builder: (context, provider, _) {
-              final cantFiltros =
-                  (provider.currentNivelFilter != null ? 1 : 0) +
-                      (provider.currentJornadaFilter != null ? 1 : 0);
-              return Stack(
-                alignment: Alignment.center,
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.filter_list),
-                    onPressed: _mostrarFiltros,
-                    tooltip: 'Filtros',
-                  ),
-                  if (cantFiltros > 0)
-                    Positioned(
-                      right: 6,
-                      top: 6,
-                      child: Container(
-                        width: 16,
-                        height: 16,
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '$cantFiltros',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
       body: Column(
         children: [
           _buildHeader(),
@@ -183,38 +137,28 @@ class _CoursesScreenState extends State<CoursesScreen> {
   }
 
   // ========================================
-  // 📋 HEADER CON COLOR SÓLIDO
+  // 📋 HEADER UNIFICADO (GradientHeader)
   // ========================================
 
   Widget _buildHeader() {
     return Consumer<CursoProvider>(
       builder: (context, cursoProvider, _) {
-        return Container(
-          width: double.infinity,
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF047857), // Verde Emerald-700
-                Color(0xFF14B8A6), // Teal-500
-              ],
+        final cantFiltros = (cursoProvider.currentNivelFilter != null ? 1 : 0) +
+            (cursoProvider.currentJornadaFilter != null ? 1 : 0);
+        return GradientHeader(
+          title: 'Gestión de Cursos',
+          subtitle:
+              '${cursoProvider.totalCursos} curso${cursoProvider.totalCursos != 1 ? 's' : ''} registrado${cursoProvider.totalCursos != 1 ? 's' : ''}',
+          showBack: true,
+          leadingIcon: Icons.school,
+          actions: [
+            HeaderAction(
+              icon: Icons.filter_list,
+              onTap: _mostrarFiltros,
+              tooltip: 'Filtros',
+              badgeCount: cantFiltros,
             ),
-          ),
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '${cursoProvider.totalCursos} curso${cursoProvider.totalCursos != 1 ? 's' : ''} registrado${cursoProvider.totalCursos != 1 ? 's' : ''}',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
+          ],
         );
       },
     );

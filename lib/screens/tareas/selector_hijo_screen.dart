@@ -8,6 +8,7 @@ import 'package:go_router/go_router.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/usuario.dart';
+import '../../widgets/common/gradient_header.dart';
 
 /// Pantalla para que el acudiente seleccione cuál hijo ver
 class SelectorHijoScreen extends StatefulWidget {
@@ -191,17 +192,17 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        title: const Text('Tareas de mis hijos'),
-        elevation: 0,
-        // ✅ CRÍTICO: Solo mostrar botón atrás si NO es el tab principal
-        automaticallyImplyLeading: !widget.isMainTab,
-        // Si es el tab principal, agregar un leading vacío
-        leading: widget.isMainTab ? const SizedBox.shrink() : null,
+      body: Column(
+        children: [
+          GradientHeader(
+            title: 'Tareas de mis hijos',
+            leadingIcon: Icons.family_restroom,
+            // Solo mostrar botón atrás si NO es el tab principal
+            showBack: !widget.isMainTab,
+          ),
+          Expanded(child: _buildBody()),
+        ],
       ),
-      body: _buildBody(),
     );
   }
 

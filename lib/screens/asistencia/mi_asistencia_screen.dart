@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../models/asistencia.dart';
 import '../../providers/asistencia_provider.dart';
+import '../../widgets/common/gradient_header.dart';
 
 // ─────────────────────────────────────────────────────────────
 // Helper privado: estadísticas por materia calculadas localmente
@@ -118,62 +119,54 @@ class _MiAsistenciaScreenState extends State<MiAsistenciaScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: Text(
-          widget.nombreEstudiante,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-          overflow: TextOverflow.ellipsis,
-        ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: widget.onBack != null
-            ? IconButton(
-                icon: const Icon(Icons.arrow_back),
-                onPressed: widget.onBack,
-              )
-            : null,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
+      body: Column(
+        children: [
+          GradientHeader(
+            title: widget.nombreEstudiante,
+            showBack: widget.onBack != null,
+            onBack: widget.onBack,
+            leadingIcon: Icons.fact_check,
+            bottom: TabBar(
+              controller: _tabController,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white60,
+              indicatorColor: Colors.white,
+              indicatorWeight: 3,
+              labelStyle:
+                  const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+              unselectedLabelStyle: const TextStyle(fontSize: 13),
+              tabs: const [
+                Tab(
+                    icon: Icon(Icons.bar_chart_rounded, size: 18),
+                    text: 'Resumen'),
+                Tab(
+                    icon: Icon(Icons.history_rounded, size: 18),
+                    text: 'Historial'),
+              ],
             ),
           ),
-        ),
-        foregroundColor: Colors.white,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: Colors.white,
-          unselectedLabelColor: Colors.white60,
-          indicatorColor: Colors.white,
-          indicatorWeight: 3,
-          labelStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-          unselectedLabelStyle: const TextStyle(fontSize: 13),
-          tabs: const [
-            Tab(icon: Icon(Icons.bar_chart_rounded, size: 18), text: 'Resumen'),
-            Tab(icon: Icon(Icons.history_rounded, size: 18), text: 'Historial'),
-          ],
-        ),
-      ),
-      body: Consumer<AsistenciaProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoadingMiAsistencia) {
-            return const Center(
-              child: CircularProgressIndicator(color: Color(0xFF059669)),
-            );
-          }
-          if (provider.error != null) {
-            return _buildError(provider.error!);
-          }
-          return TabBarView(
-            controller: _tabController,
-            children: [
-              _buildTabResumen(provider),
-              _buildTabHistorial(provider),
-            ],
-          );
-        },
+          Expanded(
+            child: Consumer<AsistenciaProvider>(
+              builder: (context, provider, _) {
+                if (provider.isLoadingMiAsistencia) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF059669)),
+                  );
+                }
+                if (provider.error != null) {
+                  return _buildError(provider.error!);
+                }
+                return TabBarView(
+                  controller: _tabController,
+                  children: [
+                    _buildTabResumen(provider),
+                    _buildTabHistorial(provider),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../models/asistencia.dart';
 import '../../providers/asistencia_provider.dart';
 import '../../services/permission_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class DetalleAsistenciaScreen extends StatefulWidget {
   final String asistenciaId;
@@ -143,55 +144,46 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Detalle de Asistencia'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                Color(0xFF047857), // Verde Emerald-700
-                Color(0xFF14B8A6), // Teal-500
-              ],
-            ),
-          ),
-        ),
-        foregroundColor: Colors.white,
-        actions: [
-          // ✅ BOTÓN EDITAR - Solo si NO está finalizado
-          Consumer<AsistenciaProvider>(
-            builder: (context, provider, _) {
-              final registro = provider.registroActual;
+      body: Column(
+        children: [
+          GradientHeader(
+            title: 'Detalle de Asistencia',
+            showBack: true,
+            leadingIcon: Icons.fact_check,
+            actions: [
+              // ✅ BOTÓN EDITAR - Solo si NO está finalizado
+              Consumer<AsistenciaProvider>(
+                builder: (context, provider, _) {
+                  final registro = provider.registroActual;
 
-              if (registro == null) return const SizedBox.shrink();
+                  if (registro == null) return const SizedBox.shrink();
 
-              // Mostrar botón editar si NO está finalizado y tiene permiso
-              if (!registro.finalizado &&
-                  PermissionService.canAccess('asistencia.editar')) {
-                return IconButton(
-                  icon: const Icon(Icons.edit),
-                  onPressed: () {
-                    context.push('/asistencia/editar/${widget.asistenciaId}');
-                  },
-                  tooltip: 'Editar asistencia',
-                );
-              }
+                  // Mostrar botón editar si NO está finalizado y tiene permiso
+                  if (!registro.finalizado &&
+                      PermissionService.canAccess('asistencia.editar')) {
+                    return IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      onPressed: () {
+                        context
+                            .push('/asistencia/editar/${widget.asistenciaId}');
+                      },
+                      tooltip: 'Editar asistencia',
+                    );
+                  }
 
-              return const SizedBox.shrink();
-            },
-          ),
+                  return const SizedBox.shrink();
+                },
+              ),
 
-          // Menú de opciones
-          Consumer<AsistenciaProvider>(
-            builder: (context, provider, _) {
-              final registro = provider.registroActual;
-              if (registro == null) return const SizedBox.shrink();
+              // Menú de opciones
+              Consumer<AsistenciaProvider>(
+                builder: (context, provider, _) {
+                  final registro = provider.registroActual;
+                  if (registro == null) return const SizedBox.shrink();
 
-              return PopupMenuButton<String>(
-                onSelected: (value) {
+                  return PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_vert, color: Colors.white),
+                    onSelected: (value) {
                   switch (value) {
                     case 'finalizar':
                       _finalizarRegistro();
@@ -241,12 +233,13 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
                 },
               );
             },
+              ),
+            ],
           ),
-        ],
-      ),
-      body: Consumer<AsistenciaProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading) {
+          Expanded(
+            child: Consumer<AsistenciaProvider>(
+              builder: (context, provider, _) {
+                if (provider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
@@ -272,7 +265,10 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
               ],
             ),
           );
-        },
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

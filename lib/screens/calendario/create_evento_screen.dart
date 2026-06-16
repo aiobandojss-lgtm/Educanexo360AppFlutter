@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/evento.dart';
 import '../../providers/calendario_provider.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class CreateEventoScreen extends StatefulWidget {
   final Evento? evento;
@@ -88,39 +89,15 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
     return Scaffold(
       backgroundColor: Colors.grey[50],
       body: SafeArea(
+        top: false,
         child: Column(
           children: [
-            // Header con gradiente disfuminado
-            Container(
-              width: double.infinity,
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    Color(0xFF047857), // Verde Emerald-700
-                    Color(0xFF14B8A6), // Teal-500
-                  ],
-                ),
-              ),
-              padding: const EdgeInsets.fromLTRB(16, 20, 16, 20),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    _isEditMode ? 'Editar Evento' : 'Crear Evento',
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                ],
-              ),
+            // Header unificado
+            GradientHeader(
+              title: _isEditMode ? 'Editar Evento' : 'Crear Evento',
+              showBack: true,
+              leadingIcon: _isEditMode ? Icons.edit : Icons.event,
+              onBack: () => Navigator.pop(context),
             ),
             // Body
             Expanded(

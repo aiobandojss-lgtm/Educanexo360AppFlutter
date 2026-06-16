@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/estado_badge.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class ListaEntregasScreen extends StatefulWidget {
   final String tareaId;
@@ -159,73 +160,81 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: const Text('Entregas'),
-        actions: [
-          // Menú de ordenamiento
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.sort),
-            onSelected: (value) {
-              setState(() {
-                _ordenamiento = value;
-                _aplicarFiltrosYOrdenamiento();
-              });
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'nombre',
-                child: Row(
-                  children: [
-                    Icon(Icons.sort_by_alpha),
-                    SizedBox(width: 8),
-                    Text('Por nombre'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'fecha',
-                child: Row(
-                  children: [
-                    Icon(Icons.access_time),
-                    SizedBox(width: 8),
-                    Text('Por fecha de entrega'),
-                  ],
-                ),
-              ),
-              const PopupMenuItem(
-                value: 'calificacion',
-                child: Row(
-                  children: [
-                    Icon(Icons.star),
-                    SizedBox(width: 8),
-                    Text('Por calificación'),
-                  ],
-                ),
-              ),
-            ],
+      body: Column(
+        children: [
+          // Header unificado (siempre visible)
+          if (_tarea != null)
+            _buildTareaHeader()
+          else
+            GradientHeader(
+              title: 'Entregas',
+              showBack: true,
+              leadingIcon: Icons.assignment_turned_in,
+              actions: [_buildSortMenu()],
+            ),
+          Expanded(
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : Column(
+                    children: [
+                      // Estadísticas
+                      _buildEstadisticas(),
+
+                      // Filtros
+                      _buildFiltros(),
+
+                      // Lista de entregas
+                      Expanded(child: _buildEntregasList()),
+                    ],
+                  ),
           ),
         ],
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : Column(
-              children: [
-                // Header con info de la tarea
-                if (_tarea != null) _buildTareaHeader(),
+    );
+  }
 
-                // Estadísticas
-                _buildEstadisticas(),
-
-                // Filtros
-                _buildFiltros(),
-
-                // Lista de entregas
-                Expanded(child: _buildEntregasList()),
-              ],
-            ),
+  // Menú de ordenamiento (usado en el header)
+  Widget _buildSortMenu() {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.sort, color: Colors.white),
+      onSelected: (value) {
+        setState(() {
+          _ordenamiento = value;
+          _aplicarFiltrosYOrdenamiento();
+        });
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'nombre',
+          child: Row(
+            children: [
+              Icon(Icons.sort_by_alpha),
+              SizedBox(width: 8),
+              Text('Por nombre'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'fecha',
+          child: Row(
+            children: [
+              Icon(Icons.access_time),
+              SizedBox(width: 8),
+              Text('Por fecha de entrega'),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'calificacion',
+          child: Row(
+            children: [
+              Icon(Icons.star),
+              SizedBox(width: 8),
+              Text('Por calificación'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
@@ -234,68 +243,26 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
   // ========================================
 
   Widget _buildTareaHeader() {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 14, 20, 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+    return GradientHeader(
+      title: 'Entregas',
+      subtitle: _tarea!.titulo,
+      showBack: true,
+      leadingIcon: Icons.assignment_turned_in,
+      actions: [_buildSortMenu()],
+      bottom: Row(
         children: [
-          const Row(
-            children: [
-              Icon(Icons.assignment_turned_in, color: Colors.white, size: 24),
-              SizedBox(width: 8),
-              Text(
-                'Entregas de la Tarea',
-                style: TextStyle(
-                  fontSize: 20,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
+          const Icon(Icons.book, size: 14, color: Colors.white),
+          const SizedBox(width: 4),
           Text(
-            _tarea!.titulo,
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              fontWeight: FontWeight.w600,
-            ),
+            _tarea!.asignatura.nombre,
+            style: const TextStyle(fontSize: 14, color: Colors.white),
           ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Icon(Icons.book, size: 14, color: Colors.white),
-              const SizedBox(width: 4),
-              Text(
-                _tarea!.asignatura.nombre,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Icon(Icons.group, size: 14, color: Colors.white),
-              const SizedBox(width: 4),
-              Text(
-                _tarea!.curso.nombre,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Colors.white,
-                ),
-              ),
-            ],
+          const SizedBox(width: 12),
+          const Icon(Icons.group, size: 14, color: Colors.white),
+          const SizedBox(width: 4),
+          Text(
+            _tarea!.curso.nombre,
+            style: const TextStyle(fontSize: 14, color: Colors.white),
           ),
         ],
       ),

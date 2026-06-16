@@ -12,6 +12,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/api_service.dart';
 import '../../models/usuario.dart';
 import '../../utils/logger.dart';
+import '../../widgets/common/gradient_header.dart';
 import 'lista_asistencia_screen.dart';
 import 'mi_asistencia_screen.dart';
 
@@ -157,27 +158,18 @@ class _SelectorHijosAsistenciaState extends State<_SelectorHijosAsistencia> {
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
-      appBar: AppBar(
-        title: const Text('Asistencia'),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [Color(0xFF047857), Color(0xFF14B8A6)],
-            ),
+      body: Column(
+        children: [
+          const GradientHeader(
+            title: 'Asistencia',
+            leadingIcon: Icons.fact_check,
           ),
-        ),
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-      ),
-      body: _cargando
-          ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
+          Expanded(
+            child: _cargando
+                ? const Center(child: CircularProgressIndicator())
+                : ListView(
+                    padding: const EdgeInsets.all(20),
+                    children: [
                 Text(
                   'Selecciona un hijo para ver su asistencia',
                   style: TextStyle(
@@ -190,6 +182,9 @@ class _SelectorHijosAsistenciaState extends State<_SelectorHijosAsistencia> {
                 ..._hijos.map((hijo) => _buildHijoCard(context, hijo)),
               ],
             ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -253,20 +248,21 @@ class _SinHijosScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Asistencia'),
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        elevation: 0,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.people_outline, size: 64, color: Colors.grey[300]),
+      body: Column(
+        children: [
+          const GradientHeader(
+            title: 'Asistencia',
+            leadingIcon: Icons.fact_check,
+          ),
+          Expanded(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.people_outline,
+                        size: 64, color: Colors.grey[300]),
               const SizedBox(height: 16),
               Text(
                 'Sin estudiantes asociados',
@@ -285,6 +281,9 @@ class _SinHijosScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+          ),
+        ],
       ),
     );
   }

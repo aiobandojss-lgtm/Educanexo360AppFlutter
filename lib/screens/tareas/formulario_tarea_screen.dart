@@ -12,6 +12,7 @@ import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/file_uploader_widget.dart';
 import '../../widgets/tareas/archivo_tile.dart';
 import '../../services/api_service.dart';
+import '../../widgets/common/gradient_header.dart';
 
 class FormularioTareaScreen extends StatefulWidget {
   final String? tareaId; // null = crear, con valor = editar
@@ -440,14 +441,19 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
     final esEdicion = widget.tareaId != null;
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: const Color(0xFF059669),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        title: Text(esEdicion ? 'Editar Tarea' : 'Crear Nueva Tarea'),
-      ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Column(
+              children: [
+                GradientHeader(
+                  title: esEdicion ? 'Editar Tarea' : 'Nueva Tarea',
+                  showBack: true,
+                  leadingIcon: esEdicion ? Icons.edit : Icons.edit_outlined,
+                ),
+                const Expanded(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              ],
+            )
           : AbsorbPointer(
               absorbing: _isSaving,
               child: Opacity(
@@ -545,53 +551,13 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
   // ========================================
 
   Widget _buildHeader(bool esEdicion) {
-    return Container(
-      width: double.infinity,
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            Color(0xFF047857), // Verde Emerald-700
-            Color(0xFF14B8A6), // Teal-500
-          ],
-        ),
-      ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                esEdicion ? Icons.edit : Icons.edit_outlined,
-                color: Colors.white,
-                size: 28,
-              ),
-              const SizedBox(width: 10),
-              Text(
-                esEdicion ? 'Editar Tarea' : 'Nueva Tarea',
-                style: const TextStyle(
-                  fontSize: 24,
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            esEdicion
-                ? 'Modifica los campos que necesites'
-                : 'Completa la información de la tarea',
-            style: const TextStyle(
-              fontSize: 16,
-              color: Colors.white,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
+    return GradientHeader(
+      title: esEdicion ? 'Editar Tarea' : 'Nueva Tarea',
+      subtitle: esEdicion
+          ? 'Modifica los campos que necesites'
+          : 'Completa la información de la tarea',
+      showBack: true,
+      leadingIcon: esEdicion ? Icons.edit : Icons.edit_outlined,
     );
   }
 

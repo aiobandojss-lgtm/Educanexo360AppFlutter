@@ -10,6 +10,7 @@ import '../../providers/message_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/messages/message_card.dart';
 import '../../widgets/messages/bandeja_selector.dart';
+import '../../widgets/common/gradient_header.dart';
 import '../../services/permission_service.dart';
 import '../mensajes/create_message_screen.dart';
 
@@ -178,14 +179,16 @@ class _MessagesScreenState extends State<MessagesScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      appBar: AppBar(
-        title: const Text('Mensajes'),
-        backgroundColor: const Color(0xFF047857),
-        foregroundColor: Colors.white,
-        elevation: 0,
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(60),
-          child: Consumer<MessageProvider>(
+      body: Column(
+        children: [
+          // Header unificado (GradientHeader)
+          const GradientHeader(
+            title: 'Mensajes',
+            leadingIcon: Icons.mail_outline,
+          ),
+
+          // Selector de bandejas (Recibidos / Enviados / Borradores...)
+          Consumer<MessageProvider>(
             builder: (context, messageProvider, _) {
               return BandejaSelector(
                 selectedBandeja: messageProvider.currentBandeja,
@@ -205,10 +208,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               );
             },
           ),
-        ),
-      ),
-      body: Column(
-        children: [
+
           // Barra de búsqueda
           _buildSearchBar(),
 
