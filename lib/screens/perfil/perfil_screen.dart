@@ -2,9 +2,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../config/app_config.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/usuario.dart';
 import '../../services/perfil_rol_service.dart';
+import '../../services/usuario_service.dart';
+import '../../services/api_service.dart';
 import '../../widgets/common/gradient_header.dart';
 import 'editar_perfil_screen.dart';
 import 'cambiar_password_screen.dart';
@@ -77,6 +82,14 @@ class _PerfilScreenState extends State<PerfilScreen> {
 
                   // Información de la cuenta
                   _buildCuentaInfo(user),
+                  const SizedBox(height: 16),
+
+                  // Sección legal (Política de Privacidad / Términos)
+                  _buildLegalSection(),
+                  const SizedBox(height: 16),
+
+                  // Zona de peligro (Eliminar cuenta)
+                  _buildDangerZone(),
                   const SizedBox(height: 32),
                 ],
               ),
@@ -344,6 +357,135 @@ class _PerfilScreenState extends State<PerfilScreen> {
     );
   }
 
+  Widget _buildLegalSection() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(20),
+            child: Text(
+              '📄 Legal',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          _buildListItem(
+            icon: Icons.privacy_tip_outlined,
+            iconColor: const Color(0xFF0D9488),
+            title: 'Política de Privacidad',
+            description: 'Cómo tratamos y protegemos tus datos',
+            onTap: () => _openUrl(AppConfig.privacyPolicyUrl),
+          ),
+          const Divider(height: 1),
+          _buildListItem(
+            icon: Icons.description_outlined,
+            iconColor: const Color(0xFF0D9488),
+            title: 'Términos y Condiciones',
+            description: 'Condiciones de uso del servicio',
+            onTap: () => _openUrl(AppConfig.termsUrl),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDangerZone() {
+    const dangerColor = Color(0xFFEF4444);
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFFECACA)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(20),
+            child: Text(
+              '⚠️ Zona de peligro',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: dangerColor,
+              ),
+            ),
+          ),
+          InkWell(
+            onTap: _confirmarEliminarCuenta,
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  Icon(Icons.delete_forever_outlined,
+                      color: dangerColor, size: 24),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Eliminar mi cuenta',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                            color: dangerColor,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Solicita eliminar tu cuenta y tus datos personales',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Icon(Icons.chevron_right, color: dangerColor),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _confirmarEliminarCuenta() async {
+    final eliminada = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _EliminarCuentaDialog(),
+    );
+
+    if (eliminada == true && mounted) {
+      // Cerrar sesión y volver al login
+      await context.read<AuthProvider>().logout();
+      if (mounted) context.go('/login');
+    }
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    final ok = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!ok && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo abrir el enlace'),
+        ),
+      );
+    }
+  }
+
   Widget _buildListItem({
     required IconData icon,
     required Color iconColor,
@@ -517,4 +659,145 @@ class _PerfilScreenState extends State<PerfilScreen> {
     return DateFormat('dd/MM/yyyy').format(date);
   }
 
+}
+
+/// Diálogo de confirmación para solicitar la eliminación de la cuenta.
+/// Requiere la contraseña actual y permite un motivo opcional.
+class _EliminarCuentaDialog extends StatefulWidget {
+  const _EliminarCuentaDialog();
+
+  @override
+  State<_EliminarCuentaDialog> createState() => _EliminarCuentaDialogState();
+}
+
+class _EliminarCuentaDialogState extends State<_EliminarCuentaDialog> {
+  final _passwordController = TextEditingController();
+  final _motivoController = TextEditingController();
+  final _usuarioService = UsuarioService();
+
+  bool _loading = false;
+  bool _obscurePassword = true;
+  String? _error;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    _motivoController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _eliminar() async {
+    final password = _passwordController.text;
+    if (password.isEmpty) {
+      setState(() => _error = 'Ingresa tu contraseña para confirmar');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      await _usuarioService.solicitarEliminacionCuenta(
+        password: password,
+        motivo: _motivoController.text,
+      );
+      if (mounted) Navigator.of(context).pop(true);
+    } on ApiException catch (e) {
+      setState(() {
+        _loading = false;
+        _error = e.message;
+      });
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = 'No se pudo completar la solicitud. Intenta de nuevo.';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const dangerColor = Color(0xFFEF4444);
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Row(
+        children: [
+          Icon(Icons.warning_amber_rounded, color: dangerColor),
+          SizedBox(width: 8),
+          Expanded(child: Text('Eliminar mi cuenta')),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Al confirmar, tu cuenta se desactivará de inmediato y se enviará '
+              'una solicitud al colegio para eliminar tus datos personales. '
+              'No podrás volver a iniciar sesión.',
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _passwordController,
+              obscureText: _obscurePassword,
+              enabled: !_loading,
+              decoration: InputDecoration(
+                labelText: 'Contraseña actual',
+                border: const OutlineInputBorder(),
+                suffixIcon: IconButton(
+                  icon: Icon(_obscurePassword
+                      ? Icons.visibility_outlined
+                      : Icons.visibility_off_outlined),
+                  onPressed: () =>
+                      setState(() => _obscurePassword = !_obscurePassword),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _motivoController,
+              enabled: !_loading,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: 'Motivo (opcional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 12),
+              Text(
+                _error!,
+                style: const TextStyle(color: dangerColor, fontSize: 13),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.of(context).pop(false),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: dangerColor),
+          onPressed: _loading ? null : _eliminar,
+          child: _loading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Eliminar cuenta'),
+        ),
+      ],
+    );
+  }
 }

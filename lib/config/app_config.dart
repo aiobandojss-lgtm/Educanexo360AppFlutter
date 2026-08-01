@@ -35,6 +35,18 @@ class AppConfig {
   static bool get isDevelopment => !isProduction;
 
   // ==========================================
+  // ENLACES LEGALES (requeridos por Play Store / App Store)
+  // ==========================================
+  //
+  // ⚠️ ACTUALIZAR con la URL real de la Política de Privacidad publicada
+  // antes de enviar a las tiendas. Debe ser una URL pública y accesible.
+
+  static const String privacyPolicyUrl =
+      'https://educanexo360.creativebycode.com/politica-de-privacidad.html';
+  static const String termsUrl =
+      'https://educanexo360.creativebycode.com/terminos.html';
+
+  // ==========================================
   // ENDPOINTS DE AUTENTICACIÓN
   // ==========================================
 
@@ -51,6 +63,7 @@ class AppConfig {
   // ==========================================
 
   static const String usuarios = '/usuarios';
+  static const String usuariosEliminarCuenta = '/usuarios/eliminar-cuenta';
   static const String usuariosDocentes = '/usuarios/docentes';
   static const String usuariosEstudiantes = '/usuarios/estudiantes';
   static const String usuariosPadres = '/usuarios/padres';

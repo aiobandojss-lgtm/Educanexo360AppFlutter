@@ -25,6 +25,12 @@ linked_fonts/
 **/android/**/GeneratedPluginRegistrant.java
 **/android/key.properties
 
+# Keystore de firma (NUNCA versionar: si se filtra, cualquiera puede firmar
+# actualizaciones falsas de la app; si se pierde, no se puede actualizar en Play)
+*.jks
+*.keystore
+key.properties
+
 # iOS related
 **/ios/Flutter/Flutter.framework/
 **/ios/Flutter/Flutter.podspec

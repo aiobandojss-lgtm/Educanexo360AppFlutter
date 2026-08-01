@@ -215,6 +215,36 @@ class UsuarioService {
     }
   }
 
+  /// Solicita la eliminación de la cuenta del usuario autenticado.
+  /// El backend confirma la contraseña, desactiva el acceso de inmediato
+  /// y notifica al colegio para procesar el borrado definitivo.
+  Future<void> solicitarEliminacionCuenta({
+    required String password,
+    String? motivo,
+  }) async {
+    try {
+      dlog('🗑️ UsuarioService: Solicitando eliminación de cuenta...');
+
+      final response = await _apiService.post(
+        AppConfig.usuariosEliminarCuenta,
+        data: {
+          'password': password,
+          if (motivo != null && motivo.trim().isNotEmpty) 'motivo': motivo.trim(),
+        },
+      );
+
+      if (response['success'] == true) {
+        dlog('✅ Solicitud de eliminación registrada');
+        return;
+      }
+
+      throw Exception(response['message'] ?? 'Error solicitando la eliminación');
+    } catch (e) {
+      dlog('❌ Error solicitando eliminación de cuenta: $e');
+      rethrow;
+    }
+  }
+
   Future<List<Usuario>> getAssociatedStudents(String acudienteId) async {
     try {
       dlog('👨‍👩‍👧‍👦 UsuarioService: Obteniendo estudiantes asociados...');
