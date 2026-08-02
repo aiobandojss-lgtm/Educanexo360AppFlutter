@@ -31,9 +31,27 @@ if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.withReader('UTF-8') { reader ->
         keystoreProperties.load(reader)
     }
-    // Solo usar release signing si el archivo .jks también existe
-    def jksFile = file(keystoreProperties['storeFile'])
+    // OJO: file() dentro de app/build.gradle resuelve desde android/app/, pero storeFile
+    // se escribe relativo a android/ (rootProject). Usar rootProject.file evita que la
+    // ruta falle y el build caiga en silencio a la firma de debug.
+    def jksFile = rootProject.file(keystoreProperties['storeFile'])
     hasKeystoreConfig = jksFile.exists()
+    if (!hasKeystoreConfig) {
+        println "AVISO: key.properties apunta a un keystore inexistente: ${jksFile.absolutePath}"
+    }
+}
+
+// Un .aab/.apk de release firmado con la clave de debug es rechazado por Play Store.
+// Antes esto pasaba en silencio; ahora el build falla y se ve el motivo.
+gradle.taskGraph.whenReady { graph ->
+    def buildingRelease = graph.allTasks.any { it.name ==~ /(?i).*(assemble|bundle)release.*/ }
+    if (buildingRelease && !hasKeystoreConfig) {
+        throw new GradleException(
+            "No se puede firmar el release: falta el keystore de produccion.\n" +
+            "Revisa android/key.properties (storeFile es relativo a la carpeta android/) " +
+            "y que el archivo .jks exista."
+        )
+    }
 }
 
 android {
@@ -60,7 +78,7 @@ android {
             if (hasKeystoreConfig) {
                 keyAlias keystoreProperties['keyAlias']
                 keyPassword keystoreProperties['keyPassword']
-                storeFile file(keystoreProperties['storeFile'])
+                storeFile rootProject.file(keystoreProperties['storeFile'])
                 storePassword keystoreProperties['storePassword']
             }
         }
