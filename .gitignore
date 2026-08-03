@@ -31,6 +31,9 @@ linked_fonts/
 *.keystore
 key.properties
 
+# Credenciales de las cuentas demo (el repositorio es publico)
+*.local.txt
+
 # iOS related
 **/ios/Flutter/Flutter.framework/
 **/ios/Flutter/Flutter.podspec

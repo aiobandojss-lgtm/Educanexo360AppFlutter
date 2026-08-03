@@ -262,7 +262,7 @@ Expected: servidor escuchando (ej: `Server running on port 3000`).
 ```bash
 curl -s -X POST http://localhost:3000/api/auth/login \
   -H "Content-Type: application/json" \
-  -d '{"email":"rector.cdrc@demo.com","password":"Demo2026*"}' | jq .
+  -d '{"email":"rector.cdrc@demo.com","password":"$DEMO_PASSWORD"}' | jq .
 ```
 
 Expected: respuesta con campo `token`. Guardar el token en variable:
