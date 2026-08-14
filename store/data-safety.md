@@ -167,24 +167,31 @@ Cuestionario. Las respuestas relevantes:
 | ¿Permite compras digitales? | **No** |
 | ¿Contenido generado por usuarios sin moderar? | Ver abajo |
 
-**⚠️ Hallazgo — esto lo revisé y no está en la app:**
+**✅ RESUELTO el 2026-08-13 — la app ya tiene sistema de denuncia:**
 decir "Sí" en interacción entre usuarios activa la **política de contenido generado por
-el usuario (UGC)** de Google, que exige un sistema para **denunciar** contenido o
-usuarios ofensivos y para **bloquear** a un usuario. Busqué en
-[lib/screens/mensajes/](lib/screens/mensajes/) y **no existe ninguna de las dos cosas**.
+el usuario (UGC)** de Google, que exige un mecanismo para **denunciar** contenido
+ofensivo. No existía; ahora sí.
 
-Lo que juega a tu favor: es una red **cerrada**: solo se comunican miembros del mismo
-colegio, con cuentas creadas por el administrador, y el admin puede desactivar a
-cualquiera desde la web. Eso es moderación real y suele bastar.
+**Cómo funciona:** en el detalle de cualquier mensaje recibido aparece un icono de
+bandera. Abre un diálogo con seis motivos y un comentario opcional, y envía el reporte
+—con copia del mensaje denunciado, su remitente, fecha e ID interno— al personal
+administrativo del colegio (ADMIN, RECTOR, COORDINADOR, ADMINISTRATIVO) como mensaje de
+**prioridad ALTA**.
 
-Tres opciones, de menor a mayor esfuerzo:
+**No necesitó endpoint nuevo.** El reporte viaja por la mensajería que ya existe, así que
+los moderadores lo reciben en su bandeja **con notificación push y correo**, igual que
+cualquier otro mensaje. Ver `reportMessage()` en
+[message_service.dart](lib/services/message_service.dart) y `_ReportarMensajeDialog` en
+[message_detail_screen.dart](lib/screens/mensajes/message_detail_screen.dart).
 
-- **(A)** Enviar así y explicar la red cerrada en las notas del revisor. Puede pasar.
-  Es apuesta, no certeza.
-- **(B) Recomendado —** añadir un botón "Reportar mensaje" en el detalle del mensaje que
-  cree una notificación al ADMIN del colegio. Es una pantalla y un endpoint; cierra el
-  tema sin discusión.
-- **(C)** Reportar + bloquear usuario. Más trabajo y no creo que lo necesites.
+**Qué responder si el revisor pregunta por moderación:** es una red **cerrada** —solo se
+comunican miembros del mismo colegio, con cuentas creadas por el administrador—, hay
+denuncia dentro de la app que llega a un moderador humano, y ese moderador puede
+desactivar la cuenta del infractor desde el panel web.
+
+*No se implementó "bloquear usuario"*, y es una decisión deliberada: en una red escolar
+cerrada, dejar que un estudiante bloquee a su docente rompería la comunicación oficial
+que es justamente el propósito de la plataforma. La moderación la ejerce el colegio.
 
 ---
 
@@ -215,8 +222,8 @@ Para sostener cada respuesta si un revisor pregunta:
 | 2 | **Subir `eliminar-cuenta.html` a cPanel** | ⏳ manual | Sí |
 | 3 | Quitar `image_picker` del `pubspec.yaml` — ver abajo | ✅ hecho | — |
 | 4 | Restringir `FileType.any` en anuncios y eventos | ✅ hecho | — |
-| 5 | **Regenerar el `.aab`** (el actual trae `image_picker`) | ⏳ | Sí |
-| 6 | Botón "Reportar mensaje" (opción B del formulario 3) | ⏳ decisión | No |
+| 5 | Botón "Reportar mensaje" (política UGC) | ✅ hecho | — |
+| 6 | Regenerar el `.aab` y verificar firma | ✅ hecho | — |
 | 7 | Dejar por contrato que las cuentas de estudiante son 13+ | ⏳ | No |
 
 **Sobre el punto 3 —** `image_picker: ^1.0.0` estaba en el `pubspec.yaml` pero **no se
@@ -233,19 +240,35 @@ importaba en ningún archivo de `lib/`**. Exactamente el mismo caso de
 Verificado tras quitarlo: `flutter pub get` OK y `flutter analyze` con **0 errores** y
 cero referencias a `image_picker`.
 
-**⚠️ Sobre el punto 5 —** el `.aab` que ya está construido y verificado se generó
-*antes* de estos cambios, así que todavía incluye `image_picker`. Hay que regenerarlo
-antes de subirlo:
+---
+
+## El `.aab` de producción — regenerado el 2026-08-13
 
 ```
 flutter build appbundle --release --dart-define=API_URL=https://educanexo360.creativebycode.com/educanexo360/api
 ```
 
-Y volver a comprobar la firma antes de subir — es la trampa que ya nos mordió una vez:
+Resultado: `build/app/outputs/bundle/release/app-release.aab`, 46.7 MB.
+
+**Verificaciones hechas sobre este `.aab`** (repetirlas siempre antes de subir, la
+trampa de la firma ya nos mordió una vez):
+
+| Verificación | Resultado |
+|---|---|
+| Firma (`keytool -printcert -jarfile`) | `CN=Aymer Ivan Obando Valois, O=Creativebycode SAS` |
+| SHA1 | `AB:AB:72:19:52:D7:81:1F:61:BB:66:04:83:D0:84:58:E7:B1:04:0D` |
+| URL de producción en `libapp.so` | Presente en las 3 arquitecturas |
+| Rastros de `image_picker` | Ninguno, ni en entradas ni en el binario |
+| URL de desarrollo | Ninguna: `http://`, `192.168.1.7` y `:3000` ausentes |
 
 ```
 "C:\Program Files\Android\Android Studio\jbr\bin\keytool.exe" -printcert -jarfile build\app\outputs\bundle\release\app-release.aab
 ```
 
-Debe decir `CN=Aymer Ivan Obando Valois, O=Creativebycode SAS`. Si dice
-`CN=Android Debug`, **no subir**.
+Si alguna vez dice `CN=Android Debug`, **no subir**.
+
+> **Falso positivo conocido:** buscar la cadena `192.168` en el binario **sí da
+> resultado**, una vez por arquitectura. No es una URL: es el literal del guardia
+> `baseUrl.contains('192.168')` de `AppConfig.isProduction`. La URL de desarrollo
+> completa sí fue eliminada por el compilador. Busca `http://192.168` o `:3000`, no
+> `192.168` a secas.

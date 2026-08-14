@@ -56,6 +56,16 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     return _message!.destinatarios.any((d) => d.id == currentUserId);
   }
 
+  /// Se puede reportar cualquier mensaje recibido de otra persona.
+  /// No tiene sentido reportarse a uno mismo ni reportar un borrador.
+  bool _canReport() {
+    if (_message == null) return false;
+    if (_message!.isDraft) return false;
+
+    final currentUserId = context.read<AuthProvider>().currentUser?.id ?? '';
+    return _message!.remitente.id != currentUserId;
+  }
+
   // ========================================
   // ðŸ”„ CARGAR MENSAJE
   // ========================================
@@ -169,6 +179,14 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
             showBack: true,
             leadingIcon: Icons.mail_outline,
             actions: [
+              // Reportar contenido inapropiado
+              if (_canReport())
+                IconButton(
+                  icon: const Icon(Icons.flag_outlined, color: Colors.white),
+                  onPressed: _handleReport,
+                  tooltip: 'Reportar mensaje',
+                ),
+
               // Archivar
               if (message.archivado != true)
                 IconButton(
@@ -604,6 +622,31 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     }
   }
 
+  Future<void> _handleReport() async {
+    if (_message == null) return;
+
+    final enviado = await showDialog<int>(
+      context: context,
+      builder: (context) => _ReportarMensajeDialog(
+        message: _message!,
+        messageService: _messageService,
+      ),
+    );
+
+    if (enviado != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            enviado == 1
+                ? 'Reporte enviado. El colegio lo revisara.'
+                : 'Reporte enviado a $enviado personas del colegio.',
+          ),
+          backgroundColor: const Color(0xFF059669),
+        ),
+      );
+    }
+  }
+
   Future<void> _handleDelete() async {
     final confirmed = await showDialog<bool>(
       context: context,
@@ -648,6 +691,160 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
       context,
       '/mensajes/${widget.messageId}/adjuntos/${attachment.fileId}',
       attachment.nombre,
+    );
+  }
+}
+
+/// 🚩 DIÁLOGO PARA REPORTAR UN MENSAJE
+/// El reporte llega al personal administrativo del colegio, que es quien
+/// modera y puede desactivar al usuario desde la web.
+class _ReportarMensajeDialog extends StatefulWidget {
+  final Message message;
+  final MessageService messageService;
+
+  const _ReportarMensajeDialog({
+    required this.message,
+    required this.messageService,
+  });
+
+  @override
+  State<_ReportarMensajeDialog> createState() => _ReportarMensajeDialogState();
+}
+
+class _ReportarMensajeDialogState extends State<_ReportarMensajeDialog> {
+  final TextEditingController _comentarioController = TextEditingController();
+  String? _motivo;
+  bool _loading = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _comentarioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _enviar() async {
+    if (_motivo == null) {
+      setState(() => _error = 'Selecciona un motivo');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
+
+    try {
+      final enviados = await widget.messageService.reportMessage(
+        message: widget.message,
+        motivo: _motivo!,
+        comentario: _comentarioController.text,
+      );
+      if (mounted) Navigator.of(context).pop(enviados);
+    } catch (e) {
+      setState(() {
+        _loading = false;
+        _error = e.toString().replaceFirst('Exception: ', '');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    const warnColor = Color(0xFFF59E0B);
+
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Row(
+        children: [
+          Icon(Icons.flag_outlined, color: warnColor),
+          SizedBox(width: 8),
+          Expanded(child: Text('Reportar mensaje')),
+        ],
+      ),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'El reporte se enviara al personal administrativo del colegio '
+              'junto con una copia del mensaje de '
+              '${widget.message.remitente.fullName}.',
+              style: const TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Motivo',
+              style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 4),
+            RadioGroup<String>(
+              groupValue: _motivo,
+              onChanged: (value) {
+                if (_loading) return;
+                setState(() {
+                  _motivo = value;
+                  _error = null;
+                });
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: MessageService.motivosReporte
+                    .map(
+                      (motivo) => RadioListTile<String>(
+                        value: motivo,
+                        title:
+                            Text(motivo, style: const TextStyle(fontSize: 14)),
+                        contentPadding: EdgeInsets.zero,
+                        dense: true,
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _comentarioController,
+              enabled: !_loading,
+              maxLines: 3,
+              maxLength: 500,
+              decoration: const InputDecoration(
+                labelText: 'Comentario (opcional)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: const TextStyle(color: Color(0xFFEF4444), fontSize: 13),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _loading ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: warnColor),
+          onPressed: _loading ? null : _enviar,
+          child: _loading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : const Text('Enviar reporte'),
+        ),
+      ],
     );
   }
 }

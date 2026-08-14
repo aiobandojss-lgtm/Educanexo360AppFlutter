@@ -3,6 +3,7 @@
 import '../utils/logger.dart';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:intl/intl.dart';
 import '../models/message.dart';
 import 'api_service.dart';
 import 'package:path_provider/path_provider.dart';
@@ -635,6 +636,116 @@ class MessageService {
       dlog('❌ Error obteniendo destinatarios: $e');
       return [];
     }
+  }
+
+  // ========================================
+  // 🚩 REPORTAR MENSAJE
+  // ========================================
+
+  /// Roles que reciben los reportes de contenido inapropiado.
+  static const List<String> _rolesModeradores = [
+    'ADMIN',
+    'RECTOR',
+    'COORDINADOR',
+    'ADMINISTRATIVO',
+  ];
+
+  /// Motivos disponibles al reportar un mensaje.
+  static const List<String> motivosReporte = [
+    'Contenido ofensivo o agresivo',
+    'Acoso o intimidacion',
+    'Contenido inapropiado para menores',
+    'Suplantacion de identidad',
+    'Spam o publicidad',
+    'Otro',
+  ];
+
+  /// Reporta un mensaje al personal administrativo del colegio.
+  ///
+  /// No necesita un endpoint nuevo: el reporte viaja como un mensaje normal
+  /// de prioridad ALTA dirigido a los moderadores, que ya reciben
+  /// notificacion push y correo cuando les llega uno.
+  ///
+  /// Devuelve a cuantos moderadores se envio el reporte.
+  Future<int> reportMessage({
+    required Message message,
+    required String motivo,
+    String? comentario,
+  }) async {
+    try {
+      dlog('🚩 Reportando mensaje: ${message.id}');
+
+      final destinatarios = await getAvailableRecipients();
+      final moderadores = destinatarios
+          .where((u) => _rolesModeradores.contains(u.tipo.toUpperCase()))
+          .map((u) => u.id)
+          .toList();
+
+      if (moderadores.isEmpty) {
+        throw Exception(
+          'No se encontro personal administrativo al que enviar el reporte. '
+          'Comunicate directamente con la institucion educativa.',
+        );
+      }
+
+      // El backend limita el asunto a 255 caracteres
+      final asunto = _recortar(
+        'Reporte de mensaje: ${message.remitente.fullName}',
+        255,
+      );
+
+      final fecha =
+          DateFormat('d/MM/yyyy HH:mm', 'es').format(message.fechaEnvio ?? message.createdAt);
+
+      final contenido = StringBuffer()
+        ..writeln('Un usuario reporto un mensaje como inapropiado.')
+        ..writeln()
+        ..writeln('MOTIVO: $motivo');
+
+      if (comentario != null && comentario.trim().isNotEmpty) {
+        contenido
+          ..writeln()
+          ..writeln('COMENTARIO DE QUIEN REPORTA:')
+          ..writeln(comentario.trim());
+      }
+
+      contenido
+        ..writeln()
+        ..writeln('--- MENSAJE REPORTADO ---')
+        ..writeln('Remitente: ${message.remitente.fullName} '
+            '(${message.remitente.email})')
+        ..writeln('Fecha: $fecha')
+        ..writeln('Asunto: ${message.asunto}')
+        ..writeln('ID interno: ${message.id}')
+        ..writeln()
+        ..writeln('Contenido:')
+        ..writeln(_recortar(message.contenido, 2000));
+
+      if (message.hasAttachments) {
+        contenido
+          ..writeln()
+          ..writeln('Adjuntos: ${message.adjuntos!.length} archivo(s)');
+      }
+
+      await createMessage(
+        destinatarios: moderadores,
+        asunto: asunto,
+        contenido: contenido.toString(),
+        prioridad: Prioridad.alta,
+      );
+
+      dlog('✅ Reporte enviado a ${moderadores.length} moderador(es)');
+      return moderadores.length;
+    } catch (e) {
+      dlog('❌ Error reportando mensaje: $e');
+      rethrow;
+    }
+  }
+
+  /// Recorta un texto largo dejando constancia de que se recorto
+  String _recortar(String texto, int maximo) {
+    if (texto.length <= maximo) return texto;
+    return '${texto.substring(0, maximo - 3)}...';
   }
 
   // ========================================
