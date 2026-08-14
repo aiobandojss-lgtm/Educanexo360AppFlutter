@@ -32,8 +32,7 @@ dependencies:
   table_calendar: ^3.0.9
   file_picker: ^8.0.0
   url_launcher: ^6.0.0
-  image_picker: ^1.0.0
-  
+
   # Gráficas para informes de asistencia
   fl_chart: ^0.69.0
 

@@ -561,7 +561,13 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
-        type: FileType.any,
+        // Lista blanca (misma que mensajes): sin video ni audio, para que la
+        // declaracion de Seguridad de los datos de Play siga siendo exacta
+        type: FileType.custom,
+        allowedExtensions: const [
+          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
+          'jpg', 'jpeg', 'png', 'gif', 'webp',
+        ],
       );
 
       if (result != null) {

@@ -694,7 +694,13 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
   Future<void> _pickFile() async {
     try {
       final result = await FilePicker.platform.pickFiles(
-        type: FileType.any,
+        // Lista blanca (misma que mensajes): sin video ni audio, para que la
+        // declaracion de Seguridad de los datos de Play siga siendo exacta
+        type: FileType.custom,
+        allowedExtensions: const [
+          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
+          'jpg', 'jpeg', 'png', 'gif', 'webp',
+        ],
       );
 
       if (result != null && result.files.isNotEmpty) {
