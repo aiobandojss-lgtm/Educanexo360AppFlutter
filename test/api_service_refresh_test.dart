@@ -187,6 +187,67 @@ void main() {
     expect(await StorageService.getRefreshToken(), 'old-refresh');
   });
 
+  test('(g) refresh 200 que no es JSON (proxy) → se conserva la sesión',
+      () async {
+    final adapter = FakeAdapter((o) async {
+      if (o.path.contains('/auth/refresh-token')) {
+        return ResponseBody.fromString('<html>portal</html>', 200,
+            headers: {
+              Headers.contentTypeHeader: ['text/html'],
+            });
+      }
+      return unauthorized();
+    });
+    api.httpClientAdapter = adapter;
+
+    await expectLater(
+        api.get('/tareas').timeout(_timeout), throwsA(isA<ApiException>()));
+
+    expect(sessionExpiredCalls, 0);
+    expect(await StorageService.getRefreshToken(), 'old-refresh');
+  });
+
+  test('(h) otro usuario inicia sesión durante un refresh exitoso → '
+      'no se pisan sus tokens', () async {
+    final adapter = FakeAdapter((o) async {
+      if (o.path.contains('/auth/refresh-token')) {
+        // Mientras el refresh de A está en vuelo, B inicia sesión
+        await StorageService.saveToken('b-access');
+        await StorageService.saveRefreshToken('b-refresh');
+        return refreshOk();
+      }
+      return unauthorized();
+    });
+    api.httpClientAdapter = adapter;
+
+    await expectLater(
+        api.get('/tareas').timeout(_timeout), throwsA(isA<ApiException>()));
+
+    expect(sessionExpiredCalls, 0);
+    expect(await StorageService.getToken(), 'b-access');
+    expect(await StorageService.getRefreshToken(), 'b-refresh');
+  });
+
+  test('(i) otro usuario inicia sesión durante un refresh rechazado → '
+      'no se expira su sesión', () async {
+    final adapter = FakeAdapter((o) async {
+      if (o.path.contains('/auth/refresh-token')) {
+        await StorageService.saveToken('b-access');
+        await StorageService.saveRefreshToken('b-refresh');
+        return unauthorized();
+      }
+      return unauthorized();
+    });
+    api.httpClientAdapter = adapter;
+
+    await expectLater(
+        api.get('/tareas').timeout(_timeout), throwsA(isA<ApiException>()));
+
+    expect(sessionExpiredCalls, 0);
+    expect(await StorageService.getToken(), 'b-access');
+    expect(await StorageService.getRefreshToken(), 'b-refresh');
+  });
+
   test('(f) refresh 200 con success:false → sesión expirada', () async {
     final adapter = FakeAdapter((o) async {
       if (o.path.contains('/auth/refresh-token')) {

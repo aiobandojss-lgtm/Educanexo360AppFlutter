@@ -1,4 +1,4 @@
-﻿// lib/services/api_service.dart
+// lib/services/api_service.dart
 import '../utils/logger.dart';
 import 'dart:async';
 import 'package:dio/dio.dart';
@@ -159,7 +159,7 @@ class ApiService {
 
     if (refreshToken == null) {
       dlog('❌ No hay refresh token');
-      await _clearAuthAndNotify();
+      await _clearAuthAndNotify(expectedRefreshToken: null);
       return null;
     }
 
@@ -173,7 +173,7 @@ class ApiService {
       final statusCode = e.response?.statusCode;
       if (statusCode == 401 || statusCode == 403) {
         dlog('❌ Refresh token rechazado ($statusCode) - sesión expirada');
-        await _clearAuthAndNotify();
+        await _clearAuthAndNotify(expectedRefreshToken: refreshToken);
         return null;
       }
       // Red, timeout o error del servidor: no cerrar sesión
@@ -183,9 +183,18 @@ class ApiService {
     }
 
     final body = response.data;
-    if (body is! Map || body['success'] != true) {
+    if (body is! Map) {
+      // Ej.: página HTML de un proxy con 200. No es un rechazo del servidor
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        message: 'Respuesta de refresh no es JSON',
+      );
+    }
+    if (body['success'] != true) {
       dlog('❌ Refresh respondió success:false - sesión expirada');
-      await _clearAuthAndNotify();
+      await _clearAuthAndNotify(expectedRefreshToken: refreshToken);
       return null;
     }
 
@@ -206,6 +215,13 @@ class ApiService {
       );
     }
 
+    // Si la sesión cambió mientras se refrescaba (logout y login de otro
+    // usuario), no pisar los tokens de la sesión nueva
+    if (await StorageService.getRefreshToken() != refreshToken) {
+      dlog('⚠️ La sesión cambió durante el refresh - se descarta el resultado');
+      return null;
+    }
+
     await StorageService.saveToken(newToken);
 
     // El backend rota el refresh token en cada renovación
@@ -217,7 +233,15 @@ class ApiService {
     return newToken;
   }
 
-  Future<void> _clearAuthAndNotify() async {
+  /// Expira la sesión solo si sigue siendo la que inició el refresh
+  /// (mismo refresh token guardado): nunca borra la sesión de otro usuario
+  /// que haya iniciado sesión mientras el refresh estaba en curso.
+  Future<void> _clearAuthAndNotify(
+      {required String? expectedRefreshToken}) async {
+    if (await StorageService.getRefreshToken() != expectedRefreshToken) {
+      dlog('⚠️ La sesión cambió durante el refresh - no se expira');
+      return;
+    }
     await StorageService.clearAll();
     dlog('🚪 Sesión expirada - redirigiendo a login');
     onSessionExpired?.call();
