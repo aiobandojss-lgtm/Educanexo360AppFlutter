@@ -117,8 +117,16 @@ class ApiService {
       );
 
       if (response.statusCode == 200 && response.data['success']) {
-        final newToken = response.data['data']['token'] as String;
+        // El backend responde data: { access: {token}, refresh: {token} }
+        final tokens = response.data['data'];
+        final newToken = tokens['access']['token'] as String;
         await StorageService.saveToken(newToken);
+
+        // El backend rota el refresh token en cada renovación
+        final newRefreshToken = tokens['refresh']?['token'];
+        if (newRefreshToken is String && newRefreshToken.isNotEmpty) {
+          await StorageService.saveRefreshToken(newRefreshToken);
+        }
 
         dlog('✅ Token refrescado exitosamente');
 
