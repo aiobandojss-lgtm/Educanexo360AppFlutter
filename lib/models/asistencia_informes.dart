@@ -7,6 +7,14 @@
 // SUB-OBJETOS COMPARTIDOS
 // ==========================================
 
+/// Normaliza una referencia que puede llegar con populate (Map),
+/// solo como id (String) o null.
+Map<String, dynamic> _refMap(dynamic value) {
+  if (value is Map<String, dynamic>) return value;
+  if (value is String) return {'_id': value};
+  return <String, dynamic>{};
+}
+
 class CursoInforme {
   final String id;
   final String nombre;
@@ -129,7 +137,7 @@ class EstudianteRiesgo {
       estudianteId: json['estudianteId']?.toString() ?? '',
       nombre: json['nombre']?.toString() ?? '',
       apellidos: json['apellidos']?.toString() ?? '',
-      curso: CursoInforme.fromJson(json['curso'] as Map<String, dynamic>? ?? {}),
+      curso: CursoInforme.fromJson(_refMap(json['curso'])),
       clasesTotales: (json['clasesTotales'] ?? 0) as int,
       ausencias: (json['ausencias'] ?? 0) as int,
       tardanzas: (json['tardanzas'] ?? 0) as int,
@@ -434,18 +442,15 @@ class RegistroHistorial {
       fecha:
           DateTime.tryParse(json['fecha']?.toString() ?? '') ?? DateTime.now(),
       diaSemana: json['diaSemana']?.toString() ?? '',
-      curso: CursoInforme.fromJson(
-          json['curso'] as Map<String, dynamic>? ?? {}),
+      curso: CursoInforme.fromJson(_refMap(json['curso'])),
       asignatura: json['asignatura'] != null
-          ? AsignaturaInforme.fromJson(
-              json['asignatura'] as Map<String, dynamic>)
+          ? AsignaturaInforme.fromJson(_refMap(json['asignatura']))
           : null,
       estado: json['estado']?.toString() ?? '',
       justificacion: json['justificacion']?.toString(),
       observaciones: json['observaciones']?.toString(),
       registradoPor: json['registradoPor'] != null
-          ? DocenteInforme.fromJson(
-              json['registradoPor'] as Map<String, dynamic>)
+          ? DocenteInforme.fromJson(_refMap(json['registradoPor']))
           : null,
     );
   }

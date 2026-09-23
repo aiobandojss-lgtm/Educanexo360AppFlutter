@@ -41,7 +41,7 @@ class Message {
   factory Message.fromJson(Map<String, dynamic> json) {
     return Message(
       id: json['_id'] ?? '',
-      remitente: User.fromJson(json['remitente'] ?? {}),
+      remitente: _parseRemitente(json['remitente']),
       destinatarios: (json['destinatarios'] as List?)?.map((d) {
             // Si es String (solo ID), crear User parcial
             if (d is String) {
@@ -77,6 +77,18 @@ class Message {
           : null,
       archivado: json['archivado'] as bool?,
       eliminado: json['eliminado'] as bool?,
+    );
+  }
+
+  // remitente puede llegar como objeto (populate), como String (solo id) o null
+  static User _parseRemitente(dynamic data) {
+    if (data is Map<String, dynamic>) return User.fromJson(data);
+    return User(
+      id: data is String ? data : '',
+      nombre: 'Usuario',
+      apellidos: '',
+      email: '',
+      tipo: '',
     );
   }
 

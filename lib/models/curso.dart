@@ -347,9 +347,12 @@ class Curso {
       estado: EstadoCurso.fromString(json['estado'] ?? 'ACTIVO'),
       jornada: Jornada.fromString(json['jornada']),
       capacidad: json['capacidad'],
-      directorGrupo: json['director_grupo'] != null
+      // director_grupo puede llegar con populate (Map) o solo como id (String)
+      directorGrupo: json['director_grupo'] is Map<String, dynamic>
           ? DirectorGrupo.fromJson(json['director_grupo'])
-          : null,
+          : json['director_grupo'] is String
+              ? DirectorGrupo.fromJson({'_id': json['director_grupo']})
+              : null,
       estudiantes: json['estudiantes'] != null
           ? (json['estudiantes'] as List)
               .map((e) => EstudianteCurso.fromJson(e))

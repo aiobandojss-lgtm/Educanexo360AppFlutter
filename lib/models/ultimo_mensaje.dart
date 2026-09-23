@@ -1,4 +1,4 @@
-﻿// lib/models/ultimo_mensaje.dart
+// lib/models/ultimo_mensaje.dart
 import '../utils/logger.dart';
 
 /// Modelo para los últimos mensajes del dashboard
@@ -54,7 +54,11 @@ class UltimoMensaje {
 
     return UltimoMensaje(
       id: json['id'] ?? json['_id'] ?? '',
-      remitente: RemitenteInfo.fromJson(json['remitente'] ?? {}),
+      // remitente puede llegar sin populate (String) o null
+      remitente: RemitenteInfo.fromJson(
+          json['remitente'] is Map<String, dynamic>
+              ? json['remitente']
+              : <String, dynamic>{}),
       asunto: json['asunto'] ?? 'Sin asunto',
       preview: previewLimpio,
       fechaEnvio: fechaEnvio,
