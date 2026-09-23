@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/tarea.dart';
+import '../../models/usuario.dart';
 import '../../providers/tarea_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/tarea_service.dart';
@@ -462,7 +463,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
 
   Widget _buildMiEntrega() {
     final authProvider = context.watch<AuthProvider>();
-    final esAcudiente = authProvider.currentUser?.tipo == 'ACUDIENTE';
+    final esAcudiente = authProvider.currentUser?.tipo == UserRole.acudiente;
 
     return Container(
       padding: const EdgeInsets.all(20),
