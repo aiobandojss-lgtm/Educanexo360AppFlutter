@@ -17,6 +17,10 @@ class AuthProvider extends ChangeNotifier {
   Usuario? _currentUser;
   String? _errorMessage;
 
+  /// Callback para limpiar el estado de los demás providers al cerrar sesión
+  /// o al expirar la sesión. Se asigna en main.dart.
+  VoidCallback? onSessionCleared;
+
   // Getters
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
@@ -96,22 +100,16 @@ class AuthProvider extends ChangeNotifier {
     }
   }
 
-  /// Logout — cierra sesión localmente de inmediato para respuesta instantánea
+  /// Logout — limpia almacenamiento y estado local antes de notificar a la UI.
+  /// Las llamadas de red del logout corren en segundo plano (AuthService).
   Future<void> logout() async {
     dlog('🔐 AuthProvider: Cerrando sesión...');
-    _isAuthenticated = false;
-    _currentUser = null;
-    _errorMessage = null;
-    _isLoading = false;
-    notifyListeners(); // GoRouter redirige a /login en este instante
-
-    // Avisar al servidor en background (no bloquea la UI)
     try {
       await _authService.logout();
-      dlog('✅ AuthProvider: Sesión cerrada en servidor');
     } catch (e) {
-      dlog('⚠️ AuthProvider: Error al cerrar sesión en servidor - $e');
+      dlog('⚠️ AuthProvider: Error limpiando la sesión local - $e');
     }
+    _resetSessionState(); // GoRouter redirige a /login
   }
 
   /// Actualizar usuario (después de editar perfil)
@@ -179,12 +177,24 @@ class AuthProvider extends ChangeNotifier {
 
   /// Maneja la expiración de sesión invocada por ApiService.
   /// Limpia el estado y notifica al GoRouter para redirigir al login.
-  void _handleSessionExpired() {
+  Future<void> _handleSessionExpired() async {
+    try {
+      await _authService.logout(silent: true);
+    } catch (e) {
+      dlog('⚠️ AuthProvider: Error limpiando la sesión expirada - $e');
+    }
+    _resetSessionState();
+    dlog('🚪 AuthProvider: sesión expirada, redirigiendo a login');
+  }
+
+  /// Limpia el estado de autenticación y el de todos los providers
+  void _resetSessionState() {
     _isAuthenticated = false;
     _currentUser = null;
     _errorMessage = null;
+    _isLoading = false;
+    onSessionCleared?.call();
     notifyListeners();
-    dlog('🚪 AuthProvider: sesión expirada, redirigiendo a login');
   }
 
   void _setLoading(bool value) {

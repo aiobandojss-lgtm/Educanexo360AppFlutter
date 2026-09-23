@@ -381,6 +381,7 @@ class UsuarioProvider with ChangeNotifier {
   void clearState() {
     dlog('🧹 Limpiando estado del provider');
     _usuarios = [];
+    _todosLosUsuarios = [];
     _currentFilter = null;
     _searchQuery = '';
     _isLoading = false;

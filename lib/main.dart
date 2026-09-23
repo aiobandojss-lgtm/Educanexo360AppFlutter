@@ -71,11 +71,31 @@ class _MyAppState extends State<MyApp> {
   late final AuthProvider _authProvider;
   late final GoRouter _router;
 
+  // Providers creados aquí para poder limpiar su estado al cerrar sesión
+  final _messageProvider = MessageProvider();
+  final _anuncioProvider = AnuncioProvider();
+  final _calendarioProvider = CalendarioProvider();
+  final _usuarioProvider = UsuarioProvider();
+  final _cursoProvider = CursoProvider();
+  final _asistenciaProvider = AsistenciaProvider();
+  final _tareaProvider = TareaProvider();
+
   @override
   void initState() {
     super.initState();
     _authProvider = AuthProvider();
     _router = AppRoutes.createRouter(_authProvider);
+
+    // Al cerrar o expirar la sesión no deben quedar datos del usuario anterior
+    _authProvider.onSessionCleared = () {
+      _messageProvider.clearState();
+      _anuncioProvider.clearState();
+      _calendarioProvider.clearState();
+      _usuarioProvider.clearState();
+      _cursoProvider.clearState();
+      _asistenciaProvider.clearState();
+      _tareaProvider.clearState();
+    };
 
     // Registrar callback de navegación para notificaciones push (se asigna una vez)
     // Primero va a home para que el bottom nav quede como base del stack,
@@ -91,6 +111,13 @@ class _MyAppState extends State<MyApp> {
   @override
   void dispose() {
     _router.dispose();
+    _messageProvider.dispose();
+    _anuncioProvider.dispose();
+    _calendarioProvider.dispose();
+    _usuarioProvider.dispose();
+    _cursoProvider.dispose();
+    _asistenciaProvider.dispose();
+    _tareaProvider.dispose();
     super.dispose();
   }
 
@@ -99,13 +126,13 @@ class _MyAppState extends State<MyApp> {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _authProvider),
-        ChangeNotifierProvider(create: (_) => MessageProvider()),
-        ChangeNotifierProvider(create: (_) => AnuncioProvider()),
-        ChangeNotifierProvider(create: (_) => CalendarioProvider()),
-        ChangeNotifierProvider(create: (_) => UsuarioProvider()),
-        ChangeNotifierProvider(create: (_) => CursoProvider()),
-        ChangeNotifierProvider(create: (_) => AsistenciaProvider()),
-        ChangeNotifierProvider(create: (_) => TareaProvider()),
+        ChangeNotifierProvider.value(value: _messageProvider),
+        ChangeNotifierProvider.value(value: _anuncioProvider),
+        ChangeNotifierProvider.value(value: _calendarioProvider),
+        ChangeNotifierProvider.value(value: _usuarioProvider),
+        ChangeNotifierProvider.value(value: _cursoProvider),
+        ChangeNotifierProvider.value(value: _asistenciaProvider),
+        ChangeNotifierProvider.value(value: _tareaProvider),
       ],
       child: MaterialApp.router(
         title: 'EducaNexo360',

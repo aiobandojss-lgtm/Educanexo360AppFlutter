@@ -1,4 +1,5 @@
 ﻿// lib/services/auth_service.dart
+import 'dart:async';
 import '../utils/logger.dart';
 import '../models/usuario.dart';
 import '../config/app_config.dart';
@@ -6,6 +7,7 @@ import 'api_service.dart';
 import 'storage_service.dart';
 import 'permission_service.dart';
 import 'fcm_service.dart';
+import 'perfil_rol_service.dart';
 
 class AuthService {
   // Singleton
@@ -27,8 +29,8 @@ class AuthService {
       dlog('\n🔐 === INICIANDO LOGIN ===');
       dlog('📧 Email: $email');
 
-      // Limpiar cualquier sesión anterior
-      await logout(silent: true);
+      // Limpiar cualquier sesión anterior (solo local, sin red)
+      await clearLocalSession();
 
       // Hacer petición de login
       final response = await apiService.post(
@@ -108,35 +110,40 @@ class AuthService {
   // LOGOUT
   // ==========================================
 
-  /// Cerrar sesión
+  /// Limpia la sesión local: storage, usuario actual, permisos y cachés.
+  /// No hace llamadas de red.
+  Future<void> clearLocalSession() async {
+    await StorageService.clearAll();
+    _currentUser = null;
+    PermissionService.clearCurrentUser();
+    PerfilRolService.limpiarCache();
+  }
+
+  /// Cerrar sesión: primero se limpia todo lo local y después se avisa al
+  /// servidor en segundo plano. Así las llamadas de red no bloquean la UI
+  /// ni pueden borrar los datos de un login que ocurra justo después.
   Future<void> logout({bool silent = false}) async {
     try {
       if (!silent) dlog('\n🚪 === CERRANDO SESIÓN ===');
 
-      // Intentar llamar al endpoint de logout (opcional)
-      try {
-        await apiService.post(AppConfig.authLogout);
-      } catch (e) {
-        // Ignorar errores del backend en logout
-        if (!silent) dlog('⚠️ Error en logout del backend (ignorado): $e');
-      }
+      await clearLocalSession();
 
-      // Limpiar token FCM del backend antes de cerrar sesión
-      await FcmService.instance.clearTokenFromBackend();
-
-      // Limpiar storage local
-      await StorageService.clearAll();
-
-      // Limpiar usuario actual
-      _currentUser = null;
-
-      // Limpiar PermissionService
-      PermissionService.clearCurrentUser();
+      unawaited(_notifyServerLogout(silent: silent));
 
       if (!silent) dlog('✅ Sesión cerrada correctamente\n');
     } catch (e) {
       if (!silent) dlog('❌ Error cerrando sesión: $e\n');
       rethrow;
+    }
+  }
+
+  /// Llamadas de red del logout (no bloqueantes, errores ignorados)
+  Future<void> _notifyServerLogout({bool silent = false}) async {
+    try {
+      await apiService.post(AppConfig.authLogout);
+    } catch (e) {
+      // Ignorar errores del backend en logout
+      if (!silent) dlog('⚠️ Error en logout del backend (ignorado): $e');
     }
   }
 

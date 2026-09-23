@@ -402,6 +402,12 @@ class CalendarioProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Limpiar estado al cerrar sesión o cambiar de cuenta
+  void clearState() {
+    _isLoading = false;
+    limpiarEstado();
+  }
+
   /// Debug: Imprimir estado actual
   void debugState() {
     dlog('\n📅 ===== CALENDARIO PROVIDER DEBUG =====');

@@ -432,6 +432,28 @@ class AsistenciaProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Limpiar todo el estado al cerrar sesión o cambiar de cuenta
+  void clearState() {
+    _resumenes = [];
+    _registroActual = null;
+    _cursos = [];
+    _estudiantes = [];
+    _asignaturas = [];
+    _alertas = [];
+    _estadisticasEstudiante = EstadisticasEstudiante.vacia();
+    _historialEstudiante = null;
+    _isLoadingMiAsistencia = false;
+    _isLoading = false;
+    _isLoadingCursos = false;
+    _isLoadingEstudiantes = false;
+    _isLoadingAsignaturas = false;
+    _error = null;
+    _cursoSeleccionado = null;
+    _fechaInicio = null;
+    _fechaFin = null;
+    notifyListeners();
+  }
+
   // ========================================
   // 🔧 ACTUALIZAR ESTADO LOCAL DE ESTUDIANTE
   // ========================================

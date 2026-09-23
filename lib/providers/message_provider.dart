@@ -608,6 +608,29 @@ class MessageProvider with ChangeNotifier {
   }
 
   // ========================================
+  // 🧹 LIMPIAR ESTADO (logout / cambio de cuenta)
+  // ========================================
+
+  void clearState() {
+    dlog('🧹 Limpiando estado del provider de mensajes');
+    for (final bandeja in Bandeja.values) {
+      _messagesByBandeja[bandeja] = [];
+      _metaByBandeja[bandeja] = {
+        'total': 0,
+        'pagina': 1,
+        'limite': 20,
+        'totalPaginas': 1
+      };
+      _loadingByBandeja[bandeja] = false;
+    }
+    _currentBandeja = Bandeja.recibidos;
+    _searchQuery = '';
+    _availableRecipients = [];
+    _availableCourses = [];
+    notifyListeners();
+  }
+
+  // ========================================
   // 🧹 CLEANUP
   // ========================================
 

@@ -647,6 +647,13 @@ class TareaProvider with ChangeNotifier {
   List<Tarea> get tareasHijo => _tareasHijo;
   bool get isLoadingTareasHijo => _isLoadingTareasHijo;
 
+  /// Limpiar todo el estado (incluidas tareas del hijo) al cerrar sesión
+  void clearState() {
+    _tareasHijo = [];
+    _isLoadingTareasHijo = false;
+    limpiarEstado();
+  }
+
   /// Cargar tareas de un estudiante específico (para acudientes)
   Future<void> cargarTareasHijo({
     required String estudianteId,
