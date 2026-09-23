@@ -1,5 +1,6 @@
 // lib/services/fcm_service.dart
 import 'dart:io';
+import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/painting.dart';
@@ -33,6 +34,10 @@ class FcmService {
     playSound: true,
     enableVibration: true,
   );
+
+  // deleteToken() en curso de un logout; el siguiente registro lo espera para
+  // no invalidar el token recién obtenido por el nuevo usuario
+  Future<void>? _pendingUnregister;
 
   // Callback de navegación — se asigna desde main.dart
   void Function(String route)? _onNavigate;
@@ -122,6 +127,10 @@ class FcmService {
 
   Future<void> registerTokenToBackend() async {
     try {
+      // Esperar a que termine la desvinculación de un logout anterior
+      final pending = _pendingUnregister;
+      if (pending != null) await pending;
+
       final token = await getToken();
       if (token == null) return;
 
@@ -146,15 +155,42 @@ class FcmService {
     }
   }
 
-  Future<void> clearTokenFromBackend() async {
+  /// Desvincula este dispositivo al cerrar sesión.
+  /// Invalida el token FCM local (deleteToken): el backend ya no podrá enviar
+  /// push del usuario anterior a este dispositivo. El siguiente login obtiene y
+  /// registra un token nuevo. [accessToken] es el token de la sesión que se
+  /// cierra, capturado antes de limpiar el almacenamiento.
+  Future<void> unregisterDevice({String? accessToken}) {
+    // Se asigna de forma síncrona para que un login inmediato lo espere
+    return _pendingUnregister = _unregisterDevice(accessToken);
+  }
+
+  Future<void> _unregisterDevice(String? accessToken) async {
+    if (AppConfig.fcmUnregisterEnabled && accessToken != null) {
+      try {
+        final token = await getToken();
+        // Dio aparte, sin interceptores: un 401 aquí no debe disparar el
+        // refresh ni afectar la sesión de un usuario que inicie sesión después
+        await Dio(BaseOptions(
+          baseUrl: AppConfig.baseUrl,
+          connectTimeout: const Duration(seconds: 10),
+          receiveTimeout: const Duration(seconds: 10),
+          headers: {'Authorization': 'Bearer $accessToken'},
+        )).post(
+          AppConfig.notificacionesFcmUnregister,
+          data: {'fcmToken': token},
+        );
+        dlog('✅ [FCM] Token desvinculado en backend');
+      } catch (e) {
+        dlog('⚠️ [FCM] No se pudo desvincular el token en backend: $e');
+      }
+    }
+
     try {
-      await apiService.post(
-        AppConfig.notificacionesFcmToken,
-        data: {'fcmToken': null},
-      );
-      dlog('✅ [FCM] Token eliminado del backend');
+      await _fcm.deleteToken();
+      dlog('✅ [FCM] Token del dispositivo invalidado');
     } catch (e) {
-      dlog('⚠️ [FCM] No se pudo eliminar token del backend: $e');
+      dlog('⚠️ [FCM] No se pudo invalidar el token del dispositivo: $e');
     }
   }
 

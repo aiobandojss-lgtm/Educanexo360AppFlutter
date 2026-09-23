@@ -126,8 +126,14 @@ class AuthService {
     try {
       if (!silent) dlog('\n🚪 === CERRANDO SESIÓN ===');
 
+      // Capturar el token antes de borrarlo (desvinculación FCM, Fase 1)
+      final accessToken = await StorageService.getToken();
+
       await clearLocalSession();
 
+      // Invalidar el token push del dispositivo para que no lleguen
+      // notificaciones del usuario anterior
+      unawaited(FcmService.instance.unregisterDevice(accessToken: accessToken));
       unawaited(_notifyServerLogout(silent: silent));
 
       if (!silent) dlog('✅ Sesión cerrada correctamente\n');
