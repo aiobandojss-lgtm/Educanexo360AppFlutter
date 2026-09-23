@@ -77,10 +77,11 @@ class AuthService {
       PermissionService.setCurrentUser(user);
       dlog('✅ PermissionService actualizado');
 
-      // Inicializar FCM y registrar token en backend
+      // Inicializar FCM y registrar token en backend. El registro no bloquea
+      // el login: depende de Firebase y de la red (errores ya se ignoran)
       await FcmService.instance.initialize();
-      await FcmService.instance.registerTokenToBackend();
-      dlog('✅ FCM inicializado y token registrado');
+      unawaited(FcmService.instance.registerTokenToBackend());
+      dlog('✅ FCM inicializado, registro de token en segundo plano');
 
       dlog('🎉 Login exitoso\n');
 

@@ -49,6 +49,9 @@ class FcmService {
   // no invalidar el token recién obtenido por el nuevo usuario
   Future<void>? _pendingUnregister;
 
+  // Límite de espera para llamadas a Firebase (red débil)
+  static const Duration _firebaseTimeout = Duration(seconds: 10);
+
   // Callback de navegación — se asigna desde main.dart
   void Function(String route)? _onNavigate;
 
@@ -140,7 +143,7 @@ class FcmService {
 
   Future<String?> getToken() async {
     try {
-      return await _fcm.getToken();
+      return await _fcm.getToken().timeout(_firebaseTimeout);
     } catch (e) {
       dlog('❌ [FCM] Error obteniendo token: $e');
       return null;
@@ -151,7 +154,11 @@ class FcmService {
     try {
       // Esperar a que termine la desvinculación de un logout anterior
       final pending = _pendingUnregister;
-      if (pending != null) await pending;
+      if (pending != null) {
+        await pending.timeout(_firebaseTimeout, onTimeout: () {
+          dlog('⚠️ [FCM] deleteToken tardó demasiado, se continúa');
+        });
+      }
 
       // Sin sesión no se registra (un onTokenRefresh tras el logout
       // provocaría un 401 y el flujo de renovación de token)
@@ -216,7 +223,7 @@ class FcmService {
     }
 
     try {
-      await _fcm.deleteToken();
+      await _fcm.deleteToken().timeout(_firebaseTimeout);
       dlog('✅ [FCM] Token del dispositivo invalidado');
     } catch (e) {
       dlog('⚠️ [FCM] No se pudo invalidar el token del dispositivo: $e');
