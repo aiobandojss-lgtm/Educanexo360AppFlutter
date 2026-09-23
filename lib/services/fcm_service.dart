@@ -1,4 +1,5 @@
 // lib/services/fcm_service.dart
+import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -8,6 +9,7 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../config/app_config.dart';
 import '../utils/logger.dart';
 import 'api_service.dart';
+import 'storage_service.dart';
 
 // Handler que corre en un isolate separado (background/terminated)
 // DEBE ser una función de nivel superior (no puede ser un método de clase)
@@ -35,6 +37,14 @@ class FcmService {
     enableVibration: true,
   );
 
+  // Se inicializa una sola vez por ejecución de la app (login y restauración
+  // de sesión la llaman varias veces): evita listeners y notificaciones duplicados
+  bool _initialized = false;
+  Future<void>? _initializing;
+  StreamSubscription<RemoteMessage>? _onMessageSub;
+  StreamSubscription<RemoteMessage>? _onMessageOpenedAppSub;
+  StreamSubscription<String>? _onTokenRefreshSub;
+
   // deleteToken() en curso de un logout; el siguiente registro lo espera para
   // no invalidar el token recién obtenido por el nuevo usuario
   Future<void>? _pendingUnregister;
@@ -50,7 +60,17 @@ class FcmService {
   // INICIALIZACIÓN
   // ==========================================
 
-  Future<void> initialize() async {
+  Future<void> initialize() {
+    if (_initialized) {
+      dlog('🔔 [FCM] Ya inicializado, se omite');
+      return Future.value();
+    }
+    // Si ya hay una inicialización en curso, esperar esa misma
+    return _initializing ??=
+        _initialize().whenComplete(() => _initializing = null);
+  }
+
+  Future<void> _initialize() async {
     try {
       dlog('🔔 [FCM] Inicializando...');
 
@@ -103,8 +123,10 @@ class FcmService {
       dlog('🔔 [FCM] Token obtenido: ${token?.substring(0, 30)}...');
 
       // Escuchar renovaciones de token
-      _fcm.onTokenRefresh.listen(_onTokenRefresh);
+      await _onTokenRefreshSub?.cancel();
+      _onTokenRefreshSub = _fcm.onTokenRefresh.listen(_onTokenRefresh);
 
+      _initialized = true;
       dlog('✅ [FCM] Inicialización completa');
     } catch (e) {
       // FCM puede fallar si google-services.json no está → no romper la app
@@ -130,6 +152,13 @@ class FcmService {
       // Esperar a que termine la desvinculación de un logout anterior
       final pending = _pendingUnregister;
       if (pending != null) await pending;
+
+      // Sin sesión no se registra (un onTokenRefresh tras el logout
+      // provocaría un 401 y el flujo de renovación de token)
+      if (await StorageService.getToken() == null) {
+        dlog('⚠️ [FCM] Sin sesión activa, no se registra el token');
+        return;
+      }
 
       final token = await getToken();
       if (token == null) return;
@@ -204,11 +233,17 @@ class FcmService {
   // ==========================================
 
   void _setupMessageHandlers() {
+    // Cancelar suscripciones previas para no duplicar handlers
+    _onMessageSub?.cancel();
+    _onMessageOpenedAppSub?.cancel();
+
     // App en foreground → mostrar notificación local manualmente (FCM no lo hace)
-    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    _onMessageSub =
+        FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
     // App en background → tap abre la app (el mensaje ya fue mostrado por FCM)
-    FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
+    _onMessageOpenedAppSub =
+        FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
 
     // App terminada → recuperar el mensaje que abrió la app
     _fcm.getInitialMessage().then((message) {
