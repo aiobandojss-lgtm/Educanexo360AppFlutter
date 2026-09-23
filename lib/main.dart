@@ -1,4 +1,6 @@
 ﻿// lib/main.dart
+import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'utils/logger.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
@@ -44,10 +46,11 @@ void main() async {
   // Mostrar configuración
   AppConfig.printConfig();
 
-  dlog('\n🧪 ===== VERIFICANDO SERVICIOS =====\n');
-
-  // Test rápido de conectividad
-  await _testBackendConnection();
+  // Test de conectividad solo en debug y sin bloquear el arranque
+  // (antes esperaba hasta 15 s sin red antes de mostrar la app)
+  if (kDebugMode) {
+    unawaited(_testBackendConnection());
+  }
 
   dlog('\n🚀 Iniciando aplicación...\n');
 
