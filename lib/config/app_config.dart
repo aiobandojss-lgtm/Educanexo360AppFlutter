@@ -1,4 +1,5 @@
 ﻿// lib/config/app_config.dart
+import 'package:flutter/foundation.dart';
 import '../utils/logger.dart';
 
 class AppConfig {
@@ -13,7 +14,10 @@ class AppConfig {
   //   flutter build apk --dart-define=API_URL=https://TU_DOMINIO.com/api
   //   flutter build appbundle --dart-define=API_URL=https://TU_DOMINIO.com/api
   //
-  // Si no se pasa --dart-define, usa la URL de desarrollo por defecto.
+  // Si no se pasa --dart-define, usa la URL de desarrollo por defecto
+  // SOLO en debug/profile. En release la app se niega a arrancar
+  // (ver releaseConfigError) para no publicar nunca un APK apuntando a la IP
+  // de desarrollo.
 
   static const String _defaultDevUrl = 'http://192.168.1.7:3000/api';
 
@@ -26,7 +30,24 @@ class AppConfig {
   // URL base activa
   static String get baseUrl {
     if (_injectedUrl.isNotEmpty) return _injectedUrl;
+    // En release nunca se usa la URL de desarrollo
+    if (kReleaseMode) return '';
     return _defaultDevUrl;
+  }
+
+  /// En release: motivo por el que la build está mal configurada, o null si
+  /// está bien. main.dart muestra este error en pantalla en lugar de la app.
+  static String? get releaseConfigError {
+    if (!kReleaseMode) return null;
+    if (_injectedUrl.isEmpty) {
+      return 'Build de release sin API_URL.\n'
+          'Compila con --dart-define=API_URL=https://...';
+    }
+    if (!_injectedUrl.startsWith('https://')) {
+      return 'API_URL debe usar https en release.\n'
+          'Valor recibido: $_injectedUrl';
+    }
+    return null;
   }
 
   static bool get isProduction =>

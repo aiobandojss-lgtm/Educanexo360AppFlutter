@@ -24,6 +24,14 @@ import 'services/fcm_service.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Build de release mal configurada (sin API_URL https): fallar de forma
+  // visible en vez de conectarse en silencio a la URL de desarrollo
+  final configError = AppConfig.releaseConfigError;
+  if (configError != null) {
+    runApp(_ConfigErrorApp(message: configError));
+    return;
+  }
+
   // Inicializar Firebase (requerido antes de cualquier uso de firebase_messaging)
   await Firebase.initializeApp();
 
@@ -57,6 +65,35 @@ Future<void> _testBackendConnection() async {
     dlog('⚠️  URL: ${AppConfig.baseUrl}');
   } else {
     dlog('✅ Backend conectado correctamente\n');
+  }
+}
+
+/// Pantalla de error para una build de release mal configurada
+class _ConfigErrorApp extends StatelessWidget {
+  const _ConfigErrorApp({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: Scaffold(
+        backgroundColor: const Color(0xFFEF4444),
+        body: SafeArea(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Text(
+                'Error de configuración\n\n$message',
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 16),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
