@@ -2,13 +2,30 @@
 import '../utils/logger.dart';
 import 'dart:async';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import '../config/app_config.dart';
 import 'storage_service.dart';
 
 class ApiService {
   late final Dio _dio;
-  bool _isRefreshing = false;
-  final List<Function> _refreshSubscribers = [];
+
+  // Dio sin interceptores, exclusivo para /auth/refresh-token.
+  // Evita que un 401 del refresh vuelva a entrar al manejo de 401 (deadlock).
+  late final Dio _refreshDio;
+
+  // Refresh en curso compartido: todos los 401 simultáneos esperan el mismo
+  // Future, que siempre se completa (token, null o error).
+  Future<String?>? _refreshFuture;
+
+  // Rutas de autenticación que nunca disparan un refresh
+  static const List<String> _noRefreshPaths = [
+    '/auth/login',
+    '/auth/refresh-token',
+    '/auth/logout',
+  ];
+
+  // Marca en requestOptions.extra para reintentar una sola vez
+  static const String _retriedKey = '_retriedAfterRefresh';
 
   /// Callback registrado por AuthProvider para manejar sesión expirada.
   /// Se invoca cuando el refreshToken falla y no hay forma de recuperar la sesión.
@@ -29,7 +46,24 @@ class ApiService {
       },
     ));
 
+    _refreshDio = Dio(BaseOptions(
+      baseUrl: AppConfig.baseUrl,
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+      },
+    ));
+
     _setupInterceptors();
+  }
+
+  /// Solo para pruebas: reemplaza el adaptador HTTP de ambas instancias Dio.
+  @visibleForTesting
+  set httpClientAdapter(HttpClientAdapter adapter) {
+    _dio.httpClientAdapter = adapter;
+    _refreshDio.httpClientAdapter = adapter;
   }
 
   // ==========================================
@@ -61,22 +95,40 @@ class ApiService {
           dlog(
               '❌ Error ${error.response?.statusCode} ${error.requestOptions.path}');
 
-          // Si es 401 (no autorizado) y no es la ruta de login
+          final options = error.requestOptions;
+          final isAuthPath =
+              _noRefreshPaths.any((path) => options.path.contains(path));
+          final alreadyRetried = options.extra[_retriedKey] == true;
+
+          // 401 en una ruta normal que aún no se reintentó → intentar refresh
           if (error.response?.statusCode == 401 &&
-              !error.requestOptions.path.contains('/auth/login')) {
-            // Intentar refresh token
-            final newToken = await _handleTokenRefresh();
+              !isAuthPath &&
+              !alreadyRetried) {
+            final String? newToken;
+            try {
+              newToken = await _refreshAccessToken();
+            } on DioException catch (refreshError) {
+              // Fallo de red/timeout/5xx en el refresh: la sesión se conserva
+              // y se propaga el error de red a la petición original
+              return handler.next(DioException(
+                requestOptions: options,
+                response: refreshError.response,
+                type: refreshError.type,
+                error: refreshError.error,
+                message: refreshError.message,
+              ));
+            }
 
             if (newToken != null) {
-              // Reintentar request original con nuevo token
-              error.requestOptions.headers['Authorization'] =
-                  'Bearer $newToken';
+              // Reintentar la petición original una sola vez con el nuevo token
+              options.headers['Authorization'] = 'Bearer $newToken';
+              options.extra[_retriedKey] = true;
 
               try {
-                final response = await _dio.fetch(error.requestOptions);
+                final response = await _dio.fetch(options);
                 return handler.resolve(response);
-              } catch (e) {
-                return handler.next(error);
+              } on DioException catch (retryError) {
+                return handler.next(retryError);
               }
             }
           }
@@ -91,75 +143,78 @@ class ApiService {
   // MANEJO DE REFRESH TOKEN
   // ==========================================
 
-  Future<String?> _handleTokenRefresh() async {
-    if (_isRefreshing) {
-      // Si ya se está refrescando, esperar
-      return await _waitForRefresh();
+  /// Devuelve el nuevo access token, o null si la sesión expiró
+  /// (refresh rechazado con 401/403 o success:false).
+  /// Lanza DioException si el refresh falla por red, timeout o error del
+  /// servidor: en ese caso los tokens se conservan.
+  Future<String?> _refreshAccessToken() {
+    return _refreshFuture ??=
+        _doRefresh().whenComplete(() => _refreshFuture = null);
+  }
+
+  Future<String?> _doRefresh() async {
+    dlog('🔄 Refrescando token...');
+
+    final refreshToken = await StorageService.getRefreshToken();
+
+    if (refreshToken == null) {
+      dlog('❌ No hay refresh token');
+      await _clearAuthAndNotify();
+      return null;
     }
 
-    _isRefreshing = true;
-
+    final Response response;
     try {
-      dlog('🔄 Refrescando token...');
-
-      final refreshToken = await StorageService.getRefreshToken();
-
-      if (refreshToken == null) {
-        dlog('❌ No hay refresh token');
-        await _clearAuthAndNotify();
-        return null;
-      }
-
-      // Llamar al endpoint de refresh token
-      final response = await _dio.post(
+      response = await _refreshDio.post(
         AppConfig.authRefreshToken,
         data: {'refreshToken': refreshToken},
       );
-
-      if (response.statusCode == 200 && response.data['success']) {
-        // El backend responde data: { access: {token}, refresh: {token} }
-        final tokens = response.data['data'];
-        final newToken = tokens['access']['token'] as String;
-        await StorageService.saveToken(newToken);
-
-        // El backend rota el refresh token en cada renovación
-        final newRefreshToken = tokens['refresh']?['token'];
-        if (newRefreshToken is String && newRefreshToken.isNotEmpty) {
-          await StorageService.saveRefreshToken(newRefreshToken);
-        }
-
-        dlog('✅ Token refrescado exitosamente');
-
-        // Notificar a subscribers que el token está listo
-        _notifyRefreshSubscribers(newToken);
-
-        return newToken;
-      } else {
+    } on DioException catch (e) {
+      final statusCode = e.response?.statusCode;
+      if (statusCode == 401 || statusCode == 403) {
+        dlog('❌ Refresh token rechazado ($statusCode) - sesión expirada');
         await _clearAuthAndNotify();
         return null;
       }
-    } catch (e) {
-      dlog('❌ Error refrescando token: $e');
+      // Red, timeout o error del servidor: no cerrar sesión
+      dlog('⚠️ Refresh falló sin rechazo del servidor (${e.type}) - '
+          'se conserva la sesión');
+      rethrow;
+    }
+
+    final body = response.data;
+    if (body is! Map || body['success'] != true) {
+      dlog('❌ Refresh respondió success:false - sesión expirada');
       await _clearAuthAndNotify();
       return null;
-    } finally {
-      _isRefreshing = false;
-      _refreshSubscribers.clear();
     }
-  }
 
-  Future<String?> _waitForRefresh() async {
-    final completer = Completer<String?>();
-    _refreshSubscribers.add((String? token) {
-      completer.complete(token);
-    });
-    return completer.future;
-  }
-
-  void _notifyRefreshSubscribers(String token) {
-    for (var callback in _refreshSubscribers) {
-      callback(token);
+    final String newToken;
+    final dynamic newRefreshToken;
+    try {
+      // El backend responde data: { access: {token}, refresh: {token} }
+      final tokens = body['data'];
+      newToken = tokens['access']['token'] as String;
+      newRefreshToken = tokens['refresh']?['token'];
+    } catch (e) {
+      // Respuesta inesperada del servidor: tratar como error de servidor
+      throw DioException(
+        requestOptions: response.requestOptions,
+        response: response,
+        type: DioExceptionType.badResponse,
+        message: 'Respuesta de refresh inesperada: $e',
+      );
     }
+
+    await StorageService.saveToken(newToken);
+
+    // El backend rota el refresh token en cada renovación
+    if (newRefreshToken is String && newRefreshToken.isNotEmpty) {
+      await StorageService.saveRefreshToken(newRefreshToken);
+    }
+
+    dlog('✅ Token refrescado exitosamente');
+    return newToken;
   }
 
   Future<void> _clearAuthAndNotify() async {
