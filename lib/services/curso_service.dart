@@ -53,23 +53,9 @@ class CursoService {
       if (response['success'] == true) {
         final List<dynamic> data = response['data'] ?? [];
 
-        // Procesar cursos y obtener conteos reales
-        final cursos = await Future.wait(data.map((json) async {
-          final curso = Curso.fromJson(json);
-
-          // Obtener conteo real de asignaturas si no viene
-          if (curso.asignaturasCount == null) {
-            try {
-              final count = await _getAsignaturasCount(curso.id);
-              return curso.copyWith(asignaturasCount: count);
-            } catch (e) {
-              dlog('⚠️ Error obteniendo conteo asignaturas: $e');
-              return curso;
-            }
-          }
-
-          return curso;
-        }).toList());
+        // Sin N+1: el conteo de asignaturas que no venga en la respuesta lo
+        // carga CursoProvider en segundo plano con concurrencia limitada
+        final cursos = data.map((json) => Curso.fromJson(json)).toList();
 
         dlog('✅ ${cursos.length} cursos obtenidos');
         return cursos;
@@ -183,8 +169,8 @@ class CursoService {
     }
   }
 
-  /// 📊 Obtener solo el conteo de asignaturas (optimizado)
-  Future<int> _getAsignaturasCount(String cursoId) async {
+  /// 📊 Obtener solo el conteo de asignaturas de un curso
+  Future<int> getAsignaturasCount(String cursoId) async {
     try {
       // ✅ INTENTAR MÉTODO 1: Endpoint específico del curso
       try {

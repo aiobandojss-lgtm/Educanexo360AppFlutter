@@ -334,6 +334,12 @@ class Curso {
     return 0;
   }
 
+  /// Cantidad de elementos si la lista llega sin populate (ids como String)
+  static int? _idsCount(dynamic value) {
+    if (value is List && value.any((e) => e is! Map)) return value.length;
+    return null;
+  }
+
   factory Curso.fromJson(Map<String, dynamic> json) {
     return Curso(
       id: json['_id'] ?? json['id'] ?? '',
@@ -353,18 +359,22 @@ class Curso {
           : json['director_grupo'] is String
               ? DirectorGrupo.fromJson({'_id': json['director_grupo']})
               : null,
-      estudiantes: json['estudiantes'] != null
+      // estudiantes/asignaturas pueden llegar con populate (Map) o solo como
+      // ids (String); con ids se usa la cantidad como conteo
+      estudiantes: json['estudiantes'] is List
           ? (json['estudiantes'] as List)
+              .whereType<Map<String, dynamic>>()
               .map((e) => EstudianteCurso.fromJson(e))
               .toList()
           : null,
-      asignaturas: json['asignaturas'] != null
+      asignaturas: json['asignaturas'] is List
           ? (json['asignaturas'] as List)
+              .whereType<Map<String, dynamic>>()
               .map((e) => AsignaturaCurso.fromJson(e))
               .toList()
           : null,
-      estudiantesCount: json['estudiantesCount'],
-      asignaturasCount: json['asignaturasCount'],
+      estudiantesCount: json['estudiantesCount'] ?? _idsCount(json['estudiantes']),
+      asignaturasCount: json['asignaturasCount'] ?? _idsCount(json['asignaturas']),
       escuelaId: json['escuelaId'] ?? '',
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'])

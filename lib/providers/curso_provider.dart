@@ -1,6 +1,7 @@
 ﻿// lib/providers/curso_provider.dart
 // 📚 PROVIDER DE CURSOS - Siguiendo patrón de usuario_provider.dart
 
+import 'dart:math';
 import '../utils/logger.dart';
 import 'package:flutter/material.dart';
 import '../models/curso.dart';
@@ -90,6 +91,9 @@ class CursoProvider with ChangeNotifier {
       dlog(
           '✅ Cursos cargados: ${_cursos.length} (total: ${_todosCursos.length})');
       notifyListeners();
+
+      // Conteos de asignaturas en segundo plano (no bloquean la lista)
+      _cargarConteosAsignaturas(cursos);
     } catch (e) {
       dlog('❌ Error cargando cursos: $e');
       _isLoading = false;
@@ -262,8 +266,52 @@ class CursoProvider with ChangeNotifier {
   // 🧹 LIMPIAR ESTADO
   // ========================================
 
+  // ========================================
+  // 📊 CONTEOS DE ASIGNATURAS (diferidos)
+  // ========================================
+
+  /// Máximo de peticiones simultáneas de conteo (nunca N a la vez)
+  static const int _maxConteosSimultaneos = 4;
+
+  // Se incrementa en cada carga y en clearState: invalida conteos en curso
+  int _conteosGeneration = 0;
+
+  Future<void> _cargarConteosAsignaturas(List<Curso> cursos) async {
+    final generation = ++_conteosGeneration;
+    final pendientes = cursos
+        .where((c) => c.asignaturasCount == null && c.asignaturas == null)
+        .map((c) => c.id)
+        .toList();
+    if (pendientes.isEmpty) return;
+
+    var siguiente = 0;
+    Future<void> worker() async {
+      while (siguiente < pendientes.length) {
+        final cursoId = pendientes[siguiente++];
+        final count = await _cursoService.getAsignaturasCount(cursoId);
+        if (generation != _conteosGeneration) return;
+        _actualizarConteoAsignaturas(cursoId, count);
+      }
+    }
+
+    await Future.wait(List.generate(
+      min(_maxConteosSimultaneos, pendientes.length),
+      (_) => worker(),
+    ));
+  }
+
+  void _actualizarConteoAsignaturas(String cursoId, int count) {
+    final index = _todosCursos.indexWhere((c) => c.id == cursoId);
+    if (index == -1) return;
+    _todosCursos[index] =
+        _todosCursos[index].copyWith(asignaturasCount: count);
+    _aplicarFiltros();
+    notifyListeners();
+  }
+
   void clearState() {
     dlog('🧹 Limpiando estado del provider');
+    _conteosGeneration++;
     _cursos = [];
     _todosCursos = [];
     _currentNivelFilter = null;

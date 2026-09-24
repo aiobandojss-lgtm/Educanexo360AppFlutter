@@ -529,7 +529,10 @@ class _CoursesScreenState extends State<CoursesScreen> {
                 Icon(Icons.menu_book, size: 14, color: Colors.grey[700]),
                 const SizedBox(width: 6),
                 Text(
-                  '${curso.totalAsignaturas} asignaturas',
+                  // "…" mientras el conteo se carga en segundo plano
+                  curso.asignaturasCount == null && curso.asignaturas == null
+                      ? '… asignaturas'
+                      : '${curso.totalAsignaturas} asignaturas',
                   style: TextStyle(fontSize: 13, color: Colors.grey[700]),
                 ),
               ],
