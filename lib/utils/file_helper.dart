@@ -11,6 +11,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:open_filex/open_filex.dart';
 import 'logger.dart';
 import '../services/api_service.dart';
@@ -20,6 +21,9 @@ class FileHelper {
 
   /// Subcarpeta de descargas de la app (se borra al cerrar sesión)
   static const String downloadsFolder = 'descargas';
+
+  // Marca de la limpieza única de descargas de versiones anteriores
+  static const String _legacyCleanupKey = '@educanexo360_legacy_downloads_cleaned';
 
   /// Sanea un nombre de archivo que llega del servidor antes de usarlo en
   /// una ruta: solo el nombre base, sin caracteres inválidos, sin puntos
@@ -39,6 +43,18 @@ class FileHelper {
     return name.isEmpty ? 'archivo' : name;
   }
 
+  /// Las versiones anteriores descargaban sueltas en la raíz del directorio
+  /// temporal. Se borran esos archivos (no subcarpetas de otros plugins) una
+  /// sola vez: la carpeta es compartida y no se limpia en cada sesión.
+  static Future<void> _clearLegacyDownloadsOnce(Directory tempDir) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool(_legacyCleanupKey) == true) return;
+    await for (final entity in tempDir.list()) {
+      if (entity is File) await entity.delete();
+    }
+    await prefs.setBool(_legacyCleanupKey, true);
+  }
+
   /// Carpeta de descargas dentro de [base] (se crea si no existe)
   static Future<Directory> downloadsDir(Directory base) async {
     final dir = Directory('${base.path}/$downloadsFolder');
@@ -53,11 +69,7 @@ class FileHelper {
     try {
       final tempDir = await getTemporaryDirectory();
       bases.add(tempDir);
-      // Descargas de versiones anteriores quedaban sueltas en la raíz del
-      // directorio temporal: se borran solo los archivos (no subcarpetas)
-      await for (final entity in tempDir.list()) {
-        if (entity is File) await entity.delete();
-      }
+      await _clearLegacyDownloadsOnce(tempDir);
     } catch (e) {
       dlog('⚠️ FileHelper: no se pudo limpiar el temporal: $e');
     }
