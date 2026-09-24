@@ -7,8 +7,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:dio/dio.dart' show CancelToken;
 import '../../models/message.dart';
 import '../../providers/message_provider.dart';
+import '../../services/message_service.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
 
@@ -980,6 +982,12 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
   String _searchQuery = '';
   Timer? _debounceTimer;
 
+  // Búsqueda en el servidor (colegios grandes: la lista inicial viene cortada)
+  final MessageService _messageService = MessageService();
+  List<User> _remoteResults = [];
+  bool _searching = false;
+  CancelToken? _searchCancelToken;
+
   @override
   void initState() {
     super.initState();
@@ -989,17 +997,39 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
   @override
   void dispose() {
     _debounceTimer?.cancel();
+    _searchCancelToken?.cancel();
     super.dispose();
   }
 
-  List<User> get _filteredRecipients {
-    if (_searchQuery.isEmpty) return widget.recipients;
-    final query = _searchQuery.toLowerCase();
-    return widget.recipients.where((user) {
-      return user.fullName.toLowerCase().contains(query) ||
-          user.email.toLowerCase().contains(query) ||
-          user.tipo.toLowerCase().contains(query);
-    }).toList();
+  List<User> get _filteredRecipients => MessageService.mergeRecipients(
+      widget.recipients, _remoteResults, _searchQuery);
+
+  Future<void> _runSearch(String query) async {
+    // Cancelar la búsqueda anterior: una respuesta lenta no pisa la más reciente
+    _searchCancelToken?.cancel();
+    setState(() {
+      _searchQuery = query;
+      _remoteResults = [];
+      _searching = query.isNotEmpty;
+    });
+    if (query.isEmpty) return;
+
+    final token = CancelToken();
+    _searchCancelToken = token;
+    try {
+      final results =
+          await _messageService.searchRecipients(query, cancelToken: token);
+      if (!mounted || token.isCancelled) return;
+      setState(() {
+        _remoteResults = results;
+        _searching = false;
+      });
+    } catch (e) {
+      // Sin red o error: se mantiene el filtro local sobre la lista inicial
+      if (!mounted || token.isCancelled) return;
+      dlog('⚠️ Búsqueda de destinatarios falló: $e');
+      setState(() => _searching = false);
+    }
   }
 
   @override
@@ -1059,11 +1089,17 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                 onChanged: (value) {
                   _debounceTimer?.cancel();
                   _debounceTimer = Timer(const Duration(milliseconds: 400), () {
-                    setState(() => _searchQuery = value);
+                    _runSearch(value.trim());
                   });
                 },
               ),
             ),
+
+            if (_searching)
+              const LinearProgressIndicator(
+                minHeight: 2,
+                color: Color(0xFF059669),
+              ),
 
             // CONTADOR DE SELECCIONADOS
             if (_selected.isNotEmpty)
@@ -1092,7 +1128,11 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
 
             // LISTA DE USUARIOS
             Expanded(
-              child: _filteredRecipients.isEmpty
+              child: _filteredRecipients.isEmpty && _searching
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: Color(0xFF059669)))
+                  : _filteredRecipients.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

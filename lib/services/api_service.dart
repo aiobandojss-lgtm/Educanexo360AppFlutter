@@ -255,11 +255,13 @@ class ApiService {
   Future<Map<String, dynamic>> get(
     String endpoint, {
     Map<String, dynamic>? queryParameters,
+    CancelToken? cancelToken,
   }) async {
     try {
       final response = await _dio.get(
         endpoint,
         queryParameters: queryParameters,
+        cancelToken: cancelToken,
       );
       return _handleResponse(response);
     } on DioException catch (e) {

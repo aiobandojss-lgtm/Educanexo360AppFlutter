@@ -638,6 +638,46 @@ class MessageService {
     }
   }
 
+  /// Busca destinatarios en el servidor con `q` (el backend limita la lista
+  /// inicial a 250-500 usuarios en colegios grandes). Lanza en caso de error;
+  /// [cancelToken] permite descartar búsquedas viejas.
+  Future<List<User>> searchRecipients(
+    String query, {
+    CancelToken? cancelToken,
+  }) async {
+    final response = await _apiService.get(
+      '/mensajes/destinatarios-disponibles',
+      queryParameters: {'q': query},
+      cancelToken: cancelToken,
+    );
+    final data = response['data'] as List<dynamic>? ?? [];
+    return data.map((json) => User.fromJson(json)).toList();
+  }
+
+  /// Combina los resultados del servidor con la lista inicial (sin duplicados)
+  /// y aplica el filtro local por nombre, email o rol. El filtro local cubre
+  /// la búsqueda por rol y los roles cuyo endpoint ignora `q`
+  /// (acudiente/estudiante).
+  static List<User> mergeRecipients(
+    List<User> initial,
+    List<User> remote,
+    String query,
+  ) {
+    if (query.isEmpty) return initial;
+
+    final byId = <String, User>{};
+    for (final user in [...remote, ...initial]) {
+      byId.putIfAbsent(user.id, () => user);
+    }
+
+    final q = query.toLowerCase();
+    return byId.values.where((user) {
+      return user.fullName.toLowerCase().contains(q) ||
+          user.email.toLowerCase().contains(q) ||
+          user.tipo.toLowerCase().contains(q);
+    }).toList();
+  }
+
   // ========================================
   // 🚩 REPORTAR MENSAJE
   // ========================================
