@@ -80,8 +80,23 @@ class CursoProvider with ChangeNotifier {
       // Obtener TODOS los cursos del backend
       final cursos = await _cursoService.getCursos();
 
+      // Conservar conteos ya cargados (salvo refresco explícito) para no
+      // volver a pedirlos en cada recarga silenciosa
+      final conteosPrevios = refresh
+          ? const <String, int>{}
+          : {
+              for (final c in _todosCursos)
+                if (c.asignaturasCount != null) c.id: c.asignaturasCount!,
+            };
+      final cursosConConteos = cursos
+          .map((c) =>
+              c.asignaturasCount == null && conteosPrevios.containsKey(c.id)
+                  ? c.copyWith(asignaturasCount: conteosPrevios[c.id])
+                  : c)
+          .toList();
+
       // Guardar lista completa Y lista filtrada
-      _todosCursos = cursos;
+      _todosCursos = cursosConConteos;
 
       // Aplicar filtros actuales
       _aplicarFiltros();
@@ -93,7 +108,7 @@ class CursoProvider with ChangeNotifier {
       notifyListeners();
 
       // Conteos de asignaturas en segundo plano (no bloquean la lista)
-      _cargarConteosAsignaturas(cursos);
+      _cargarConteosAsignaturas(cursosConConteos);
     } catch (e) {
       dlog('❌ Error cargando cursos: $e');
       _isLoading = false;

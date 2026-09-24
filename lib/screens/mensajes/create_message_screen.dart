@@ -142,7 +142,11 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     if (total <= 0 || !mounted) return;
     final progress = sent / total;
     final previous = _uploadProgress;
-    if (previous == null || progress - previous >= 0.01 || progress >= 1) {
+    // progress < previous: la subida se reinició (reintento tras 401)
+    if (previous == null ||
+        progress < previous ||
+        progress - previous >= 0.01 ||
+        progress >= 1) {
       setState(() => _uploadProgress = progress);
     }
   }
@@ -236,9 +240,6 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     if (_attachments.isNotEmpty && !_validateFileSize(_attachments)) {
       return;
     }
-
-    // Validar límites antes de subir (mensaje claro, sin esperar al servidor)
-    if (!_validateFileSize(_attachments)) return;
 
     try {
       setState(() {
@@ -1091,6 +1092,7 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final filteredRecipients = _filteredRecipients;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Container(
@@ -1185,11 +1187,11 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
 
             // LISTA DE USUARIOS
             Expanded(
-              child: _filteredRecipients.isEmpty && _searching
+              child: filteredRecipients.isEmpty && _searching
                   ? const Center(
                       child: CircularProgressIndicator(
                           color: Color(0xFF059669)))
-                  : _filteredRecipients.isEmpty
+                  : filteredRecipients.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -1205,9 +1207,9 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
                       ),
                     )
                   : ListView.builder(
-                      itemCount: _filteredRecipients.length,
+                      itemCount: filteredRecipients.length,
                       itemBuilder: (context, index) {
-                        final user = _filteredRecipients[index];
+                        final user = filteredRecipients[index];
                         final isSelected =
                             _selected.any((u) => u.id == user.id);
 

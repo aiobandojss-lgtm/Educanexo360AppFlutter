@@ -46,7 +46,11 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
     if (total <= 0 || !mounted) return;
     final progreso = sent / total;
     final anterior = _progreso;
-    if (anterior == null || progreso - anterior >= 0.01 || progreso >= 1) {
+    // progreso < anterior: la subida se reinició (reintento tras 401)
+    if (anterior == null ||
+        progreso < anterior ||
+        progreso - anterior >= 0.01 ||
+        progreso >= 1) {
       setState(() => _progreso = progreso);
     }
   }
