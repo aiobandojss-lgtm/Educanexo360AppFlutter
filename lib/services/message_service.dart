@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import 'package:intl/intl.dart';
 import '../models/message.dart';
 import 'api_service.dart';
+import '../utils/file_helper.dart';
 import 'package:path_provider/path_provider.dart';
 
 /// 📨 SERVICIO DE MENSAJERÍA
@@ -579,11 +580,12 @@ class MessageService {
         throw Exception('No se pudo obtener el directorio de descarga');
       }
 
-      if (!await directory.exists()) {
-        await directory.create(recursive: true);
-      }
+      // Subcarpeta propia (se borra al cerrar sesión) y nombre saneado: el
+      // nombre llega del servidor y no debe poder salir de la carpeta
+      directory = await FileHelper.downloadsDir(directory);
 
-      final filePath = '${directory.path}/$fileName';
+      final filePath =
+          '${directory.path}/${FileHelper.sanitizeFileName(fileName)}';
       dlog('💾 Ruta de descarga: $filePath');
 
       // 2️⃣ Descargar el archivo

@@ -8,6 +8,7 @@
 //   2. Lo abre con open_filex, que invoca la app correspondiente.
 //   3. Si no hay app instalada para ese tipo, muestra un aviso.
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:open_filex/open_filex.dart';
@@ -16,6 +17,66 @@ import '../services/api_service.dart';
 
 class FileHelper {
   static final ApiService _apiService = ApiService();
+
+  /// Subcarpeta de descargas de la app (se borra al cerrar sesión)
+  static const String downloadsFolder = 'descargas';
+
+  /// Sanea un nombre de archivo que llega del servidor antes de usarlo en
+  /// una ruta: solo el nombre base, sin caracteres inválidos, sin puntos
+  /// iniciales (evita '..' y ocultos) y con longitud limitada.
+  static String sanitizeFileName(String fileName) {
+    // Solo el nombre base: descarta cualquier ruta (/ o \)
+    var name = fileName.split(RegExp(r'[/\\]')).last;
+    name = name.replaceAll(RegExp(r'[<>:"|?*\x00-\x1f]'), '_').trim();
+    name = name.replaceFirst(RegExp(r'^[.\s]+'), '');
+
+    const maxLength = 120;
+    if (name.length > maxLength) {
+      final dot = name.lastIndexOf('.');
+      final ext = dot > 0 && name.length - dot <= 10 ? name.substring(dot) : '';
+      name = name.substring(0, maxLength - ext.length) + ext;
+    }
+    return name.isEmpty ? 'archivo' : name;
+  }
+
+  /// Carpeta de descargas dentro de [base] (se crea si no existe)
+  static Future<Directory> downloadsDir(Directory base) async {
+    final dir = Directory('${base.path}/$downloadsFolder');
+    if (!await dir.exists()) await dir.create(recursive: true);
+    return dir;
+  }
+
+  /// Borra los archivos descargados por la sesión (llamado al cerrar sesión).
+  /// Errores ignorados: no debe impedir el logout.
+  static Future<void> clearDownloads() async {
+    final bases = <Directory?>[];
+    try {
+      final tempDir = await getTemporaryDirectory();
+      bases.add(tempDir);
+      // Descargas de versiones anteriores quedaban sueltas en la raíz del
+      // directorio temporal: se borran solo los archivos (no subcarpetas)
+      await for (final entity in tempDir.list()) {
+        if (entity is File) await entity.delete();
+      }
+    } catch (e) {
+      dlog('⚠️ FileHelper: no se pudo limpiar el temporal: $e');
+    }
+    try {
+      if (Platform.isAndroid) bases.add(await getExternalStorageDirectory());
+      bases.add(await getApplicationDocumentsDirectory());
+    } catch (e) {
+      dlog('⚠️ FileHelper: no se pudieron obtener directorios: $e');
+    }
+    for (final base in bases) {
+      if (base == null) continue;
+      try {
+        final dir = Directory('${base.path}/$downloadsFolder');
+        if (await dir.exists()) await dir.delete(recursive: true);
+      } catch (e) {
+        dlog('⚠️ FileHelper: no se pudo borrar ${base.path}/$downloadsFolder: $e');
+      }
+    }
+  }
 
   /// Descarga [endpoint] (ruta relativa del API) y lo abre inmediatamente.
   ///
@@ -28,7 +89,7 @@ class FileHelper {
     String fileName,
   ) async {
     // Sanitizar el nombre para evitar problemas en el sistema de archivos
-    final safeFileName = fileName.replaceAll(RegExp(r'[<>:"/\\|?*\x00-\x1f]'), '_');
+    final safeFileName = sanitizeFileName(fileName);
 
     bool dialogOpen = false;
 
@@ -57,7 +118,7 @@ class FileHelper {
 
     try {
       // Descargar al directorio temporal (no requiere permisos de almacenamiento)
-      final tempDir = await getTemporaryDirectory();
+      final tempDir = await downloadsDir(await getTemporaryDirectory());
       final filePath = '${tempDir.path}/$safeFileName';
 
       dlog('⬇️ FileHelper: descargando $endpoint → $filePath');

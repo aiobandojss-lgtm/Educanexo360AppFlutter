@@ -9,6 +9,7 @@ import 'permission_service.dart';
 import 'fcm_service.dart';
 import 'perfil_rol_service.dart';
 import 'session_generation.dart';
+import '../utils/file_helper.dart';
 
 class AuthService {
   // Singleton
@@ -121,6 +122,8 @@ class AuthService {
     _currentUser = null;
     PermissionService.clearCurrentUser();
     PerfilRolService.limpiarCache();
+    // Documentos descargados del usuario anterior
+    await FileHelper.clearDownloads();
   }
 
   /// Cerrar sesión: primero se limpia todo lo local y después se avisa al
