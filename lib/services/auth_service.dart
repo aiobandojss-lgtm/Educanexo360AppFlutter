@@ -8,6 +8,7 @@ import 'storage_service.dart';
 import 'permission_service.dart';
 import 'fcm_service.dart';
 import 'perfil_rol_service.dart';
+import 'session_generation.dart';
 
 class AuthService {
   // Singleton
@@ -114,6 +115,8 @@ class AuthService {
   /// Limpia la sesión local: storage, usuario actual, permisos y cachés.
   /// No hace llamadas de red.
   Future<void> clearLocalSession() async {
+    // Invalida toda respuesta de red que siga en vuelo de la sesión anterior
+    SessionGeneration.next();
     await StorageService.clearAll();
     _currentUser = null;
     PermissionService.clearCurrentUser();

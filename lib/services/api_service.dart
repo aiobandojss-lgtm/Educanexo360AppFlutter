@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show visibleForTesting;
 import '../config/app_config.dart';
+import 'session_generation.dart';
 import 'storage_service.dart';
 
 class ApiService {
@@ -26,6 +27,30 @@ class ApiService {
 
   // Marca en requestOptions.extra para reintentar una sola vez
   static const String _retriedKey = '_retriedAfterRefresh';
+
+  // Generación de sesión con la que se inició cada petición (2B.4)
+  static const String _sessionGenKey = '_sessionGeneration';
+
+  /// La petición se inició en una sesión que ya se cerró. Sin marca (p. ej.
+  /// cancelada antes de pasar por onRequest) no se considera vieja.
+  static bool _isStaleRequest(RequestOptions options) {
+    final generation = options.extra[_sessionGenKey];
+    return generation != null && generation != SessionGeneration.current;
+  }
+
+  static DioException _staleError(RequestOptions options) => DioException(
+        requestOptions: options,
+        type: DioExceptionType.cancel,
+        error: const StaleSessionException(),
+      );
+
+  static bool _isStaleError(DioException e) =>
+      e.error is StaleSessionException;
+
+  /// Respuesta descartada: un Future que nunca se completa. Ni los datos ni
+  /// un error de la sesión anterior llegan al provider (clearState ya limpió
+  /// su estado y la pantalla que la pidió se cerró al ir al login).
+  static Future<T> _discarded<T>() => Completer<T>().future;
 
   // Subidas multipart: más tiempo que el global de 15 s (redes móviles lentas)
   static const Duration _multipartTimeout = Duration(seconds: 120);
@@ -86,6 +111,10 @@ class ApiService {
     _dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
+          // Marcar la sesión vigente (se conserva en el reintento tras refresh)
+          options.extra.putIfAbsent(
+              _sessionGenKey, () => SessionGeneration.current);
+
           // Obtener token del storage
           final token = await StorageService.getToken();
 
@@ -100,6 +129,10 @@ class ApiService {
         },
         onResponse: (response, handler) {
           dlog('✅ ${response.statusCode} ${response.requestOptions.path}');
+          if (_isStaleRequest(response.requestOptions)) {
+            dlog('🗑️ Respuesta de una sesión anterior descartada');
+            return handler.reject(_staleError(response.requestOptions));
+          }
           return handler.next(response);
         },
         onError: (error, handler) async {
@@ -107,6 +140,12 @@ class ApiService {
               '❌ Error ${error.response?.statusCode} ${error.requestOptions.path}');
 
           final options = error.requestOptions;
+
+          // Error de una sesión anterior: descartar, nunca intentar refresh
+          if (_isStaleRequest(options)) {
+            return handler.next(_staleError(options));
+          }
+
           final isAuthPath =
               _noRefreshPaths.any((path) => options.path.contains(path));
           final alreadyRetried = options.extra[_retriedKey] == true;
@@ -282,6 +321,7 @@ class ApiService {
       );
       return _handleResponse(response);
     } on DioException catch (e) {
+      if (_isStaleError(e)) return _discarded();
       throw _handleError(e);
     }
   }
@@ -314,6 +354,7 @@ class ApiService {
       );
       return _handleResponse(response);
     } on DioException catch (e) {
+      if (_isStaleError(e)) return _discarded();
       throw _handleError(e);
     }
   }
@@ -333,6 +374,7 @@ class ApiService {
       );
       return _handleResponse(response);
     } on DioException catch (e) {
+      if (_isStaleError(e)) return _discarded();
       throw _handleError(e);
     }
   }
@@ -351,6 +393,7 @@ class ApiService {
       );
       return _handleResponse(response);
     } on DioException catch (e) {
+      if (_isStaleError(e)) return _discarded();
       throw _handleError(e);
     }
   }
@@ -367,6 +410,7 @@ class ApiService {
       );
       return _handleResponse(response);
     } on DioException catch (e) {
+      if (_isStaleError(e)) return _discarded();
       throw _handleError(e);
     }
   }
@@ -392,6 +436,7 @@ class ApiService {
       );
       return _handleResponse(response);
     } on DioException catch (e) {
+      if (_isStaleError(e)) return _discarded();
       throw _handleError(e);
     }
   }
@@ -495,6 +540,10 @@ class ApiService {
 
       dlog('✅ Descarga completada');
       return response;
+    } on DioException catch (e) {
+      if (_isStaleError(e)) return _discarded();
+      dlog('❌ Error en descarga: $e');
+      rethrow;
     } catch (e) {
       dlog('❌ Error en descarga: $e');
       rethrow;
@@ -511,6 +560,14 @@ class ApiService {
 // ==========================================
 // EXCEPCIÓN PERSONALIZADA
 // ==========================================
+
+/// Marca de una respuesta que pertenece a una sesión ya cerrada (2B.4)
+class StaleSessionException implements Exception {
+  const StaleSessionException();
+
+  @override
+  String toString() => 'StaleSessionException';
+}
 
 class ApiException implements Exception {
   final String message;
