@@ -3,6 +3,7 @@
 import '../utils/logger.dart';
 import 'dart:async';
 import 'dart:io';
+import 'package:dio/dio.dart' show ProgressCallback;
 import 'package:flutter/material.dart';
 import '../models/message.dart';
 import '../services/message_service.dart';
@@ -283,6 +284,7 @@ class MessageProvider with ChangeNotifier {
     required String contenido,
     Prioridad prioridad = Prioridad.normal,
     List<File>? adjuntos,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       final message = await _messageService.createMessage(
@@ -292,6 +294,7 @@ class MessageProvider with ChangeNotifier {
         contenido: contenido,
         prioridad: prioridad,
         adjuntos: adjuntos,
+        onSendProgress: onSendProgress,
       );
 
       // Notificar evento
@@ -429,6 +432,7 @@ class MessageProvider with ChangeNotifier {
     required String contenido,
     String? asunto,
     List<File>? adjuntos,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       final message = await _messageService.replyMessage(
@@ -436,6 +440,7 @@ class MessageProvider with ChangeNotifier {
         contenido: contenido,
         asunto: asunto,
         adjuntos: adjuntos,
+        onSendProgress: onSendProgress,
       );
 
       // Notificar evento

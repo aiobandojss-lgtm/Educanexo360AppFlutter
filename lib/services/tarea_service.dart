@@ -446,6 +446,7 @@ class TareaService {
     required String tareaId,
     required List<File> archivos,
     String? comentarioEstudiante,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       dlog('\n📤 ========== ENTREGAR TAREA ==========');
@@ -477,6 +478,7 @@ class TareaService {
       final response = await _apiService.postFormData(
         AppConfig.tareaEntregar(tareaId),
         formData,
+        onSendProgress: onSendProgress,
       );
 
       if (response['success'] == true) {

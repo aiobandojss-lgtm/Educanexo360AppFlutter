@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../config/app_config.dart';
 import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/file_uploader_widget.dart';
@@ -1186,8 +1187,8 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
               _archivosNuevos = archivos;
             });
           },
-          maxArchivos: 5,
-          maxTamanoMB: 10,
+          maxArchivos: AppConfig.tareaMaxArchivos,
+          maxTamanoMB: AppConfig.tareaMaxArchivoMB,
           descripcion: 'PDF, Word, Excel, PowerPoint',
         ),
       ],

@@ -27,6 +27,17 @@ class ApiService {
   // Marca en requestOptions.extra para reintentar una sola vez
   static const String _retriedKey = '_retriedAfterRefresh';
 
+  // Subidas multipart: más tiempo que el global de 15 s (redes móviles lentas)
+  static const Duration _multipartTimeout = Duration(seconds: 120);
+
+  /// Opciones por petición para multipart; null para el resto (usa globales)
+  static Options? _multipartOptions(dynamic data) => data is FormData
+      ? Options(
+          sendTimeout: _multipartTimeout,
+          receiveTimeout: _multipartTimeout,
+        )
+      : null;
+
   /// Callback registrado por AuthProvider para manejar sesión expirada.
   /// Se invoca cuando el refreshToken falla y no hay forma de recuperar la sesión.
   static Function? onSessionExpired;
@@ -123,6 +134,12 @@ class ApiService {
               // Reintentar la petición original una sola vez con el nuevo token
               options.headers['Authorization'] = 'Bearer $newToken';
               options.extra[_retriedKey] = true;
+
+              // Un FormData ya enviado no se puede reutilizar: se clona
+              // (MultipartFile.fromFile vuelve a leer el archivo desde disco)
+              if (options.data is FormData) {
+                options.data = (options.data as FormData).clone();
+              }
 
               try {
                 final response = await _dio.fetch(options);
@@ -274,6 +291,7 @@ class ApiService {
     String endpoint, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       // ✅ LOGS DE DEBUG
@@ -291,6 +309,8 @@ class ApiService {
         endpoint,
         data: data,
         queryParameters: queryParameters,
+        options: _multipartOptions(data),
+        onSendProgress: onSendProgress,
       );
       return _handleResponse(response);
     } on DioException catch (e) {
@@ -309,6 +329,7 @@ class ApiService {
         endpoint,
         data: data,
         queryParameters: queryParameters,
+        options: _multipartOptions(data),
       );
       return _handleResponse(response);
     } on DioException catch (e) {
@@ -353,8 +374,9 @@ class ApiService {
   /// POST con FormData (para subir archivos)
   Future<Map<String, dynamic>> postFormData(
     String endpoint,
-    FormData formData,
-  ) async {
+    FormData formData, {
+    ProgressCallback? onSendProgress,
+  }) async {
     try {
       final response = await _dio.post(
         endpoint,
@@ -363,7 +385,10 @@ class ApiService {
           headers: {
             'Content-Type': 'multipart/form-data',
           },
+          sendTimeout: _multipartTimeout,
+          receiveTimeout: _multipartTimeout,
         ),
+        onSendProgress: onSendProgress,
       );
       return _handleResponse(response);
     } on DioException catch (e) {

@@ -127,6 +127,7 @@ class MessageService {
     required String contenido,
     Prioridad prioridad = Prioridad.normal,
     List<File>? adjuntos,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       dlog('📤 Creando mensaje...');
@@ -174,6 +175,7 @@ class MessageService {
       final response = await _apiService.post(
         '/mensajes',
         data: formData,
+        onSendProgress: onSendProgress,
       );
 
       dlog('✅ Mensaje creado exitosamente');
@@ -404,6 +406,7 @@ class MessageService {
     required String contenido,
     String? asunto,
     List<File>? adjuntos,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       dlog('💬 Respondiendo mensaje: $originalId');
@@ -426,6 +429,7 @@ class MessageService {
         final response = await _apiService.post(
           '/mensajes/$originalId/responder',
           data: formData,
+          onSendProgress: onSendProgress,
         );
 
         dlog('✅ Respuesta enviada con adjuntos');

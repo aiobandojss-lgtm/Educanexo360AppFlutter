@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart' show CancelToken;
+import '../../config/app_config.dart';
 import '../../models/message.dart';
 import '../../providers/message_provider.dart';
 import '../../services/message_service.dart';
@@ -40,6 +41,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
   Prioridad _prioridad = Prioridad.normal;
   final List<File> _attachments = [];
   bool _loading = false;
+  double? _uploadProgress; // 0..1 mientras se suben adjuntos
   bool _hasUnsavedChanges = false;
 
   @override
@@ -84,8 +86,21 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
 
   // Ã°Å¸â€Â§ VALIDACIÃƒâ€œN DE TAMAÃƒâ€˜O DE ARCHIVOS
   bool _validateFileSize(List<File> files) {
-    const maxFileSize = 4 * 1024 * 1024; // 4MB por archivo
-    const maxTotalSize = 10 * 1024 * 1024; // 10MB total
+    const maxFileSize = AppConfig.mensajeMaxArchivoMB * 1024 * 1024;
+    const maxTotalSize = AppConfig.mensajeMaxTotalMB * 1024 * 1024;
+
+    if (files.length > AppConfig.mensajeMaxArchivos) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Puedes adjuntar máximo ${AppConfig.mensajeMaxArchivos} archivos por mensaje.',
+          ),
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 4),
+        ),
+      );
+      return false;
+    }
 
     for (final file in files) {
       final size = file.lengthSync();
@@ -94,7 +109,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              'El archivo "$fileName" es muy grande (${(size / (1024 * 1024)).toStringAsFixed(1)}MB). Máximo permitido es 4MB por archivo.',
+              'El archivo "$fileName" es muy grande (${(size / (1024 * 1024)).toStringAsFixed(1)}MB). Máximo permitido es ${AppConfig.mensajeMaxArchivoMB}MB por archivo.',
             ),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
@@ -110,7 +125,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'El tamaño total de los archivos es muy grande (${(totalSize / (1024 * 1024)).toStringAsFixed(1)}MB). El máximo permitido es 10MB total.',
+            'El tamaño total de los archivos es muy grande (${(totalSize / (1024 * 1024)).toStringAsFixed(1)}MB). El máximo permitido es ${AppConfig.mensajeMaxTotalMB}MB total.',
           ),
           backgroundColor: Colors.red,
           duration: const Duration(seconds: 4),
@@ -120,6 +135,39 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     }
 
     return true;
+  }
+
+  // Progreso de subida de adjuntos (se actualiza por cada 1 %)
+  void _onSendProgress(int sent, int total) {
+    if (total <= 0 || !mounted) return;
+    final progress = sent / total;
+    final previous = _uploadProgress;
+    if (previous == null || progress - previous >= 0.01 || progress >= 1) {
+      setState(() => _uploadProgress = progress);
+    }
+  }
+
+  Widget _buildSendingIndicator() {
+    final progress = _uploadProgress;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircularProgressIndicator(
+            value: progress != null && progress < 1 ? progress : null,
+          ),
+          if (progress != null) ...[
+            const SizedBox(height: 16),
+            Text(
+              progress < 1
+                  ? 'Subiendo adjuntos… ${(progress * 100).round()}%'
+                  : 'Procesando…',
+              style: TextStyle(color: Colors.grey[700]),
+            ),
+          ],
+        ],
+      ),
+    );
   }
 
   // Ã°Å¸â€œÅ½ ADJUNTAR DOCUMENTO
@@ -189,8 +237,14 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       return;
     }
 
+    // Validar límites antes de subir (mensaje claro, sin esperar al servidor)
+    if (!_validateFileSize(_attachments)) return;
+
     try {
-      setState(() => _loading = true);
+      setState(() {
+        _loading = true;
+        _uploadProgress = null;
+      });
 
       final messageProvider = context.read<MessageProvider>();
 
@@ -217,6 +271,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
         contenido: _contenidoController.text.trim(),
         prioridad: _prioridad,
         adjuntos: _attachments,
+        onSendProgress: _attachments.isEmpty ? null : _onSendProgress,
       );
 
       if (mounted) {
@@ -414,7 +469,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
             ),
             Expanded(
               child: _loading
-                  ? const Center(child: CircularProgressIndicator())
+                  ? _buildSendingIndicator()
                   : SafeArea(
                 // Ã¢Å“â€¦ ESTRUCTURA ANTI-OVERFLOW (igual al login)
                 child: Center(
@@ -921,7 +976,9 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
               Padding(
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
-                  'Límites: 4MB por archivo, 10MB total',
+                  'Límites: ${AppConfig.mensajeMaxArchivos} archivos, '
+                  '${AppConfig.mensajeMaxArchivoMB}MB por archivo, '
+                  '${AppConfig.mensajeMaxTotalMB}MB total',
                   style: TextStyle(
                     fontSize: 11,
                     color: Colors.grey[600],

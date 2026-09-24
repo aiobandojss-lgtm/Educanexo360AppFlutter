@@ -68,6 +68,20 @@ class AppConfig {
       'https://educanexo360.creativebycode.com/terminos.html';
 
   // ==========================================
+  // LÍMITES DE SUBIDA (alineados con el backend)
+  // ==========================================
+  //
+  // mensaje.routes.ts: multer 5 MB por archivo, 5 archivos;
+  // mensaje.controller.ts: 15 MB en total.
+  // tarea.routes.ts: multer 10 MB por archivo, 5 archivos.
+
+  static const int mensajeMaxArchivos = 5;
+  static const int mensajeMaxArchivoMB = 5;
+  static const int mensajeMaxTotalMB = 15;
+  static const int tareaMaxArchivos = 5;
+  static const int tareaMaxArchivoMB = 10;
+
+  // ==========================================
   // ENDPOINTS DE AUTENTICACIÓN
   // ==========================================
 

@@ -2,6 +2,7 @@
 
 import '../utils/logger.dart';
 import 'dart:io';
+import 'package:dio/dio.dart' show ProgressCallback;
 import 'package:flutter/material.dart';
 import '../models/tarea.dart';
 import '../services/tarea_service.dart';
@@ -434,6 +435,7 @@ class TareaProvider with ChangeNotifier {
     required String tareaId,
     required List<File> archivos,
     String? comentarioEstudiante,
+    ProgressCallback? onSendProgress,
   }) async {
     try {
       dlog('ðŸ“¤ Entregando tarea: $tareaId');
@@ -442,6 +444,7 @@ class TareaProvider with ChangeNotifier {
         tareaId: tareaId,
         archivos: archivos,
         comentarioEstudiante: comentarioEstudiante,
+        onSendProgress: onSendProgress,
       );
 
       dlog('âœ… Tarea entregada');

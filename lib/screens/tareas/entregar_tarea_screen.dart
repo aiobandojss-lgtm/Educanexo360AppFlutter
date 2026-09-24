@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../config/app_config.dart';
 import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/file_uploader_widget.dart';
@@ -29,6 +30,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
   Tarea? _tarea;
   bool _loading = true;
   bool _enviando = false;
+  double? _progreso; // 0..1 mientras se suben los archivos
   bool _success = false;
   String? _error;
   bool _descripcionExpandida = false;
@@ -37,6 +39,23 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
   void initState() {
     super.initState();
     _loadTarea();
+  }
+
+  // Progreso de subida (se actualiza por cada 1 %)
+  void _onSendProgress(int sent, int total) {
+    if (total <= 0 || !mounted) return;
+    final progreso = sent / total;
+    final anterior = _progreso;
+    if (anterior == null || progreso - anterior >= 0.01 || progreso >= 1) {
+      setState(() => _progreso = progreso);
+    }
+  }
+
+  String get _textoEnviando {
+    final progreso = _progreso;
+    if (progreso == null) return 'Entregando...';
+    if (progreso < 1) return 'Subiendo ${(progreso * 100).round()}%';
+    return 'Procesando...';
   }
 
   @override
@@ -90,6 +109,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
     try {
       setState(() {
         _enviando = true;
+        _progreso = null;
         _error = null;
       });
 
@@ -101,6 +121,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
         comentarioEstudiante: _comentarioController.text.trim().isEmpty
             ? null
             : _comentarioController.text.trim(),
+        onSendProgress: _archivos.isEmpty ? null : _onSendProgress,
       );
 
       setState(() {
@@ -253,8 +274,8 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
                   child: FileUploader(
                     archivosSeleccionados: _archivos,
                     onArchivosChanged: _onFilesChanged,
-                    maxArchivos: 5,
-                    maxTamanoMB: 10,
+                    maxArchivos: AppConfig.tareaMaxArchivos,
+                    maxTamanoMB: AppConfig.tareaMaxArchivoMB,
                     titulo: 'Archivos de la entrega',
                     descripcion: 'Sube los archivos de tu tarea',
                   ),
@@ -364,17 +385,20 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
                           ? null
                           : _handleEntregar,
                       icon: _enviando
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
+                                value: _progreso != null && _progreso! < 1
+                                    ? _progreso
+                                    : null,
                               ),
                             )
                           : const Icon(Icons.send),
                       label:
-                          Text(_enviando ? 'Entregando...' : 'Entregar Tarea'),
+                          Text(_enviando ? _textoEnviando : 'Entregar Tarea'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF059669),
                         foregroundColor: Colors.white,
