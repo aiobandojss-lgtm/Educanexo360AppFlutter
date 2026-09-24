@@ -1,15 +1,34 @@
 // test/widget_test.dart
+// Prueba de humo de UI sin Firebase: MyApp requiere Firebase.initializeApp(),
+// que no está disponible en pruebas, así que se prueba un widget común.
+import 'package:educanexo360_app/config/theme.dart';
+import 'package:educanexo360_app/widgets/common/gradient_header.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:educanexo360_app/main.dart';
-
 void main() {
-  testWidgets('App smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('GradientHeader muestra título, subtítulo y botón atrás',
+      (WidgetTester tester) async {
+    var backPressed = false;
 
-    // Verify that app loads
-    expect(find.text('EDUCANEXO360'), findsOneWidget);
-    expect(find.text('Tu colegio en tus manos'), findsOneWidget);
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.lightTheme,
+        home: Scaffold(
+          body: GradientHeader(
+            title: 'Mensajes',
+            subtitle: 'Bandeja de entrada',
+            showBack: true,
+            onBack: () => backPressed = true,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('Mensajes'), findsOneWidget);
+    expect(find.text('Bandeja de entrada'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('Atrás'));
+    expect(backPressed, isTrue);
   });
 }
