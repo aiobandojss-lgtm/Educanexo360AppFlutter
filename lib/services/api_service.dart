@@ -158,6 +158,10 @@ class ApiService {
             try {
               newToken = await _refreshAccessToken();
             } on DioException catch (refreshError) {
+              // La sesión se cerró mientras se refrescaba: descartar
+              if (_isStaleRequest(options)) {
+                return handler.next(_staleError(options));
+              }
               // Fallo de red/timeout/5xx en el refresh: la sesión se conserva
               // y se propaga el error de red a la petición original
               return handler.next(DioException(
@@ -167,6 +171,11 @@ class ApiService {
                 error: refreshError.error,
                 message: refreshError.message,
               ));
+            }
+
+            // La sesión se cerró mientras se refrescaba: descartar
+            if (_isStaleRequest(options)) {
+              return handler.next(_staleError(options));
             }
 
             if (newToken != null) {

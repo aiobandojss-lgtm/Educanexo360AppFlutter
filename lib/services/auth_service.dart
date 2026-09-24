@@ -124,6 +124,9 @@ class AuthService {
     PerfilRolService.limpiarCache();
     // Documentos descargados del usuario anterior
     await FileHelper.clearDownloads();
+    // Segundo incremento: una petición iniciada durante esta limpieza (p. ej.
+    // un refresco de pantalla) tampoco debe entregar su respuesta
+    SessionGeneration.next();
   }
 
   /// Cerrar sesión: primero se limpia todo lo local y después se avisa al
