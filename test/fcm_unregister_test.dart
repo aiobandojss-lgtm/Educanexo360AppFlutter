@@ -43,12 +43,18 @@ class _SlowUnregisterAdapter implements HttpClientAdapter {
   void close({bool force = false}) {}
 }
 
-/// Logout del backend (/auth/logout): responde al instante
+/// Backend principal: responde al instante y cuenta los registros de token
 class _OkAdapter implements HttpClientAdapter {
+  final registeredTokens = <Object?>[];
+
   @override
   Future<ResponseBody> fetch(RequestOptions options,
-          Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async =>
-      _json({'success': true});
+      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+    if (options.path.contains('/notificaciones/register-token')) {
+      registeredTokens.add((options.data as Map)['fcmToken']);
+    }
+    return _json({'success': true});
+  }
 
   @override
   void close({bool force = false}) {}
@@ -90,5 +96,39 @@ void main() {
     expect(request.path, '/notificaciones/unregister-token');
     expect(request.headers['Authorization'], 'Bearer old-access');
     expect(request.data, {'fcmToken': 'fcm-token-123'});
+  });
+
+  test(
+      'login de otro usuario durante una desvinculación lenta: no registra el '
+      'token viejo; registra al terminar la desvinculación', () async {
+    FlutterSecureStorage.setMockInitialValues({});
+    SharedPreferences.setMockInitialValues({});
+    final backend = _OkAdapter();
+    ApiService().httpClientAdapter = backend;
+
+    final unregister = _SlowUnregisterAdapter(); // tarda 300 ms
+    final fcm = FcmService.instance;
+    fcm.unregisterHttpClientAdapter = unregister;
+    fcm.debugTokenOverride = () async => 'fcm-token-123';
+    fcm.pendingUnregisterTimeout = const Duration(milliseconds: 50);
+
+    // Logout de A (la desvinculación queda en curso)
+    unawaited(FcmService.instance.unregisterDevice(accessToken: 'a-access'));
+
+    // B inicia sesión mientras tanto
+    await StorageService.saveToken('b-access');
+    await FcmService.instance.registerTokenToBackend();
+
+    // La espera expiró: no se registró el token viejo
+    expect(unregister.completed.isCompleted, isFalse);
+    expect(backend.registeredTokens, isEmpty);
+
+    // Al terminar la desvinculación se registra (una sola vez)
+    await FcmService.instance.pendingUnregister!
+        .timeout(const Duration(seconds: 2));
+    for (var i = 0; i < 50 && backend.registeredTokens.isEmpty; i++) {
+      await Future<void>.delayed(const Duration(milliseconds: 10));
+    }
+    expect(backend.registeredTokens, ['fcm-token-123']);
   });
 }

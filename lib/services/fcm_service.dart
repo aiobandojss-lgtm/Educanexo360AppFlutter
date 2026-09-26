@@ -46,6 +46,11 @@ class FcmService {
   @visibleForTesting
   Future<String?> Function()? debugTokenOverride;
 
+  /// Máximo que el registro espera a una desvinculación en curso antes de
+  /// encadenarse a su final (configurable solo en pruebas).
+  @visibleForTesting
+  Duration pendingUnregisterTimeout = _firebaseTimeout;
+
   /// Solo para pruebas: desvinculación en curso.
   @visibleForTesting
   Future<void>? get pendingUnregister => _pendingUnregister;
@@ -182,9 +187,18 @@ class FcmService {
       // Esperar a que termine la desvinculación de un logout anterior
       final pending = _pendingUnregister;
       if (pending != null) {
-        await pending.timeout(_firebaseTimeout, onTimeout: () {
-          dlog('⚠️ [FCM] deleteToken tardó demasiado, se continúa');
+        var terminada = true;
+        await pending.timeout(pendingUnregisterTimeout, onTimeout: () {
+          terminada = false;
         });
+        if (!terminada) {
+          // Registrar ahora usaría el token viejo, que deleteToken() invalida
+          // al terminar: el usuario nuevo se quedaría sin push. Se registra
+          // cuando la desvinculación termine (si sigue habiendo sesión).
+          dlog('⚠️ [FCM] Desvinculación en curso: el registro se hará al terminar');
+          unawaited(pending.whenComplete(registerTokenToBackend));
+          return;
+        }
       }
 
       // Sin sesión no se registra (un onTokenRefresh tras el logout
