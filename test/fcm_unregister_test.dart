@@ -1,0 +1,94 @@
+// test/fcm_unregister_test.dart
+// Desvinculación del token FCM al cerrar sesión (addendum Fase 2B)
+import 'dart:async';
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:dio/dio.dart';
+import 'package:educanexo360_app/services/api_service.dart';
+import 'package:educanexo360_app/services/auth_service.dart';
+import 'package:educanexo360_app/services/fcm_service.dart';
+import 'package:educanexo360_app/services/storage_service.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+ResponseBody _json(Object body) => ResponseBody.fromString(
+      jsonEncode(body),
+      200,
+      headers: {
+        Headers.contentTypeHeader: [Headers.jsonContentType],
+      },
+    );
+
+/// Backend lento: la desvinculación tarda 300 ms en responder
+class _SlowUnregisterAdapter implements HttpClientAdapter {
+  final requests = <RequestOptions>[];
+  final completed = Completer<void>();
+
+  @override
+  Future<ResponseBody> fetch(RequestOptions options,
+      Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async {
+    requests.add(options);
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    if (!completed.isCompleted) completed.complete();
+    return _json({
+      'success': true,
+      'message': 'Dispositivo desvinculado',
+      'data': {'tokenRemoved': true},
+    });
+  }
+
+  @override
+  void close({bool force = false}) {}
+}
+
+/// Logout del backend (/auth/logout): responde al instante
+class _OkAdapter implements HttpClientAdapter {
+  @override
+  Future<ResponseBody> fetch(RequestOptions options,
+          Stream<Uint8List>? requestStream, Future<void>? cancelFuture) async =>
+      _json({'success': true});
+
+  @override
+  void close({bool force = false}) {}
+}
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test(
+      'logout limpia lo local de inmediato y desvincula el token en segundo '
+      'plano con el token de la sesión que se cierra', () async {
+    FlutterSecureStorage.setMockInitialValues({
+      '@educanexo360_token': 'old-access',
+      '@educanexo360_refreshToken': 'old-refresh',
+    });
+    SharedPreferences.setMockInitialValues({});
+    ApiService().httpClientAdapter = _OkAdapter();
+
+    final adapter = _SlowUnregisterAdapter();
+    FcmService.instance
+      ..unregisterHttpClientAdapter = adapter
+      ..debugTokenOverride = () async => 'fcm-token-123';
+
+    await AuthService().logout(silent: true);
+
+    // El logout ya volvió: lo local está limpio y la desvinculación sigue en
+    // curso (no bloqueó la navegación al login)
+    expect(await StorageService.getToken(), isNull);
+    expect(await StorageService.getRefreshToken(), isNull);
+    expect(adapter.completed.isCompleted, isFalse);
+
+    // La desvinculación termina después, en segundo plano
+    await FcmService.instance.pendingUnregister!
+        .timeout(const Duration(seconds: 2));
+    expect(adapter.completed.isCompleted, isTrue);
+
+    final request = adapter.requests.single;
+    expect(request.method, 'POST');
+    expect(request.path, '/notificaciones/unregister-token');
+    expect(request.headers['Authorization'], 'Bearer old-access');
+    expect(request.data, {'fcmToken': 'fcm-token-123'});
+  });
+}

@@ -2,6 +2,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/painting.dart';
@@ -23,7 +24,31 @@ class FcmService {
   FcmService._internal();
   static final FcmService instance = FcmService._internal();
 
-  final FirebaseMessaging _fcm = FirebaseMessaging.instance;
+  // Getter (no campo): FirebaseMessaging.instance exige Firebase inicializado
+  FirebaseMessaging get _fcm => FirebaseMessaging.instance;
+
+  // Dio aparte, sin interceptores, para desvincular el token en el logout: un
+  // 401 aquí no debe disparar el refresh ni afectar la sesión de un usuario
+  // que inicie sesión después. El token de la sesión que se cierra va por
+  // petición.
+  final Dio _unregisterDio = Dio(BaseOptions(
+    baseUrl: AppConfig.baseUrl,
+    connectTimeout: const Duration(seconds: 10),
+    receiveTimeout: const Duration(seconds: 10),
+  ));
+
+  /// Solo para pruebas: adaptador HTTP del Dio de desvinculación.
+  @visibleForTesting
+  set unregisterHttpClientAdapter(HttpClientAdapter adapter) =>
+      _unregisterDio.httpClientAdapter = adapter;
+
+  /// Solo para pruebas: reemplaza la obtención del token FCM.
+  @visibleForTesting
+  Future<String?> Function()? debugTokenOverride;
+
+  /// Solo para pruebas: desvinculación en curso.
+  @visibleForTesting
+  Future<void>? get pendingUnregister => _pendingUnregister;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
 
@@ -143,6 +168,8 @@ class FcmService {
 
   Future<String?> getToken() async {
     try {
+      final override = debugTokenOverride;
+      if (override != null) return await override();
       return await _fcm.getToken().timeout(_firebaseTimeout);
     } catch (e) {
       dlog('❌ [FCM] Error obteniendo token: $e');
@@ -205,18 +232,18 @@ class FcmService {
     if (AppConfig.fcmUnregisterEnabled && accessToken != null) {
       try {
         final token = await getToken();
-        // Dio aparte, sin interceptores: un 401 aquí no debe disparar el
-        // refresh ni afectar la sesión de un usuario que inicie sesión después
-        await Dio(BaseOptions(
-          baseUrl: AppConfig.baseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
-          headers: {'Authorization': 'Bearer $accessToken'},
-        )).post(
-          AppConfig.notificacionesFcmUnregister,
-          data: {'fcmToken': token},
-        );
-        dlog('✅ [FCM] Token desvinculado en backend');
+        // Sin token FCM no hay nada que desvincular (el backend responde 400)
+        if (token != null) {
+          final response = await _unregisterDio.post(
+            AppConfig.notificacionesFcmUnregister,
+            data: {'fcmToken': token},
+            options: Options(
+              headers: {'Authorization': 'Bearer $accessToken'},
+            ),
+          );
+          dlog('✅ [FCM] Token desvinculado en backend: '
+              '${response.data is Map ? response.data['data'] : ''}');
+        }
       } catch (e) {
         dlog('⚠️ [FCM] No se pudo desvincular el token en backend: $e');
       }

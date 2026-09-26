@@ -234,11 +234,11 @@ class AppConfig {
   static const String notificacionesLeerTodas = '/notificaciones/leer-todas';
   static const String notificacionesFcmToken = '/notificaciones/register-token';
 
-  // TODO(Fase 1): endpoint del backend para desvincular el token FCM del
-  // usuario al cerrar sesión. Aún no existe: mientras fcmUnregisterEnabled sea
-  // false, el logout solo invalida el token del dispositivo (deleteToken).
-  // Confirmar ruta y body con el backend antes de activarlo.
-  static const bool fcmUnregisterEnabled = false;
+  // Desvincular el token FCM del usuario al cerrar sesión (backend Fase 1):
+  // POST /notificaciones/unregister-token { fcmToken }, autenticado; responde
+  // 200 con data.tokenRemoved. Además el logout invalida el token local
+  // (deleteToken).
+  static const bool fcmUnregisterEnabled = true;
   static const String notificacionesFcmUnregister =
       '/notificaciones/unregister-token';
 
