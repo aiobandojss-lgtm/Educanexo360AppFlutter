@@ -345,7 +345,11 @@ class AppRoutes {
               name: 'tarea-detalle',
               builder: (context, state) {
                 final tareaId = state.pathParameters['tareaId']!;
-                return DetalleTareaScreen(tareaId: tareaId);
+                return DetalleTareaScreen(
+                  tareaId: tareaId,
+                  // Acudiente con varios hijos: entrega de cuál mostrar
+                  estudianteId: state.uri.queryParameters['estudianteId'],
+                );
               },
             ),
             // Entregar tarea (estudiantes)

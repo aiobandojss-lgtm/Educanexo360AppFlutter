@@ -442,6 +442,14 @@ class Tarea {
     }
   }
 
+  // 🔧 HELPER: Entrega que ve el acudiente. El backend ya filtra las
+  // entregas a sus hijos; con varios hijos en el curso (hermanos) se elige la
+  // del hijo indicado. Sin hijo indicado, la primera.
+  EntregaTarea? entregaParaAcudiente(String? estudianteId) {
+    if (estudianteId != null) return getEntregaEstudiante(estudianteId);
+    return entregas.isNotEmpty ? entregas.first : null;
+  }
+
   // 🔧 HELPER: Estadísticas de entregas
   Map<String, int> get estadisticasEntregas {
     int totalEstudiantes = estudiantesIds.length;

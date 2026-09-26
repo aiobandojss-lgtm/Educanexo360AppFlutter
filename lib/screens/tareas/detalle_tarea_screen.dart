@@ -20,9 +20,13 @@ import '../../widgets/common/gradient_header.dart';
 class DetalleTareaScreen extends StatefulWidget {
   final String tareaId;
 
+  /// Hijo del acudiente cuya entrega se muestra (?estudianteId= en la ruta)
+  final String? estudianteId;
+
   const DetalleTareaScreen({
     super.key,
     required this.tareaId,
+    this.estudianteId,
   });
 
   @override
@@ -91,17 +95,13 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
         }
       }
 
-      // Si es acudiente, también obtener la entrega del hijo
+      // Acudiente: la entrega del hijo ya viene en el detalle (el backend
+      // filtra las entregas a sus hijos). /mi-entrega es solo para ESTUDIANTE
+      // (el acudiente recibía 403)
       if (esAcudiente) {
-        try {
-          final tareaService = TareaService();
-          final entrega = await tareaService.verMiEntrega(widget.tareaId);
-          setState(() {
-            _miEntrega = entrega;
-          });
-        } catch (e) {
-          dlog('No hay entrega del estudiante');
-        }
+        setState(() {
+          _miEntrega = tarea?.entregaParaAcudiente(widget.estudianteId);
+        });
       }
 
       // Si es docente, cargar todas las entregas

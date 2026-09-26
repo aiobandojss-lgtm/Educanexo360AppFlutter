@@ -150,7 +150,8 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
           return TareaCard(
             tarea: tarea,
             miEntrega: miEntrega,
-            onTap: () => context.push('/tareas/${tarea.id}'),
+            onTap: () => context.push(
+                '/tareas/${tarea.id}?estudianteId=${widget.estudianteId}'),
             isReadOnly: true, // ⬅️ IMPORTANTE: Activar modo read-only
           );
         },
