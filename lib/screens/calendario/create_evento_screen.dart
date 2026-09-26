@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../config/app_config.dart';
 import '../../models/evento.dart';
 import '../../providers/calendario_provider.dart';
 import '../../widgets/common/gradient_header.dart';
@@ -704,8 +705,22 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
       );
 
       if (result != null && result.files.isNotEmpty) {
+        final archivo = File(result.files.first.path!);
+
+        // Límite del servidor: avisar antes de intentar subirlo
+        const maxBytes = AppConfig.calendarioMaxArchivoMB * 1024 * 1024;
+        final tamano = archivo.lengthSync();
+        if (tamano > maxBytes) {
+          _showError(
+            'El archivo es muy grande '
+            '(${(tamano / (1024 * 1024)).toStringAsFixed(1)} MB). '
+            'Máximo ${AppConfig.calendarioMaxArchivoMB} MB.',
+          );
+          return;
+        }
+
         setState(() {
-          _archivoAdjunto = File(result.files.first.path!);
+          _archivoAdjunto = archivo;
         });
       }
     } catch (e) {

@@ -80,6 +80,8 @@ class AppConfig {
   static const int mensajeMaxTotalMB = 15;
   static const int tareaMaxArchivos = 5;
   static const int tareaMaxArchivoMB = 10;
+  // calendario: multer de GridFS (config/gridfs.ts), 1 archivo de 5 MB
+  static const int calendarioMaxArchivoMB = 5;
 
   // ==========================================
   // ENDPOINTS DE AUTENTICACIÓN
