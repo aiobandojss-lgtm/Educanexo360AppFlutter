@@ -150,52 +150,64 @@ class ApiService {
               _noRefreshPaths.any((path) => options.path.contains(path));
           final alreadyRetried = options.extra[_retriedKey] == true;
 
-          // 401 en una ruta normal que aún no se reintentó → intentar refresh
-          if (error.response?.statusCode == 401 &&
-              !isAuthPath &&
-              !alreadyRetried) {
-            final String? newToken;
-            try {
-              newToken = await _refreshAccessToken();
-            } on DioException catch (refreshError) {
+          // Todo el manejo de refresh y reintento protegido: si algo que no es
+          // DioException falla (p. ej. el keystore al guardar el token), la
+          // petición termina con error en vez de quedar colgada para siempre
+          try {
+            // 401 en una ruta normal que aún no se reintentó → intentar refresh
+            if (error.response?.statusCode == 401 &&
+                !isAuthPath &&
+                !alreadyRetried) {
+              final String? newToken;
+              try {
+                newToken = await _refreshAccessToken();
+              } on DioException catch (refreshError) {
+                // La sesión se cerró mientras se refrescaba: descartar
+                if (_isStaleRequest(options)) {
+                  return handler.next(_staleError(options));
+                }
+                // Fallo de red/timeout/5xx en el refresh: la sesión se conserva
+                // y se propaga el error de red a la petición original
+                return handler.next(DioException(
+                  requestOptions: options,
+                  response: refreshError.response,
+                  type: refreshError.type,
+                  error: refreshError.error,
+                  message: refreshError.message,
+                ));
+              }
+
               // La sesión se cerró mientras se refrescaba: descartar
               if (_isStaleRequest(options)) {
                 return handler.next(_staleError(options));
               }
-              // Fallo de red/timeout/5xx en el refresh: la sesión se conserva
-              // y se propaga el error de red a la petición original
-              return handler.next(DioException(
-                requestOptions: options,
-                response: refreshError.response,
-                type: refreshError.type,
-                error: refreshError.error,
-                message: refreshError.message,
-              ));
-            }
 
-            // La sesión se cerró mientras se refrescaba: descartar
-            if (_isStaleRequest(options)) {
-              return handler.next(_staleError(options));
-            }
+              if (newToken != null) {
+                // Reintentar la petición original una sola vez con el nuevo token
+                options.headers['Authorization'] = 'Bearer $newToken';
+                options.extra[_retriedKey] = true;
 
-            if (newToken != null) {
-              // Reintentar la petición original una sola vez con el nuevo token
-              options.headers['Authorization'] = 'Bearer $newToken';
-              options.extra[_retriedKey] = true;
+                // Un FormData ya enviado no se puede reutilizar: se clona
+                // (MultipartFile.fromFile vuelve a leer el archivo desde disco)
+                if (options.data is FormData) {
+                  options.data = (options.data as FormData).clone();
+                }
 
-              // Un FormData ya enviado no se puede reutilizar: se clona
-              // (MultipartFile.fromFile vuelve a leer el archivo desde disco)
-              if (options.data is FormData) {
-                options.data = (options.data as FormData).clone();
-              }
-
-              try {
-                final response = await _dio.fetch(options);
-                return handler.resolve(response);
-              } on DioException catch (retryError) {
-                return handler.next(retryError);
+                try {
+                  final response = await _dio.fetch(options);
+                  return handler.resolve(response);
+                } on DioException catch (retryError) {
+                  return handler.next(retryError);
+                }
               }
             }
+          } catch (e) {
+            dlog('❌ Error inesperado manejando el 401: $e');
+            return handler.next(DioException(
+              requestOptions: options,
+              error: e,
+              type: DioExceptionType.unknown,
+            ));
           }
 
           return handler.next(error);

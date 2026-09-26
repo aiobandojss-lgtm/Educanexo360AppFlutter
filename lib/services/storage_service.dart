@@ -1,6 +1,7 @@
 ﻿// lib/services/storage_service.dart
 import '../utils/logger.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter/foundation.dart' show visibleForTesting;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'dart:convert';
 import '../models/usuario.dart';
@@ -18,6 +19,14 @@ class StorageService {
     ),
   );
 
+  /// Solo para pruebas: reemplaza el almacenamiento seguro (p. ej. uno que
+  /// falla, para simular un keystore de Android dañado).
+  @visibleForTesting
+  static FlutterSecureStorage? debugSecureStorageOverride;
+
+  static FlutterSecureStorage get _storage =>
+      debugSecureStorageOverride ?? _secureStorage;
+
   // ==========================================
   // TOKENS (usando FlutterSecureStorage)
   // ==========================================
@@ -25,7 +34,7 @@ class StorageService {
   /// Guardar token de acceso
   static Future<void> saveToken(String token) async {
     try {
-      await _secureStorage.write(key: _tokenKey, value: token);
+      await _storage.write(key: _tokenKey, value: token);
       dlog('✅ Token guardado en secure storage');
     } catch (e) {
       dlog('❌ Error guardando token: $e');
@@ -36,7 +45,7 @@ class StorageService {
   /// Obtener token de acceso
   static Future<String?> getToken() async {
     try {
-      final token = await _secureStorage.read(key: _tokenKey);
+      final token = await _storage.read(key: _tokenKey);
       if (token != null) {
         dlog('✅ Token recuperado de secure storage');
       } else {
@@ -52,7 +61,7 @@ class StorageService {
   /// Guardar refresh token
   static Future<void> saveRefreshToken(String refreshToken) async {
     try {
-      await _secureStorage.write(key: _refreshTokenKey, value: refreshToken);
+      await _storage.write(key: _refreshTokenKey, value: refreshToken);
       dlog('✅ Refresh token guardado');
     } catch (e) {
       dlog('❌ Error guardando refresh token: $e');
@@ -63,7 +72,7 @@ class StorageService {
   /// Obtener refresh token
   static Future<String?> getRefreshToken() async {
     try {
-      return await _secureStorage.read(key: _refreshTokenKey);
+      return await _storage.read(key: _refreshTokenKey);
     } catch (e) {
       dlog('❌ Error obteniendo refresh token: $e');
       return null;
@@ -118,8 +127,8 @@ class StorageService {
       dlog('🧹 Limpiando datos de autenticación...');
 
       // Limpiar secure storage
-      await _secureStorage.delete(key: _tokenKey);
-      await _secureStorage.delete(key: _refreshTokenKey);
+      await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _refreshTokenKey);
 
       // Limpiar SharedPreferences
       final prefs = await SharedPreferences.getInstance();
@@ -135,8 +144,8 @@ class StorageService {
   /// Limpiar solo el token (mantener usuario)
   static Future<void> clearTokens() async {
     try {
-      await _secureStorage.delete(key: _tokenKey);
-      await _secureStorage.delete(key: _refreshTokenKey);
+      await _storage.delete(key: _tokenKey);
+      await _storage.delete(key: _refreshTokenKey);
       dlog('✅ Tokens limpiados');
     } catch (e) {
       dlog('❌ Error limpiando tokens: $e');

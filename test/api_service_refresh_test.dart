@@ -8,6 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:educanexo360_app/services/api_service.dart';
 import 'package:educanexo360_app/services/storage_service.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter/services.dart' show PlatformException;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -57,6 +58,25 @@ ResponseBody refreshOk() => jsonResponse(200, {
     });
 
 const _timeout = Duration(seconds: 5);
+
+/// Keystore dañado: leer funciona, escribir lanza (no es DioException)
+class _ThrowingWriteStorage extends FlutterSecureStorage {
+  const _ThrowingWriteStorage();
+
+  @override
+  Future<void> write({
+    required String key,
+    required String? value,
+    IOSOptions? iOptions,
+    AndroidOptions? aOptions,
+    LinuxOptions? lOptions,
+    WebOptions? webOptions,
+    MacOsOptions? mOptions,
+    WindowsOptions? wOptions,
+  }) async {
+    throw PlatformException(code: 'keystore', message: 'Keystore no disponible');
+  }
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -246,6 +266,31 @@ void main() {
     expect(sessionExpiredCalls, 0);
     expect(await StorageService.getToken(), 'b-access');
     expect(await StorageService.getRefreshToken(), 'b-refresh');
+  });
+
+  test(
+      '(j) el keystore falla al guardar el token renovado → las peticiones '
+      'terminan con error, no se cuelgan', () async {
+    StorageService.debugSecureStorageOverride = const _ThrowingWriteStorage();
+    addTearDown(() => StorageService.debugSecureStorageOverride = null);
+
+    final adapter = FakeAdapter((o) async {
+      if (o.path.contains('/auth/refresh-token')) {
+        await Future<void>.delayed(const Duration(milliseconds: 30));
+        return refreshOk();
+      }
+      return unauthorized();
+    });
+    api.httpClientAdapter = adapter;
+
+    // Dos peticiones esperan el mismo refresh: ambas deben terminar
+    final results = await Future.wait([
+      api.get('/tareas').then<Object>((r) => r, onError: (Object e) => e),
+      api.get('/mensajes').then<Object>((r) => r, onError: (Object e) => e),
+    ]).timeout(_timeout);
+
+    expect(results, everyElement(isA<ApiException>()));
+    expect(adapter.refreshCalls, 1);
   });
 
   test('(f) refresh 200 con success:false → sesión expirada', () async {
