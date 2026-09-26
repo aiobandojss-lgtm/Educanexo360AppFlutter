@@ -293,6 +293,37 @@ void main() {
     expect(adapter.refreshCalls, 1);
   });
 
+  test('(k) sin refresh ni access token → no limpia ni notifica', () async {
+    FlutterSecureStorage.setMockInitialValues({});
+    final adapter = FakeAdapter((o) async => unauthorized());
+    api.httpClientAdapter = adapter;
+
+    await expectLater(api.get('/tareas').timeout(_timeout),
+        throwsA(isA<ApiException>()));
+
+    expect(adapter.refreshCalls, 0);
+    expect(sessionExpiredCalls, 0);
+  });
+
+  test('(l) access token sin refresh token → expira la sesión una sola vez',
+      () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'@educanexo360_token': 'huerfano'});
+    final adapter = FakeAdapter((o) async => unauthorized());
+    api.httpClientAdapter = adapter;
+
+    await expectLater(api.get('/tareas').timeout(_timeout),
+        throwsA(isA<ApiException>()));
+    expect(sessionExpiredCalls, 1);
+    expect(await StorageService.getToken(), isNull);
+
+    // Un segundo 401 ya no vuelve a expirar la sesión
+    await expectLater(api.get('/mensajes').timeout(_timeout),
+        throwsA(isA<ApiException>()));
+    expect(sessionExpiredCalls, 1);
+    expect(adapter.refreshCalls, 0);
+  });
+
   test('(f) refresh 200 con success:false → sesión expirada', () async {
     final adapter = FakeAdapter((o) async {
       if (o.path.contains('/auth/refresh-token')) {

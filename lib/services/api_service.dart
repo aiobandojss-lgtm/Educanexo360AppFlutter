@@ -235,7 +235,17 @@ class ApiService {
     final refreshToken = await StorageService.getRefreshToken();
 
     if (refreshToken == null) {
-      dlog('❌ No hay refresh token');
+      // Tampoco hay access token: ya no hay sesión (p. ej. un logout o login
+      // en curso). No limpiar ni notificar: dispararía otro ciclo de logout y
+      // descartaría la respuesta de un login que esté en curso.
+      if (await StorageService.getToken() == null) {
+        dlog('ℹ️ Sin sesión guardada - no se intenta refresh');
+        return null;
+      }
+      // Sesión anómala (access token sin refresh token): expirarla una vez
+      // para ir al login en lugar de recibir 401 indefinidamente. Tras la
+      // limpieza ya no hay access token, así que no se repite.
+      dlog('❌ Access token sin refresh token - sesión expirada');
       await _clearAuthAndNotify(expectedRefreshToken: null);
       return null;
     }
