@@ -11,6 +11,7 @@ import '../../services/perfil_rol_service.dart';
 import '../../services/usuario_service.dart';
 import '../../services/api_service.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/perfil/preferencias_correo_card.dart';
 import 'editar_perfil_screen.dart';
 import 'cambiar_password_screen.dart';
 
@@ -22,8 +23,6 @@ class PerfilScreen extends StatefulWidget {
 }
 
 class _PerfilScreenState extends State<PerfilScreen> {
-  bool _notificationsEnabled = true;
-  bool _emailNotifications = true;
 
   // Nombre del perfil personalizado (null = mostrar rol base)
   String? _perfilNombre;
@@ -76,8 +75,10 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   _buildAccountSettings(context, user),
                   const SizedBox(height: 16),
 
-                  // Configuración de notificaciones
-                  _buildNotificationsSettings(),
+                  // Correos de EducaNexo (se oculta si el backend no lo
+                  // soporta). Reemplaza los interruptores de notificaciones,
+                  // que no guardaban nada.
+                  const PreferenciasCorreoCard(),
                   const SizedBox(height: 16),
 
                   // Información de la cuenta
@@ -235,51 +236,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   builder: (_) => const EditarPerfilScreen(),
                 ),
               );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNotificationsSettings() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.all(20),
-            child: Text(
-              '🔔 Notificaciones',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-          _buildSwitchItem(
-            icon: Icons.notifications_outlined,
-            iconColor: const Color(0xFF0D9488),
-            title: 'Notificaciones Push',
-            description: 'Recibe notificaciones en tu dispositivo',
-            value: _notificationsEnabled,
-            onChanged: (value) {
-              setState(() => _notificationsEnabled = value);
-            },
-          ),
-          const Divider(height: 1),
-          _buildSwitchItem(
-            icon: Icons.email_outlined,
-            iconColor: const Color(0xFF0D9488),
-            title: 'Notificaciones por Email',
-            description: 'Recibe notificaciones en tu correo',
-            value: _emailNotifications,
-            onChanged: (value) {
-              setState(() => _emailNotifications = value);
             },
           ),
         ],
@@ -526,52 +482,6 @@ class _PerfilScreenState extends State<PerfilScreen> {
             Icon(Icons.chevron_right, color: Colors.grey.shade400),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildSwitchItem({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String description,
-    required bool value,
-    required ValueChanged<bool> onChanged,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Icon(icon, color: iconColor, size: 24),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  description,
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: value,
-            onChanged: onChanged,
-            activeThumbColor: const Color(0xFF059669),
-          ),
-        ],
       ),
     );
   }

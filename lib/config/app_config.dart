@@ -101,6 +101,8 @@ class AppConfig {
 
   static const String usuarios = '/usuarios';
   static const String usuariosEliminarCuenta = '/usuarios/eliminar-cuenta';
+  // Preferencia de correo de mensajes (backend Fase 4)
+  static const String usuariosMisPreferencias = '/usuarios/me/preferencias';
   static const String usuariosDocentes = '/usuarios/docentes';
   static const String usuariosEstudiantes = '/usuarios/estudiantes';
   static const String usuariosPadres = '/usuarios/padres';
