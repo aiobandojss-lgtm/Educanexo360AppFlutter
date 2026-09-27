@@ -63,6 +63,14 @@ class _OkAdapter implements HttpClientAdapter {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
+  // Valores originales del singleton: cada prueba los restablece al terminar
+  final timeoutOriginal = FcmService.instance.pendingUnregisterTimeout;
+  tearDown(() {
+    FcmService.instance
+      ..pendingUnregisterTimeout = timeoutOriginal
+      ..debugTokenOverride = null;
+  });
+
   test(
       'logout limpia lo local de inmediato y desvincula el token en segundo '
       'plano con el token de la sesión que se cierra', () async {
@@ -150,5 +158,9 @@ void main() {
       await Future<void>.delayed(const Duration(milliseconds: 10));
     }
     expect(backend.registeredTokens, ['fcm-token-123']);
+
+    // Margen después del primer registro: no debe haber un segundo
+    await Future<void>.delayed(const Duration(milliseconds: 300));
+    expect(backend.registeredTokens, hasLength(1));
   });
 }
