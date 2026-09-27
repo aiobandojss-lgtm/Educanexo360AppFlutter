@@ -137,6 +137,10 @@ class AuthService {
   /// [accessTokenOverride]: token de la sesión que se cierra cuando el storage
   /// ya se borró (sesión expirada), para desvincular el token FCM.
   Future<void> logout({bool silent = false, String? accessTokenOverride}) async {
+    // Antes de cualquier await: las respuestas en vuelo de esta sesión (p. ej.
+    // el 401 que disparó la expiración) se descartan en vez de llegar a la UI.
+    // onSessionExpired llega aquí de forma síncrona hasta el primer await.
+    SessionGeneration.next();
     try {
       if (!silent) dlog('\n🚪 === CERRANDO SESIÓN ===');
 

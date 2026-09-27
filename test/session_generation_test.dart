@@ -5,6 +5,7 @@ import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
 import 'package:educanexo360_app/services/api_service.dart';
+import 'package:educanexo360_app/services/auth_service.dart';
 import 'package:educanexo360_app/services/session_generation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -128,6 +129,25 @@ void main() {
     expect(await _completesWithin(pending, const Duration(milliseconds: 400)),
         isFalse);
     // Aserción positiva: la respuesta llegó y se descartó (no es un bloqueo)
+    expect(ApiService.debugDiscardedResponses, descartadasAntes + 1);
+  });
+
+  test(
+      'sesión expirada sin token capturado: el 401 original se descarta, no '
+      'llega a la UI (B3)', () async {
+    final adapter = _SlowAdapter(401); // el refresh también responde 401
+    final api = ApiService()..httpClientAdapter = adapter;
+    // Flujo real: la expiración llama a logout (tokenExpirado null)
+    ApiService.onSessionExpired =
+        (_) => AuthService().logout(silent: true, accessTokenOverride: null);
+    addTearDown(() => ApiService.onSessionExpired = null);
+
+    final descartadasAntes = ApiService.debugDiscardedResponses;
+    final pending = api.get('/mensajes');
+
+    expect(await _completesWithin(pending, const Duration(milliseconds: 600)),
+        isFalse);
+    expect(adapter.refreshCalls, 1);
     expect(ApiService.debugDiscardedResponses, descartadasAntes + 1);
   });
 
