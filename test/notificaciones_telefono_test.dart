@@ -45,6 +45,24 @@ void main() {
     expect(find.byType(SnackBar), findsNothing);
   });
 
+  testWidgets('con lector de pantalla (acción semántica tap) abre los ajustes',
+      (tester) async {
+    final semantics = tester.ensureSemantics();
+    await tester.pumpWidget(_app());
+
+    expect(
+        tester.getSemantics(
+            find.byKey(const ValueKey('abrir-ajustes-notificaciones'))),
+        isSemantics(isButton: true, hasTapAction: true));
+
+    tester.semantics.tap(
+        find.semantics.byLabel(RegExp('^Abrir ajustes de notificaciones')));
+    await tester.pumpAndSettle();
+
+    expect(llamadas, ['abrirNotificaciones']);
+    semantics.dispose();
+  });
+
   testWidgets('si no se pueden abrir, explica dónde encontrarlos',
       (tester) async {
     respuesta = false;

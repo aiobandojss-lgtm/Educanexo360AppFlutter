@@ -147,7 +147,10 @@ void main() {
       // Accesibilidad: la opción elegida se anuncia como seleccionada
       final semantica = tester.getSemantics(
           find.byKey(const ValueKey('preferencia-resumen')));
-      expect(semantica, isSemantics(hasCheckedState: true, isChecked: true));
+      expect(
+          semantica,
+          isSemantics(
+              hasCheckedState: true, isChecked: true, hasTapAction: true));
       final otra = tester.getSemantics(
           find.byKey(const ValueKey('preferencia-inmediato')));
       expect(otra, isSemantics(hasCheckedState: true, isChecked: false));
@@ -180,6 +183,20 @@ void main() {
       final semantica = tester.getSemantics(
           find.byKey(const ValueKey('preferencia-ninguno')));
       expect(semantica, isSemantics(hasCheckedState: true, isChecked: true));
+    });
+
+    testWidgets('con lector de pantalla (acción semántica tap) se selecciona',
+        (tester) async {
+      final semantics = tester.ensureSemantics();
+      final service = _FakeService(inicial: inicialResumen);
+      await tester.pumpWidget(_app(service));
+      await tester.pumpAndSettle();
+
+      tester.semantics.tap(find.semantics.byLabel(RegExp('^Ninguno')));
+      await tester.pumpAndSettle();
+
+      expect(service.guardadas, [PreferenciaCorreo.ninguno]);
+      semantics.dispose();
     });
 
     testWidgets('si falla al guardar vuelve a la opción anterior y avisa',

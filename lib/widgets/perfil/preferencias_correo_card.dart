@@ -210,12 +210,16 @@ class _PreferenciasCorreoCardState extends State<PreferenciasCorreoCard> {
     final seleccionada = opcion == actual;
 
     // Accesibilidad: el lector de pantalla anuncia la opción, su
-    // descripción y si está seleccionada (como un botón de radio)
+    // descripción y si está seleccionada (como un botón de radio). El onTap
+    // va en el Semantics: excludeSemantics descarta la acción del InkWell y,
+    // sin esto, con TalkBack no se podría seleccionar.
     return Semantics(
+      container: true, // cada opción es su propio nodo
       button: true,
       inMutuallyExclusiveGroup: true,
       checked: seleccionada,
       label: '$titulo. $descripcion',
+      onTap: _guardando ? null : () => _elegir(opcion),
       excludeSemantics: true,
       child: InkWell(
         key: ValueKey('preferencia-${opcion.value}'),

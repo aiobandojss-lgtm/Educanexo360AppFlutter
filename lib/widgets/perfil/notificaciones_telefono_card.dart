@@ -44,9 +44,15 @@ class NotificacionesTelefonoCard extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
           ),
+          // onTap en el Semantics: excludeSemantics descarta la acción del
+          // InkWell y, sin esto, con TalkBack no se podría activar
           Semantics(
+            // Nodo propio: sin esto el título de la tarjeta se fusiona con
+            // el botón y TalkBack lo lee todo junto
+            container: true,
             button: true,
             label: 'Abrir ajustes de notificaciones del teléfono',
+            onTap: () => _abrir(context),
             excludeSemantics: true,
             child: InkWell(
               key: const ValueKey('abrir-ajustes-notificaciones'),
