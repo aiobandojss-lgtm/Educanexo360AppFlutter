@@ -61,9 +61,11 @@ class AuthService {
       dlog('   Access: ${accessToken.substring(0, 20)}...');
       dlog('   Refresh: ${refreshToken.substring(0, 20)}...');
 
-      // Guardar tokens
-      await StorageService.saveToken(accessToken);
+      // Guardar tokens: PRIMERO el refresh. Si un 401 llega entre las dos
+      // escrituras, ver un access token sin refresh se trataría como sesión
+      // anómala y se borraría el login recién hecho.
       await StorageService.saveRefreshToken(refreshToken);
+      await StorageService.saveToken(accessToken);
       dlog('✅ Tokens guardados en storage');
 
       // Crear objeto Usuario desde la respuesta
