@@ -24,6 +24,9 @@ class FileHelper {
 
   // Marca de la limpieza única de descargas de versiones anteriores
   static const String _legacyCleanupKey = '@educanexo360_legacy_downloads_cleaned';
+  @visibleForTesting
+  static const String legacyExternalCleanupKey =
+      '@educanexo360_legacy_external_downloads_cleaned';
 
   /// Sanea un nombre de archivo que llega del servidor antes de usarlo en
   /// una ruta: solo el nombre base, sin caracteres inválidos, sin puntos
@@ -44,15 +47,22 @@ class FileHelper {
   }
 
   /// Las versiones anteriores descargaban sueltas en la raíz del directorio
-  /// temporal. Se borran esos archivos (no subcarpetas de otros plugins) una
-  /// sola vez: la carpeta es compartida y no se limpia en cada sesión.
-  static Future<void> _clearLegacyDownloadsOnce(Directory tempDir) async {
+  /// temporal (FileHelper) y del externo de la app (adjuntos de mensajes). Se
+  /// borran esos archivos de nivel superior (no subcarpetas de otros plugins)
+  /// una sola vez por carpeta: no se limpian en cada sesión.
+  @visibleForTesting
+  static Future<void> clearLegacyDownloadsOnce(
+    Directory dir, {
+    String flagKey = _legacyCleanupKey,
+  }) async {
     final prefs = await SharedPreferences.getInstance();
-    if (prefs.getBool(_legacyCleanupKey) == true) return;
-    await for (final entity in tempDir.list()) {
-      if (entity is File) await entity.delete();
+    if (prefs.getBool(flagKey) == true) return;
+    if (await dir.exists()) {
+      await for (final entity in dir.list()) {
+        if (entity is File) await entity.delete();
+      }
     }
-    await prefs.setBool(_legacyCleanupKey, true);
+    await prefs.setBool(flagKey, true);
   }
 
   /// Carpeta de descargas dentro de [base] (se crea si no existe)
@@ -69,12 +79,21 @@ class FileHelper {
     try {
       final tempDir = await getTemporaryDirectory();
       bases.add(tempDir);
-      await _clearLegacyDownloadsOnce(tempDir);
+      await clearLegacyDownloadsOnce(tempDir);
     } catch (e) {
       dlog('⚠️ FileHelper: no se pudo limpiar el temporal: $e');
     }
     try {
-      if (Platform.isAndroid) bases.add(await getExternalStorageDirectory());
+      if (Platform.isAndroid) {
+        final externalDir = await getExternalStorageDirectory();
+        bases.add(externalDir);
+        // Almacenamiento propio de la app: adjuntos sueltos de versiones
+        // anteriores (solo archivos de nivel superior, una sola vez)
+        if (externalDir != null) {
+          await clearLegacyDownloadsOnce(externalDir,
+              flagKey: legacyExternalCleanupKey);
+        }
+      }
       bases.add(await getApplicationDocumentsDirectory());
     } catch (e) {
       dlog('⚠️ FileHelper: no se pudieron obtener directorios: $e');
