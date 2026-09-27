@@ -85,6 +85,7 @@ void main() {
       () async {
     final api = ApiService()..httpClientAdapter = _SlowAdapter(200);
 
+    final descartadasAntes = ApiService.debugDiscardedResponses;
     final pending = api.get('/mensajes');
     // Logout mientras la petición ya está en vuelo
     await Future<void>.delayed(const Duration(milliseconds: 30));
@@ -92,18 +93,23 @@ void main() {
 
     expect(await _completesWithin(pending, const Duration(milliseconds: 400)),
         isFalse);
+    // Aserción positiva: la respuesta llegó y se descartó (no es un bloqueo)
+    expect(ApiService.debugDiscardedResponses, descartadasAntes + 1);
   });
 
   test('un 401 de la sesión anterior no dispara refresh', () async {
     final adapter = _SlowAdapter(401);
     final api = ApiService()..httpClientAdapter = adapter;
 
+    final descartadasAntes = ApiService.debugDiscardedResponses;
     final pending = api.get('/mensajes');
     await Future<void>.delayed(const Duration(milliseconds: 30));
     SessionGeneration.next();
 
     expect(await _completesWithin(pending, const Duration(milliseconds: 400)),
         isFalse);
+    // Aserción positiva: la respuesta llegó y se descartó (no es un bloqueo)
+    expect(ApiService.debugDiscardedResponses, descartadasAntes + 1);
     expect(adapter.refreshCalls, 0);
   });
 
@@ -112,6 +118,7 @@ void main() {
     final adapter = _RefreshDuringLogoutAdapter();
     final api = ApiService()..httpClientAdapter = adapter;
 
+    final descartadasAntes = ApiService.debugDiscardedResponses;
     final pending = api.get('/mensajes');
     // Esperar a que el refresh esté en vuelo y cerrar sesión
     await Future<void>.delayed(const Duration(milliseconds: 30));
@@ -120,6 +127,8 @@ void main() {
 
     expect(await _completesWithin(pending, const Duration(milliseconds: 400)),
         isFalse);
+    // Aserción positiva: la respuesta llegó y se descartó (no es un bloqueo)
+    expect(ApiService.debugDiscardedResponses, descartadasAntes + 1);
   });
 
   test('las peticiones de la sesión nueva funcionan normal', () async {

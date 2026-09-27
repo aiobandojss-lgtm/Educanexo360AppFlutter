@@ -50,7 +50,15 @@ class ApiService {
   /// Respuesta descartada: un Future que nunca se completa. Ni los datos ni
   /// un error de la sesión anterior llegan al provider (clearState ya limpió
   /// su estado y la pantalla que la pidió se cerró al ir al login).
-  static Future<T> _discarded<T>() => Completer<T>().future;
+  static Future<T> _discarded<T>() {
+    debugDiscardedResponses++;
+    return Completer<T>().future;
+  }
+
+  /// Solo para pruebas: cuántas respuestas de sesiones viejas se descartaron
+  /// (permite afirmar que se descartó, no solo que "no completó").
+  @visibleForTesting
+  static int debugDiscardedResponses = 0;
 
   // Subidas multipart: más tiempo que el global de 15 s (redes móviles lentas)
   static const Duration _multipartTimeout = Duration(seconds: 120);
