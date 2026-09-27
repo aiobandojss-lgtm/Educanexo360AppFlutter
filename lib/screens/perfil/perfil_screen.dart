@@ -10,7 +10,9 @@ import '../../models/usuario.dart';
 import '../../services/perfil_rol_service.dart';
 import '../../services/usuario_service.dart';
 import '../../services/api_service.dart';
+import '../../services/ajustes_telefono.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/perfil/notificaciones_telefono_card.dart';
 import '../../widgets/perfil/preferencias_correo_card.dart';
 import 'editar_perfil_screen.dart';
 import 'cambiar_password_screen.dart';
@@ -74,6 +76,13 @@ class _PerfilScreenState extends State<PerfilScreen> {
                   // Configuración de la cuenta
                   _buildAccountSettings(context, user),
                   const SizedBox(height: 16),
+
+                  // Notificaciones del celular: abre los ajustes del
+                  // sistema (solo Android; en iOS no se muestra)
+                  if (AjustesTelefono.disponible) ...[
+                    const NotificacionesTelefonoCard(),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Correos de EducaNexo (se oculta si el backend no lo
                   // soporta). Reemplaza los interruptores de notificaciones,
