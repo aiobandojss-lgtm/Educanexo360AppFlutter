@@ -85,10 +85,15 @@ class Message {
           : null,
       archivado: json['archivado'] as bool?,
       eliminado: json['eliminado'] as bool?,
-      totalDestinatarios: (json['totalDestinatarios'] as num?)?.toInt(),
-      totalDestinatariosCc: (json['totalDestinatariosCc'] as num?)?.toInt(),
+      totalDestinatarios: _intOrNull(json['totalDestinatarios']),
+      totalDestinatariosCc: _intOrNull(json['totalDestinatariosCc']),
     );
   }
+
+  // Conteo tolerante: número, String numérico o cualquier otra cosa (→ null,
+  // y se usa la lista). Un valor raro no debe tumbar toda la bandeja.
+  static int? _intOrNull(dynamic value) =>
+      value == null ? null : num.tryParse('$value')?.toInt();
 
   // remitente puede llegar como objeto (populate), como String (solo id) o null
   static User _parseRemitente(dynamic data) {

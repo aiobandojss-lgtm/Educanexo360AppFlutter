@@ -32,6 +32,15 @@ void main() {
     expect(Message.fromJson(_mensaje()).cantidadDestinatarios, 3);
   });
 
+  test('totalDestinatarios tolerante: String numérico o valor inválido (B5)',
+      () {
+    final comoTexto = _mensaje()..['totalDestinatarios'] = '250';
+    expect(Message.fromJson(comoTexto).cantidadDestinatarios, 250);
+
+    final invalido = _mensaje()..['totalDestinatarios'] = 'muchos';
+    expect(Message.fromJson(invalido).cantidadDestinatarios, 3);
+  });
+
   testWidgets('enviados: muestra el primero y el resto con el total real',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
