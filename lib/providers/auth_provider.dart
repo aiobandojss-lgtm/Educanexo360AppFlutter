@@ -41,7 +41,8 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _initializeAuth() async {
     // Registrar callback para cuando el token expire y no se pueda renovar.
     // ApiService lo invoca desde _clearAuthAndNotify() tras un 401 irrecuperable.
-    ApiService.onSessionExpired = _handleSessionExpired;
+    ApiService.onSessionExpired =
+        (tokenExpirado) => _handleSessionExpired(tokenExpirado);
 
     _setLoading(true);
     try {
@@ -177,9 +178,10 @@ class AuthProvider extends ChangeNotifier {
 
   /// Maneja la expiración de sesión invocada por ApiService.
   /// Limpia el estado y notifica al GoRouter para redirigir al login.
-  Future<void> _handleSessionExpired() async {
+  Future<void> _handleSessionExpired(String? tokenExpirado) async {
     try {
-      await _authService.logout(silent: true);
+      // El storage ya se borró: se pasa el token capturado por ApiService
+      await _authService.logout(silent: true, accessTokenOverride: tokenExpirado);
     } catch (e) {
       dlog('⚠️ AuthProvider: Error limpiando la sesión expirada - $e');
     }

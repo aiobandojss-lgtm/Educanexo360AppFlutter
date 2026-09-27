@@ -132,12 +132,15 @@ class AuthService {
   /// Cerrar sesión: primero se limpia todo lo local y después se avisa al
   /// servidor en segundo plano. Así las llamadas de red no bloquean la UI
   /// ni pueden borrar los datos de un login que ocurra justo después.
-  Future<void> logout({bool silent = false}) async {
+  /// [accessTokenOverride]: token de la sesión que se cierra cuando el storage
+  /// ya se borró (sesión expirada), para desvincular el token FCM.
+  Future<void> logout({bool silent = false, String? accessTokenOverride}) async {
     try {
       if (!silent) dlog('\n🚪 === CERRANDO SESIÓN ===');
 
       // Capturar el token antes de borrarlo (desvinculación FCM, Fase 1)
-      final accessToken = await StorageService.getToken();
+      final accessToken =
+          accessTokenOverride ?? await StorageService.getToken();
 
       await clearLocalSession();
 

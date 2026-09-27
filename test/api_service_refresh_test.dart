@@ -83,6 +83,7 @@ void main() {
 
   final api = ApiService();
   late int sessionExpiredCalls;
+  late List<String?> expiredTokens;
 
   setUp(() {
     FlutterSecureStorage.setMockInitialValues({
@@ -91,7 +92,11 @@ void main() {
     });
     SharedPreferences.setMockInitialValues({});
     sessionExpiredCalls = 0;
-    ApiService.onSessionExpired = () => sessionExpiredCalls++;
+    expiredTokens = [];
+    ApiService.onSessionExpired = (tokenExpirado) {
+      sessionExpiredCalls++;
+      expiredTokens.add(tokenExpirado);
+    };
   });
 
   test('(a) refresh rechazado con 401 → sesión expirada, sin colgarse',
@@ -107,6 +112,8 @@ void main() {
 
     expect(adapter.refreshCalls, 1);
     expect(sessionExpiredCalls, 1);
+    // El callback recibe el token de la sesión que expiró (A4)
+    expect(expiredTokens, ['old-access']);
     expect(await StorageService.getToken(), isNull);
     expect(await StorageService.getRefreshToken(), isNull);
   });

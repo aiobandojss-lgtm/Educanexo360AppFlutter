@@ -99,6 +99,26 @@ void main() {
   });
 
   test(
+      'sesión expirada: con el storage ya borrado se desvincula con el token '
+      'capturado', () async {
+    FlutterSecureStorage.setMockInitialValues({}); // ApiService ya lo borró
+    SharedPreferences.setMockInitialValues({});
+    ApiService().httpClientAdapter = _OkAdapter();
+
+    final adapter = _SlowUnregisterAdapter();
+    final fcm = FcmService.instance;
+    fcm.unregisterHttpClientAdapter = adapter;
+    fcm.debugTokenOverride = () async => 'fcm-token-123';
+
+    await AuthService()
+        .logout(silent: true, accessTokenOverride: 'expired-access');
+    await fcm.pendingUnregister!.timeout(const Duration(seconds: 2));
+
+    expect(adapter.requests.single.headers['Authorization'],
+        'Bearer expired-access');
+  });
+
+  test(
       'login de otro usuario durante una desvinculación lenta: no registra el '
       'token viejo; registra al terminar la desvinculación', () async {
     FlutterSecureStorage.setMockInitialValues({});

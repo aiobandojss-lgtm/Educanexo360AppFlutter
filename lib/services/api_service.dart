@@ -64,8 +64,10 @@ class ApiService {
       : null;
 
   /// Callback registrado por AuthProvider para manejar sesión expirada.
-  /// Se invoca cuando el refreshToken falla y no hay forma de recuperar la sesión.
-  static Function? onSessionExpired;
+  /// Se invoca cuando el refreshToken falla y no hay forma de recuperar la
+  /// sesión. Recibe el access token de la sesión que expira (capturado antes de
+  /// borrar el storage) para poder desvincular el token FCM en el backend.
+  static void Function(String? tokenExpirado)? onSessionExpired;
 
   // Singleton
   static final ApiService _instance = ApiService._internal();
@@ -329,9 +331,12 @@ class ApiService {
       dlog('⚠️ La sesión cambió durante el refresh - no se expira');
       return;
     }
+    // Capturar el token antes de borrarlo: sin él no se puede desvincular
+    // el token FCM (unregister-token es autenticado)
+    final tokenExpirado = await StorageService.getToken();
     await StorageService.clearAll();
     dlog('🚪 Sesión expirada - redirigiendo a login');
-    onSessionExpired?.call();
+    onSessionExpired?.call(tokenExpirado);
   }
 
   // ==========================================
