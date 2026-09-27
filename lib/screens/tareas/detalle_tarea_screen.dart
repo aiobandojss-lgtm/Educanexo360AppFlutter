@@ -36,6 +36,8 @@ class DetalleTareaScreen extends StatefulWidget {
 class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
   Tarea? _tarea;
   EntregaTarea? _miEntrega;
+  // Acudiente sin hijo indicado y con varios hijos en el curso
+  List<EntregaTarea> _entregasHijos = const [];
   List<EntregaTarea>? _entregas;
   bool _loading = true;
   String? _error;
@@ -99,8 +101,11 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
       // filtra las entregas a sus hijos). /mi-entrega es solo para ESTUDIANTE
       // (el acudiente recibía 403)
       if (esAcudiente) {
+        final entregas =
+            tarea?.entregasParaAcudiente(widget.estudianteId) ?? const [];
         setState(() {
-          _miEntrega = tarea?.entregaParaAcudiente(widget.estudianteId);
+          _entregasHijos = entregas;
+          _miEntrega = entregas.isNotEmpty ? entregas.first : null;
         });
       }
 
@@ -362,7 +367,13 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
 
                   // Mi entrega (estudiante o acudiente)
                   if ((esEstudiante || esAcudiente) && _miEntrega != null)
-                    _buildMiEntrega(),
+                    ...(esAcudiente && _entregasHijos.length > 1
+                        // Varios hijos: una entrega por hijo, con su nombre
+                        ? _entregasHijos.map((entrega) => _buildMiEntrega(
+                              entrega,
+                              titulo: 'Entrega de ${_nombreHijo(entrega)}',
+                            ))
+                        : [_buildMiEntrega(_miEntrega!)]),
 
                   // Lista de entregas (docente)
                   if (esDocente && _entregas != null && _entregas!.isNotEmpty)
@@ -402,7 +413,9 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
             runSpacing: 8,
             children: [
               PrioridadBadge(prioridad: _tarea!.prioridad),
-              if (_miEntrega != null) EstadoBadge(estado: _miEntrega!.estado),
+              // Con varios hijos cada bloque muestra su estado
+              if (_miEntrega != null && _entregasHijos.length <= 1)
+                EstadoBadge(estado: _miEntrega!.estado),
               if (_tarea!.estado == EstadoTarea.cerrada)
                 const Chip(
                   label: Text('Cerrada'),
@@ -461,7 +474,14 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
     );
   }
 
-  Widget _buildMiEntrega() {
+  String _nombreHijo(EntregaTarea entrega) {
+    final estudiante = entrega.estudiante;
+    if (estudiante == null) return 'el estudiante';
+    final nombre = '${estudiante.nombre} ${estudiante.apellidos}'.trim();
+    return nombre.isEmpty ? 'el estudiante' : nombre;
+  }
+
+  Widget _buildMiEntrega(EntregaTarea entrega, {String? titulo}) {
     final authProvider = context.watch<AuthProvider>();
     final esAcudiente = authProvider.currentUser?.tipo == UserRole.acudiente;
 
@@ -473,7 +493,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
           const Divider(),
           const SizedBox(height: 16),
           Text(
-            esAcudiente ? 'Entrega del Estudiante' : 'Mi Entrega',
+            titulo ?? (esAcudiente ? 'Entrega del Estudiante' : 'Mi Entrega'),
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -494,10 +514,10 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                         style: TextStyle(color: Colors.grey),
                       ),
                       Text(
-                        _miEntrega!.fechaEntrega != null
+                        entrega.fechaEntrega != null
                             ? DateFormat('dd/MM/yyyy HH:mm')
-                                .format(_miEntrega!.fechaEntrega!)
-                            : _miEntrega!.estado == EstadoEntrega.pendiente
+                                .format(entrega.fechaEntrega!)
+                            : entrega.estado == EstadoEntrega.pendiente
                                 ? 'Pendiente'
                                 : 'No entregada',
                         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -507,8 +527,8 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
 
                   // ✅ CORRECCIÓN 3: Mejorar visualización de calificación
                   // Mostrar si está calificada O si tiene calificación
-                  if (_miEntrega!.estaCalificada ||
-                      _miEntrega!.calificacion != null) ...[
+                  if (entrega.estaCalificada ||
+                      entrega.calificacion != null) ...[
                     const SizedBox(height: 16),
                     const Divider(),
                     const SizedBox(height: 16),
@@ -543,7 +563,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                                 ),
                               ),
                               Text(
-                                '${_miEntrega!.calificacion?.toStringAsFixed(1) ?? '0.0'} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
+                                '${entrega.calificacion?.toStringAsFixed(1) ?? '0.0'} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 20,
@@ -554,8 +574,8 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                           ),
 
                           // Retroalimentación del docente (si existe)
-                          if (_miEntrega!.comentarioDocente != null &&
-                              _miEntrega!.comentarioDocente!.isNotEmpty) ...[
+                          if (entrega.comentarioDocente != null &&
+                              entrega.comentarioDocente!.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             Container(
                               width: double.infinity,
@@ -585,7 +605,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
                                   ),
                                   const SizedBox(height: 8),
                                   Text(
-                                    _miEntrega!.comentarioDocente!,
+                                    entrega.comentarioDocente!,
                                     style: const TextStyle(fontSize: 14),
                                   ),
                                 ],
@@ -599,7 +619,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
 
                   // Botón para entregar si está pendiente
                   if (!esAcudiente &&
-                      _miEntrega!.estado == EstadoEntrega.pendiente &&
+                      entrega.estado == EstadoEntrega.pendiente &&
                       _tarea!.estado == EstadoTarea.activa) ...[
                     const SizedBox(height: 16),
                     SizedBox(

@@ -442,12 +442,16 @@ class Tarea {
     }
   }
 
-  // 🔧 HELPER: Entrega que ve el acudiente. El backend ya filtra las
-  // entregas a sus hijos; con varios hijos en el curso (hermanos) se elige la
-  // del hijo indicado. Sin hijo indicado, la primera.
-  EntregaTarea? entregaParaAcudiente(String? estudianteId) {
-    if (estudianteId != null) return getEntregaEstudiante(estudianteId);
-    return entregas.isNotEmpty ? entregas.first : null;
+  // 🔧 HELPER: Entregas que ve el acudiente. El backend ya filtra las
+  // entregas a sus hijos. Con hijo indicado (?estudianteId), solo la suya;
+  // sin hijo indicado (notificación, dashboard), las de todos sus hijos para
+  // no mostrar la de un hermano como si fuera la única.
+  List<EntregaTarea> entregasParaAcudiente(String? estudianteId) {
+    if (estudianteId != null) {
+      final entrega = getEntregaEstudiante(estudianteId);
+      return entrega == null ? const [] : [entrega];
+    }
+    return List.unmodifiable(entregas);
   }
 
   // 🔧 HELPER: Estadísticas de entregas
