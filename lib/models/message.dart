@@ -91,9 +91,13 @@ class Message {
   }
 
   // Conteo tolerante: número, String numérico o cualquier otra cosa (→ null,
-  // y se usa la lista). Un valor raro no debe tumbar toda la bandeja.
-  static int? _intOrNull(dynamic value) =>
-      value == null ? null : num.tryParse('$value')?.toInt();
+  // y se usa la lista). Un valor raro no debe tumbar toda la bandeja:
+  // num.tryParse acepta "NaN"/"Infinity" y .toInt() lanzaría con ellos.
+  static int? _intOrNull(dynamic value) {
+    if (value == null) return null;
+    final n = num.tryParse('$value');
+    return (n != null && n.isFinite) ? n.toInt() : null;
+  }
 
   // remitente puede llegar como objeto (populate), como String (solo id) o null
   static User _parseRemitente(dynamic data) {

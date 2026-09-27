@@ -41,6 +41,13 @@ void main() {
     expect(Message.fromJson(invalido).cantidadDestinatarios, 3);
   });
 
+  test('totalDestinatarios NaN / Infinity no tumba el parseo (C2)', () {
+    for (final raro in ['NaN', 'Infinity', '-Infinity', double.nan]) {
+      final json = _mensaje()..['totalDestinatarios'] = raro;
+      expect(Message.fromJson(json).cantidadDestinatarios, 3, reason: '$raro');
+    }
+  });
+
   testWidgets('enviados: muestra el primero y el resto con el total real',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
