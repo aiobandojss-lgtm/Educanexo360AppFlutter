@@ -19,6 +19,12 @@ class Message {
   final bool? archivado;
   final bool? eliminado;
 
+  // Conteo real de destinatarios. En masivos el backend recorta la lista
+  // `destinatarios` (bandeja: 3 para el remitente; masivo o >10: solo el
+  // propio usuario) y envía el total aquí. En borradores no recorta.
+  final int? totalDestinatarios;
+  final int? totalDestinatariosCc;
+
   Message({
     required this.id,
     required this.remitente,
@@ -35,6 +41,8 @@ class Message {
     this.fechaEnvio,
     this.archivado,
     this.eliminado,
+    this.totalDestinatarios,
+    this.totalDestinatariosCc,
   });
 
   // 🔄 DESERIALIZACIÓN desde JSON
@@ -77,6 +85,8 @@ class Message {
           : null,
       archivado: json['archivado'] as bool?,
       eliminado: json['eliminado'] as bool?,
+      totalDestinatarios: (json['totalDestinatarios'] as num?)?.toInt(),
+      totalDestinatariosCc: (json['totalDestinatariosCc'] as num?)?.toInt(),
     );
   }
 
@@ -110,6 +120,9 @@ class Message {
       'fechaEnvio': fechaEnvio?.toIso8601String(),
       'archivado': archivado,
       'eliminado': eliminado,
+      if (totalDestinatarios != null) 'totalDestinatarios': totalDestinatarios,
+      if (totalDestinatariosCc != null)
+        'totalDestinatariosCc': totalDestinatariosCc,
     };
   }
 
@@ -118,6 +131,9 @@ class Message {
     if (lecturas == null) return false;
     return lecturas!.any((lectura) => lectura.usuarioId == userId);
   }
+
+  // 🔧 HELPER: Cantidad real de destinatarios (la lista puede venir recortada)
+  int get cantidadDestinatarios => totalDestinatarios ?? destinatarios.length;
 
   // 🔧 HELPER: ¿Tiene adjuntos?
   bool get hasAttachments => adjuntos != null && adjuntos!.isNotEmpty;
@@ -145,6 +161,8 @@ class Message {
     DateTime? fechaEnvio,
     bool? archivado,
     bool? eliminado,
+    int? totalDestinatarios,
+    int? totalDestinatariosCc,
   }) {
     return Message(
       id: id ?? this.id,
@@ -162,6 +180,8 @@ class Message {
       fechaEnvio: fechaEnvio ?? this.fechaEnvio,
       archivado: archivado ?? this.archivado,
       eliminado: eliminado ?? this.eliminado,
+      totalDestinatarios: totalDestinatarios ?? this.totalDestinatarios,
+      totalDestinatariosCc: totalDestinatariosCc ?? this.totalDestinatariosCc,
     );
   }
 

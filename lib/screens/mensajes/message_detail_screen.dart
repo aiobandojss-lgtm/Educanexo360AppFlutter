@@ -214,7 +214,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                   const Divider(height: 1),
 
             // Destinatarios
-            if (message.destinatarios.isNotEmpty)
+            if (message.cantidadDestinatarios > 0)
               _buildRecipientsSection(message),
 
             const Divider(height: 1),
@@ -326,7 +326,9 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
 
   Widget _buildRecipientsSection(Message message) {
     const limite = 4;
-    final total = message.destinatarios.length;
+    // Total real (masivos: el backend solo envía algunos destinatarios)
+    final total = message.cantidadDestinatarios;
+    final visibles = message.destinatarios.length;
     final mostrar = _verTodosDestinatarios
         ? message.destinatarios
         : message.destinatarios.take(limite).toList();
@@ -393,7 +395,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                   ],
                 ),
               )),
-          if (total > limite)
+          if (visibles > limite)
             GestureDetector(
               onTap: () => setState(
                   () => _verTodosDestinatarios = !_verTodosDestinatarios),
@@ -402,13 +404,24 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
                 child: Text(
                   _verTodosDestinatarios
                       ? 'Ver menos ▲'
-                      : '+${total - limite} más ▼',
+                      : '+${visibles - limite} más ▼',
                   style: const TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF059669),
                   ),
                 ),
+              ),
+            ),
+          // Destinatarios que el backend no envía (masivos, por privacidad)
+          if (total > visibles)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                visibles == 0
+                    ? '$total destinatario${total != 1 ? 's' : ''}'
+                    : 'y ${total - visibles} más',
+                style: TextStyle(fontSize: 13, color: Colors.grey[600]),
               ),
             ),
         ],

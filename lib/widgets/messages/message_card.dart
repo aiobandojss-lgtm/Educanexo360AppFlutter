@@ -34,7 +34,7 @@ class MessageCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isRead = _isRead();
     final displayUser = _getDisplayUser();
-    final displayName = displayUser.fullName;
+    final displayName = _getDisplayName(displayUser);
     final avatarColor = Color(displayUser.avatarColor);
     final initials = displayUser.initials;
 
@@ -263,6 +263,21 @@ class MessageCard extends StatelessWidget {
       // En recibidos, mostrar el remitente
       return message.remitente;
     }
+  }
+
+  /// En enviados, el primer destinatario más el resto con el total real
+  /// (en masivos el backend recorta la lista y envía totalDestinatarios)
+  String _getDisplayName(User displayUser) {
+    if (bandeja != Bandeja.enviados) return displayUser.fullName;
+    final total = message.cantidadDestinatarios;
+    if (message.destinatarios.isEmpty) {
+      return total > 0
+          ? '$total destinatario${total != 1 ? 's' : ''}'
+          : displayUser.fullName;
+    }
+    return total > 1
+        ? '${displayUser.fullName} y ${total - 1} más'
+        : displayUser.fullName;
   }
 
   String _getDisplayEmoji() {
