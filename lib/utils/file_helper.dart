@@ -35,6 +35,15 @@ class FileHelper {
     // Solo el nombre base: descarta cualquier ruta (/ o \)
     var name = fileName.split(RegExp(r'[/\\]')).last;
     name = name.replaceAll(RegExp(r'[<>:"|?*\x00-\x1f]'), '_').trim();
+
+    // Extensión original (p. ej. '.pdf'), antes de quitar puntos iniciales
+    final dotOriginal = name.lastIndexOf('.');
+    final extOriginal = dotOriginal >= 0 &&
+            name.length - dotOriginal > 1 &&
+            name.length - dotOriginal <= 10
+        ? name.substring(dotOriginal)
+        : '';
+
     name = name.replaceFirst(RegExp(r'^[.\s]+'), '');
 
     const maxLength = 120;
@@ -42,6 +51,16 @@ class FileHelper {
       final dot = name.lastIndexOf('.');
       final ext = dot > 0 && name.length - dot <= 10 ? name.substring(dot) : '';
       name = name.substring(0, maxLength - ext.length) + ext;
+    }
+
+    // Si se perdió la extensión (".pdf" → "pdf"), se conserva: sin ella la app
+    // del teléfono no sabe con qué abrir el archivo
+    if (extOriginal.isNotEmpty &&
+        !name.toLowerCase().endsWith(extOriginal.toLowerCase())) {
+      final sinExt = name.toLowerCase() == extOriginal.substring(1).toLowerCase()
+          ? ''
+          : name;
+      name = '${sinExt.isEmpty ? 'archivo' : sinExt}$extOriginal';
     }
     return name.isEmpty ? 'archivo' : name;
   }

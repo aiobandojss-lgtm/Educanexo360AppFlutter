@@ -17,7 +17,7 @@ void main() {
   });
 
   test('quita puntos iniciales y caracteres inválidos', () {
-    expect(s('.oculto'), 'oculto');
+    expect(s('..datos.xlsx'), 'datos.xlsx');
     expect(s('a<b>:c|d?.txt'), 'a_b__c_d_.txt');
   });
 
@@ -26,6 +26,13 @@ void main() {
     final result = s(largo);
     expect(result.length, 120);
     expect(result.endsWith('.pdf'), isTrue);
+  });
+
+  test('conserva la extensión si el nombre era solo la extensión (A7)', () {
+    expect(s('.pdf'), 'archivo.pdf');
+    expect(s('...PDF'), 'archivo.PDF');
+    expect(s('../.docx'), 'archivo.docx');
+    expect(s('informe final.pdf'), 'informe final.pdf');
   });
 
   test('vacío → nombre por defecto', () {
