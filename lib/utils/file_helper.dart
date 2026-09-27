@@ -108,14 +108,23 @@ class FileHelper {
         bases.add(externalDir);
         // Almacenamiento propio de la app: adjuntos sueltos de versiones
         // anteriores (solo archivos de nivel superior, una sola vez)
+        // Try propio: si falla no debe impedir limpiar las demás carpetas
         if (externalDir != null) {
-          await clearLegacyDownloadsOnce(externalDir,
-              flagKey: legacyExternalCleanupKey);
+          try {
+            await clearLegacyDownloadsOnce(externalDir,
+                flagKey: legacyExternalCleanupKey);
+          } catch (e) {
+            dlog('⚠️ FileHelper: no se pudo limpiar el externo antiguo: $e');
+          }
         }
       }
+    } catch (e) {
+      dlog('⚠️ FileHelper: no se pudo obtener el directorio externo: $e');
+    }
+    try {
       bases.add(await getApplicationDocumentsDirectory());
     } catch (e) {
-      dlog('⚠️ FileHelper: no se pudieron obtener directorios: $e');
+      dlog('⚠️ FileHelper: no se pudo obtener el directorio de documentos: $e');
     }
     for (final base in bases) {
       if (base == null) continue;
