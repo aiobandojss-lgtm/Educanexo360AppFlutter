@@ -160,6 +160,10 @@ class _PreferenciasCorreoCardState extends State<PreferenciasCorreoCard> {
             icono: Icons.schedule_outlined,
             titulo: 'Resumen diario',
             etiqueta: 'Recomendado para acudientes',
+            // Hora fija: el backend envía el resumen a la hora RESUMEN_HORA
+            // (18 por defecto, hora Colombia) pero hoy no la devuelve en
+            // GET /usuarios/me/preferencias. Si llega a devolverla, leerla
+            // en PreferenciasCorreo.fromJson y mostrarla aquí.
             descripcion: 'Un solo correo a las 6 p. m. con los mensajes que '
                 'aún no hayas leído.',
           ),
