@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../config/app_config.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 import '../../models/evento.dart';
 import '../../providers/calendario_provider.dart';
 import '../../widgets/common/gradient_header.dart';
@@ -698,14 +699,18 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
         // Lista blanca (misma que mensajes): sin video ni audio, para que la
         // declaracion de Seguridad de los datos de Play siga siendo exacta
         type: FileType.custom,
-        allowedExtensions: const [
-          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
-          'jpg', 'jpeg', 'png', 'gif', 'webp',
-        ],
+        allowedExtensions: AppConfig.extensionesPermitidas,
       );
 
       if (result != null && result.files.isNotEmpty) {
         final archivo = File(result.files.first.path!);
+
+        // Algunos administradores de archivos ignoran el filtro
+        final nombre = result.files.first.name;
+        if (!AppConfig.extensionPermitida(nombre)) {
+          _showError(AppConfig.mensajeTipoNoPermitido(nombre));
+          return;
+        }
 
         // Límite del servidor: avisar antes de intentar subirlo
         const maxBytes = AppConfig.calendarioMaxArchivoMB * 1024 * 1024;
@@ -850,7 +855,7 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
       }
     } catch (e) {
       dlog('❌ Error al guardar evento: $e');
-      _showError('Error al guardar evento: $e');
+      _showError(mensajeDeError(e, 'Error al guardar el evento'));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);

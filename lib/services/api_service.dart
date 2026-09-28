@@ -605,6 +605,15 @@ class ApiService {
 // EXCEPCIÓN PERSONALIZADA
 // ==========================================
 
+/// Mensaje para mostrar al usuario: el del backend si es un ApiException
+/// (p. ej. el 400 "Tipo de archivo no permitido"), si no [porDefecto].
+String mensajeDeError(Object error, [String porDefecto = 'Ocurrió un error']) {
+  if (error is ApiException && error.message.trim().isNotEmpty) {
+    return error.message;
+  }
+  return porDefecto;
+}
+
 /// Marca de una respuesta que pertenece a una sesión ya cerrada (2B.4)
 class StaleSessionException implements Exception {
   const StaleSessionException();

@@ -4,6 +4,7 @@ import '../../utils/logger.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../config/app_config.dart';
 
 /// 📎 FILE UPLOADER
 /// Widget para seleccionar y mostrar archivos antes de subirlos
@@ -278,8 +279,10 @@ class _FileUploaderState extends State<FileUploader> {
 
       final result = await FilePicker.platform.pickFiles(
         allowMultiple: true,
-        type: widget.tiposPermitidos != null ? FileType.custom : FileType.any,
-        allowedExtensions: widget.tiposPermitidos,
+        // Solo los tipos que acepta el backend (antes FileType.any)
+        type: FileType.custom,
+        allowedExtensions:
+            widget.tiposPermitidos ?? AppConfig.extensionesPermitidas,
       );
 
       if (result != null && result.files.isNotEmpty) {
@@ -287,6 +290,20 @@ class _FileUploaderState extends State<FileUploader> {
 
         for (var file in result.files.take(maxRestantes)) {
           if (file.path != null) {
+            // Algunos administradores de archivos ignoran el filtro
+            if (widget.tiposPermitidos == null &&
+                !AppConfig.extensionPermitida(file.name)) {
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(AppConfig.mensajeTipoNoPermitido(file.name)),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+              continue;
+            }
+
             final archivo = File(file.path!);
             final tamanoMB = archivo.lengthSync() / (1024 * 1024);
 

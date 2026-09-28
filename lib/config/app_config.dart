@@ -83,6 +83,29 @@ class AppConfig {
   // calendario: multer de GridFS (config/gridfs.ts), 1 archivo de 5 MB
   static const int calendarioMaxArchivoMB = 5;
 
+  // Tipos de archivo que acepta el backend (utils/tipoArchivo.ts, validados
+  // por extensión y contenido). Sin video ni audio: la declaración de
+  // Seguridad de los datos de Play sigue siendo exacta.
+  static const List<String> extensionesPermitidas = [
+    'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv',
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'zip',
+  ];
+  static const String descripcionTiposPermitidos =
+      'PDF, Word, Excel, PowerPoint, texto (TXT, CSV), imágenes '
+      '(JPG, PNG, GIF, WEBP, HEIC) y ZIP';
+
+  /// Algunos administradores de archivos ignoran el filtro del selector:
+  /// se vuelve a comprobar la extensión después de elegir.
+  static bool extensionPermitida(String nombreArchivo) {
+    final punto = nombreArchivo.lastIndexOf('.');
+    if (punto < 0) return false;
+    return extensionesPermitidas
+        .contains(nombreArchivo.substring(punto + 1).toLowerCase());
+  }
+
+  static String mensajeTipoNoPermitido(String nombreArchivo) =>
+      'No se permite "$nombreArchivo". Se aceptan: $descripcionTiposPermitidos.';
+
   // ==========================================
   // ENDPOINTS DE AUTENTICACIÓN
   // ==========================================

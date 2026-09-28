@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../config/app_config.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/file_uploader_widget.dart';
@@ -159,7 +160,8 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          // Mensaje del backend (p. ej. tipo de archivo no permitido)
+          content: Text(mensajeDeError(e, 'No se pudo entregar la tarea')),
           backgroundColor: Colors.red,
         ),
       );

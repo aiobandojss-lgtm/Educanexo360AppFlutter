@@ -11,6 +11,7 @@ import 'package:dio/dio.dart' show CancelToken;
 import '../../config/app_config.dart';
 import '../../models/message.dart';
 import '../../providers/message_provider.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 import '../../services/message_service.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
@@ -179,14 +180,27 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
-        allowedExtensions: [
-          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
-          'jpg', 'jpeg', 'png', 'gif', 'webp',
-        ],
+        allowedExtensions: AppConfig.extensionesPermitidas,
         allowMultiple: true,
       );
       if (result != null) {
-        final newFiles = result.paths.where((p) => p != null).map((p) => File(p!)).toList();
+        final elegidos = result.paths.whereType<String>().toList();
+        // Algunos administradores de archivos ignoran el filtro
+        final rechazado = elegidos.firstWhere(
+            (p) => !AppConfig.extensionPermitida(p.split('/').last),
+            orElse: () => '');
+        if (rechazado.isNotEmpty && mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(
+                AppConfig.mensajeTipoNoPermitido(rechazado.split('/').last)),
+            backgroundColor: Colors.red,
+          ));
+        }
+        final newFiles = elegidos
+            .where((p) => AppConfig.extensionPermitida(p.split('/').last))
+            .map((p) => File(p))
+            .toList();
+        if (newFiles.isEmpty) return;
         final allAttachments = [..._attachments, ...newFiles];
         if (_validateFileSize(allAttachments)) {
           setState(() { _attachments.addAll(newFiles); _hasUnsavedChanges = true; });
@@ -284,10 +298,8 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
     } catch (e) {
       dlog('❌ Error enviando mensaje: $e');
       if (mounted) {
-        String errorMessage = 'No se pudo enviar el mensaje';
-        if (e.toString().contains('message')) {
-          errorMessage = e.toString().split('message:').last.trim();
-        }
+        // Mensaje del backend (p. ej. tipo de archivo no permitido)
+        final errorMessage = mensajeDeError(e, 'No se pudo enviar el mensaje');
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

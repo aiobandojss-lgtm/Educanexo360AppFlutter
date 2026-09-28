@@ -66,7 +66,7 @@ URL a declarar en el formulario:
 | **Salud y actividad física** | — | ❌ | — |
 | **Mensajes** | Otros mensajes en la app | ✅ | Módulo de mensajería |
 | | Correos / SMS | ❌ | No se lee el correo ni los SMS del dispositivo |
-| **Fotos y videos** | Fotos | ✅ | Adjuntos jpg/png/gif/webp en mensajes |
+| **Fotos y videos** | Fotos | ✅ | Adjuntos jpg/png/gif/webp/heic en mensajes, tareas, anuncios y eventos |
 | | Videos | ⚠️ | Ver "acción recomendada" abajo |
 | **Archivos de audio** | — | ❌ | Sin micrófono ni grabación |
 | **Archivos y documentos** | — | ✅ | Entregas de tareas, material, adjuntos |
@@ -82,9 +82,15 @@ el selector de archivos de **anuncios** y **eventos** usaba `FileType.any`, así
 docente podía adjuntar un video. Ya se restringió a la misma lista blanca de mensajes
 (`pdf, doc, docx, xls, xlsx, txt, jpg, jpeg, png, gif, webp`) en
 [create_anuncio_screen.dart](lib/screens/anuncios/create_anuncio_screen.dart) y
-[create_evento_screen.dart](lib/screens/calendario/create_evento_screen.dart). Con eso
-los tres selectores de la app aceptan lo mismo, la declaración es exacta y de paso nadie
-sube un archivo de 200 MB a GridFS.
+[create_evento_screen.dart](lib/screens/calendario/create_evento_screen.dart).
+
+**Actualización 2026-09-28 (Fase 5):** el selector de **tareas**
+([file_uploader_widget.dart](lib/widgets/tareas/file_uploader_widget.dart)) seguía con
+`FileType.any` (un estudiante podía adjuntar un video). Ahora los **cuatro** selectores
+(tareas, mensajes, anuncios y eventos) usan una sola lista,
+`AppConfig.extensionesPermitidas`, igual a la que valida el backend por extensión y
+contenido: `pdf, doc, docx, xls, xlsx, ppt, pptx, txt, csv, jpg, jpeg, png, gif, webp,
+heic, heif, zip`. Sin video ni audio: la declaración es exacta.
 
 ---
 
@@ -221,7 +227,7 @@ Para sostener cada respuesta si un revisor pregunta:
 | 1 | Redactar la página de eliminación de cuenta | ✅ hecho | — |
 | 2 | **Subir `eliminar-cuenta.html` a cPanel** | ⏳ manual | Sí |
 | 3 | Quitar `image_picker` del `pubspec.yaml` — ver abajo | ✅ hecho | — |
-| 4 | Restringir `FileType.any` en anuncios y eventos | ✅ hecho | — |
+| 4 | Restringir `FileType.any` en anuncios, eventos y tareas | ✅ hecho | — |
 | 5 | Botón "Reportar mensaje" (política UGC) | ✅ hecho | — |
 | 6 | Regenerar el `.aab` y verificar firma | ✅ hecho | — |
 | 7 | Dejar por contrato que las cuentas de estudiante son 13+ | ⏳ | No |

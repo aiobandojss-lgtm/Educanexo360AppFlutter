@@ -425,7 +425,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(mensajeDeError(e, 'Error al guardar la tarea')),
             backgroundColor: Colors.red,
           ),
         );

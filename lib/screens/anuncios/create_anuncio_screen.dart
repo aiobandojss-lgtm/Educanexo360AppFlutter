@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../config/app_config.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
 import '../../services/anuncio_service.dart' show AdjuntosNoSubidosException;
@@ -566,17 +567,22 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
         // Lista blanca (misma que mensajes): sin video ni audio, para que la
         // declaracion de Seguridad de los datos de Play siga siendo exacta
         type: FileType.custom,
-        allowedExtensions: const [
-          'pdf', 'doc', 'docx', 'xls', 'xlsx', 'txt',
-          'jpg', 'jpeg', 'png', 'gif', 'webp',
-        ],
+        allowedExtensions: AppConfig.extensionesPermitidas,
       );
 
       if (result != null) {
+        final elegidos = result.paths.whereType<String>().toList();
+        // Algunos administradores de archivos ignoran el filtro
+        final rechazado = elegidos.firstWhere(
+            (p) => !AppConfig.extensionPermitida(p.split('/').last),
+            orElse: () => '');
+        if (rechazado.isNotEmpty) {
+          _showError(AppConfig.mensajeTipoNoPermitido(rechazado.split('/').last));
+        }
         setState(() {
-          _adjuntos.addAll(
-            result.paths.map((path) => File(path!)).toList(),
-          );
+          _adjuntos.addAll(elegidos
+              .where((p) => AppConfig.extensionPermitida(p.split('/').last))
+              .map((path) => File(path)));
         });
       }
     } catch (e) {
