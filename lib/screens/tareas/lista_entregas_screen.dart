@@ -604,7 +604,8 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
                       const Icon(Icons.star, color: Colors.amber, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        'Calificación: ${entrega.calificacion!.toStringAsFixed(1)} / ${_tarea!.calificacionMaxima.toStringAsFixed(1)}',
+                        // Sin '!': 'Sin calificar' si no trae nota
+                        entrega.textoCalificacion(_tarea!.calificacionMaxima),
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w700,

@@ -611,6 +611,15 @@ class EntregaTarea {
   bool get estaCalificada => estado == EstadoEntrega.calificada;
   bool get tieneArchivos => archivos.isNotEmpty;
   bool get estaAtrasada => estado == EstadoEntrega.atrasada;
+
+  /// Texto de la nota sin asumir que el estado CALIFICADA trae calificación
+  /// (p. ej. una re-entrega sobre una calificada queda sin nota, 5.C12).
+  String textoCalificacion(double maxima) {
+    final nota = calificacion;
+    if (nota == null) return 'Sin calificar';
+    return 'Calificación: ${nota.toStringAsFixed(1)} / '
+        '${maxima.toStringAsFixed(1)}';
+  }
 }
 
 // ========================================
