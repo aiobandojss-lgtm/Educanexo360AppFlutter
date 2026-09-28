@@ -88,8 +88,9 @@ class AppConfig {
   static const int anuncioMaxArchivoMB = 10;
 
   // Tipos de archivo que acepta el backend (utils/tipoArchivo.ts, validados
-  // por extensión y contenido). Sin video ni audio: la declaración de
-  // Seguridad de los datos de Play sigue siendo exacta.
+  // por extensión y contenido; copia de la lista del commit b44fc03). Si el
+  // backend la cambia, actualizarla aquí a mano. Sin video ni audio: la
+  // declaración de Seguridad de los datos de Play sigue siendo exacta.
   static const List<String> extensionesPermitidas = [
     'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv',
     'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif', 'zip',

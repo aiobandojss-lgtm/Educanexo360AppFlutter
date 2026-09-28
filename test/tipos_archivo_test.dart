@@ -5,7 +5,12 @@ import 'package:educanexo360_app/services/api_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  test('la lista coincide con la del backend (utils/tipoArchivo.ts)', () {
+  // OJO: esto compara contra una COPIA FIJA de la lista del backend, no contra
+  // el backend en vivo. Copiada de educanexo360-backend/src/utils/tipoArchivo.ts
+  // (lista definida en el commit b44fc03, sin cambios hasta 3c9334d, dist de
+  // la Fase 5). Si el backend cambia la lista, este test NO lo detecta:
+  // actualizar AppConfig.extensionesPermitidas y esta copia a mano.
+  test('la lista coincide con la copia de la del backend (b44fc03)', () {
     expect(AppConfig.extensionesPermitidas.toSet(), {
       'pdf', 'doc', 'xls', 'ppt', 'docx', 'xlsx', 'pptx', 'zip', 'txt',
       'csv', 'jpg', 'jpeg', 'png', 'gif', 'webp', 'heic', 'heif',
