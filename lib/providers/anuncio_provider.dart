@@ -324,13 +324,11 @@ class AnuncioProvider with ChangeNotifier {
     try {
       dlog('📥 Obteniendo anuncio: $id');
 
-      // Primero buscar en lista local
-      final localAnuncio = _anuncios.firstWhere(
-        (a) => a.id == id,
-        orElse: () => _anuncios.first, // Placeholder
-      );
-
-      if (localAnuncio.id == id) {
+      // Primero buscar en lista local. Búsqueda nula: con la lista vacía
+      // (p. ej. abierto desde una notificación antes de cargarla) el
+      // antiguo orElse: _anuncios.first lanzaba StateError.
+      final localAnuncio = _anuncios.where((a) => a.id == id).firstOrNull;
+      if (localAnuncio != null) {
         dlog('✅ Anuncio encontrado en cache local');
         return localAnuncio;
       }

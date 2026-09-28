@@ -40,6 +40,7 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
       final provider = context.read<AnuncioProvider>();
       final anuncio = await provider.getAnuncioById(widget.anuncioId);
 
+      if (!mounted) return;
       if (anuncio != null) {
         setState(() {
           _anuncio = anuncio;
@@ -48,9 +49,13 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
 
         // ✅ SIN marcar como leído - Solo mostrar contador
       } else {
+        // Sin anuncio: quitar el spinner (no debe quedar colgado)
+        setState(() => _isLoading = false);
         _showError('Anuncio no encontrado');
       }
     } catch (e) {
+      if (!mounted) return;
+      setState(() => _isLoading = false);
       _showError('Error al cargar el anuncio');
     }
   }
