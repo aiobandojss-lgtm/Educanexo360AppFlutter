@@ -8,6 +8,8 @@ import 'package:go_router/go_router.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
+import '../../services/anuncio_service.dart' show AdjuntosNoSubidosException;
+import '../../services/api_service.dart' show ApiException;
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
 
@@ -647,9 +649,27 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
           context.pop();
         }
       }
+    } on AdjuntosNoSubidosException catch (e) {
+      // El anuncio quedó guardado: salir del formulario (reintentar lo
+      // duplicaría) y explicar qué pasó con los adjuntos
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'El anuncio se guardó, pero no se pudieron subir los adjuntos: '
+            '${e.motivo}. Puedes agregarlos editándolo.',
+          ),
+          backgroundColor: const Color(0xFFF59E0B),
+          duration: const Duration(seconds: 6),
+        ),
+      );
+      context.pop();
     } catch (e) {
       setState(() => _isSubmitting = false);
-      _showError('No se pudo guardar el anuncio. Intenta nuevamente.');
+      // Mensaje del backend si lo hay (p. ej. validación)
+      _showError(e is ApiException
+          ? e.message
+          : 'No se pudo guardar el anuncio. Intenta nuevamente.');
     }
   }
 

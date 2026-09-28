@@ -179,6 +179,10 @@ class AnuncioProvider with ChangeNotifier {
       await loadAnuncios(refresh: true, silent: false);
 
       return anuncio;
+    } on AdjuntosNoSubidosException {
+      // El anuncio sí se creó: mostrarlo en la lista y avisar a la pantalla
+      await loadAnuncios(refresh: true, silent: true);
+      rethrow;
     } catch (e) {
       dlog('❌ Error creando anuncio: $e');
       rethrow;
@@ -225,6 +229,12 @@ class AnuncioProvider with ChangeNotifier {
       notifyListeners();
 
       return anuncio;
+    } on AdjuntosNoSubidosException catch (e) {
+      // Los cambios sí se guardaron: reflejarlos en la lista y avisar
+      final index = _anuncios.indexWhere((a) => a.id == anuncioId);
+      if (index != -1) _anuncios[index] = e.anuncio;
+      notifyListeners();
+      rethrow;
     } catch (e) {
       dlog('❌ Error actualizando anuncio: $e');
       rethrow;

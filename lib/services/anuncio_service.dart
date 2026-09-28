@@ -143,9 +143,11 @@ class AnuncioService {
         throw Exception('Debe seleccionar al menos una audiencia');
       }
 
-      // Si hay adjuntos o imagen, usar FormData
-      if ((adjuntos != null && adjuntos.isNotEmpty) || imagenPortada != null) {
-        FormData formData = FormData.fromMap({
+      // POST /anuncios solo recibe JSON (no multer): los adjuntos se suben
+      // después a POST /anuncios/:id/adjuntos, como hace la web
+      final response = await _apiService.post(
+        '/anuncios',
+        data: {
           'titulo': titulo,
           'contenido': contenido,
           'paraEstudiantes': paraEstudiantes,
@@ -153,59 +155,56 @@ class AnuncioService {
           'paraPadres': paraPadres,
           'destacado': destacado,
           'estaPublicado': publicar,
-        });
+        },
+      );
+      final anuncio = Anuncio.fromJson(response['data']);
+      dlog('✅ Anuncio creado: ${anuncio.id}');
 
-        // Agregar imagen de portada
-        if (imagenPortada != null) {
-          String fileName = imagenPortada.path.split('/').last;
-          formData.files.add(MapEntry(
-            'imagenPortada',
-            await MultipartFile.fromFile(
-              imagenPortada.path,
-              filename: fileName,
-            ),
-          ));
-        }
-
-        // Agregar adjuntos
-        if (adjuntos != null && adjuntos.isNotEmpty) {
-          for (File file in adjuntos) {
-            String fileName = file.path.split('/').last;
-            formData.files.add(MapEntry(
-              'archivos',
-              await MultipartFile.fromFile(file.path, filename: fileName),
-            ));
-          }
-        }
-
-        final response = await _apiService.post(
-          '/anuncios',
-          data: formData,
-        );
-
-        dlog('✅ Anuncio creado con archivos');
-        return Anuncio.fromJson(response['data']);
-      } else {
-        // Sin archivos, usar JSON
-        final response = await _apiService.post(
-          '/anuncios',
-          data: {
-            'titulo': titulo,
-            'contenido': contenido,
-            'paraEstudiantes': paraEstudiantes,
-            'paraDocentes': paraDocentes,
-            'paraPadres': paraPadres,
-            'destacado': destacado,
-            'estaPublicado': publicar,
-          },
-        );
-
-        dlog('✅ Anuncio creado sin archivos');
-        return Anuncio.fromJson(response['data']);
-      }
+      _avisarPortadaNoSoportada(imagenPortada);
+      return await _conAdjuntos(anuncio, adjuntos);
     } catch (e) {
       dlog('❌ Error creando anuncio: $e');
       rethrow;
+    }
+  }
+
+  /// Sube [adjuntos] al anuncio ya guardado y lo devuelve con ellos. Si la
+  /// subida falla, lanza [AdjuntosNoSubidosException] con el anuncio (que ya
+  /// existe en el servidor) para no provocar un duplicado al reintentar.
+  Future<Anuncio> _conAdjuntos(Anuncio anuncio, List<File>? adjuntos) async {
+    if (adjuntos == null || adjuntos.isEmpty) return anuncio;
+    try {
+      final formData = FormData();
+      for (final file in adjuntos) {
+        formData.files.add(MapEntry(
+          'archivos',
+          await MultipartFile.fromFile(file.path,
+              filename: file.path.split('/').last),
+        ));
+      }
+      final response = await _apiService.postFormData(
+        '/anuncios/${anuncio.id}/adjuntos',
+        formData,
+      );
+      final lista = (response['data'] as List<dynamic>? ?? [])
+          .map((adj) => ArchivoAdjunto.fromJson(adj as Map<String, dynamic>))
+          .toList();
+      dlog('✅ ${lista.length} adjunto(s) en el anuncio');
+      return anuncio.copyWith(archivosAdjuntos: lista);
+    } catch (e) {
+      dlog('❌ El anuncio se guardó pero los adjuntos fallaron: $e');
+      throw AdjuntosNoSubidosException(
+        anuncio: anuncio,
+        motivo: e is ApiException ? e.message : 'Error de conexión',
+      );
+    }
+  }
+
+  // El backend no tiene ruta para la imagen de portada (solo adjuntos) y
+  // ninguna pantalla la envía hoy: se ignora con aviso en el log.
+  void _avisarPortadaNoSoportada(File? imagen) {
+    if (imagen != null) {
+      dlog('⚠️ Imagen de portada no soportada por el backend: se ignora');
     }
   }
 
@@ -232,65 +231,24 @@ class AnuncioService {
         throw Exception('Debe seleccionar al menos una audiencia');
       }
 
-      // Si hay archivos nuevos, usar FormData
-      if ((nuevosAdjuntos != null && nuevosAdjuntos.isNotEmpty) ||
-          nuevaImagenPortada != null) {
-        FormData formData = FormData.fromMap({
+      // PUT /anuncios/:id solo recibe JSON; los adjuntos nuevos se suben
+      // después a POST /anuncios/:id/adjuntos
+      final response = await _apiService.put(
+        '/anuncios/$anuncioId',
+        data: {
           'titulo': titulo,
           'contenido': contenido,
           'paraEstudiantes': paraEstudiantes,
           'paraDocentes': paraDocentes,
           'paraPadres': paraPadres,
           'destacado': destacado,
-        });
+        },
+      );
+      final anuncio = Anuncio.fromJson(response['data']);
+      dlog('✅ Anuncio actualizado');
 
-        // Nueva imagen de portada
-        if (nuevaImagenPortada != null) {
-          String fileName = nuevaImagenPortada.path.split('/').last;
-          formData.files.add(MapEntry(
-            'imagenPortada',
-            await MultipartFile.fromFile(
-              nuevaImagenPortada.path,
-              filename: fileName,
-            ),
-          ));
-        }
-
-        // Nuevos adjuntos
-        if (nuevosAdjuntos != null && nuevosAdjuntos.isNotEmpty) {
-          for (File file in nuevosAdjuntos) {
-            String fileName = file.path.split('/').last;
-            formData.files.add(MapEntry(
-              'archivos',
-              await MultipartFile.fromFile(file.path, filename: fileName),
-            ));
-          }
-        }
-
-        final response = await _apiService.put(
-          '/anuncios/$anuncioId',
-          data: formData,
-        );
-
-        dlog('✅ Anuncio actualizado con archivos');
-        return Anuncio.fromJson(response['data']);
-      } else {
-        // Sin archivos nuevos, usar JSON
-        final response = await _apiService.put(
-          '/anuncios/$anuncioId',
-          data: {
-            'titulo': titulo,
-            'contenido': contenido,
-            'paraEstudiantes': paraEstudiantes,
-            'paraDocentes': paraDocentes,
-            'paraPadres': paraPadres,
-            'destacado': destacado,
-          },
-        );
-
-        dlog('✅ Anuncio actualizado');
-        return Anuncio.fromJson(response['data']);
-      }
+      _avisarPortadaNoSoportada(nuevaImagenPortada);
+      return await _conAdjuntos(anuncio, nuevosAdjuntos);
     } catch (e) {
       dlog('❌ Error actualizando anuncio: $e');
       rethrow;
@@ -378,4 +336,16 @@ class AnuncioService {
   String getImagenPortadaUrl(String anuncioId, String imagenId) {
     return '/anuncios/$anuncioId/imagen/$imagenId';
   }
+}
+
+/// El anuncio se guardó en el servidor, pero los adjuntos no se pudieron
+/// subir (p. ej. tipo de archivo no permitido o sin conexión).
+class AdjuntosNoSubidosException implements Exception {
+  AdjuntosNoSubidosException({required this.anuncio, required this.motivo});
+
+  final Anuncio anuncio;
+  final String motivo;
+
+  @override
+  String toString() => 'AdjuntosNoSubidosException: $motivo';
 }
