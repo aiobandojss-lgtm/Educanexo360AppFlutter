@@ -137,6 +137,12 @@ class FileHelper {
     }
   }
 
+  /// Solo para pruebas: si se asigna, recibe el endpoint pedido y no se
+  /// descarga nada (permite afirmar qué URL usa cada botón).
+  @visibleForTesting
+  static void Function(String endpoint, String fileName)?
+      debugInterceptarDescarga;
+
   /// Descarga [endpoint] (ruta relativa del API) y lo abre inmediatamente.
   ///
   /// [context]  : BuildContext para mostrar diálogo y SnackBar.
@@ -147,6 +153,12 @@ class FileHelper {
     String endpoint,
     String fileName,
   ) async {
+    final interceptar = debugInterceptarDescarga;
+    if (interceptar != null) {
+      interceptar(endpoint, fileName);
+      return;
+    }
+
     // Sanitizar el nombre para evitar problemas en el sistema de archivos
     final safeFileName = sanitizeFileName(fileName);
 
