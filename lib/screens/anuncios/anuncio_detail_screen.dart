@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
+import '../../services/api_service.dart' show ApiException;
 import '../../services/permission_service.dart';
 import '../../utils/file_helper.dart';
 import '../../widgets/common/gradient_header.dart';
@@ -33,6 +34,9 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
     _loadAnuncio();
   }
 
+  static const String _mensajeNoDisponible =
+      'Este anuncio ya no está disponible';
+
   Future<void> _loadAnuncio() async {
     try {
       setState(() => _isLoading = true);
@@ -51,12 +55,15 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
       } else {
         // Sin anuncio: quitar el spinner (no debe quedar colgado)
         setState(() => _isLoading = false);
-        _showError('Anuncio no encontrado');
+        _showError(_mensajeNoDisponible);
       }
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      _showError('Error al cargar el anuncio');
+      // 404: el anuncio se borró (p. ej. abierto desde una notificación vieja)
+      _showError(e is ApiException && e.statusCode == 404
+          ? _mensajeNoDisponible
+          : 'Error al cargar el anuncio');
     }
   }
 

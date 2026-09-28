@@ -67,9 +67,39 @@ void main() {
         AnuncioProvider().getAnuncioById('zz'), throwsA(isA<ApiException>()));
   });
 
-  testWidgets('si falla la carga no queda el spinner colgado',
+  Future<void> abrirDetalle(WidgetTester tester) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(
+            path: '/',
+            builder: (_, __) => const Scaffold(body: Text('Inicio'))),
+        GoRoute(
+          path: '/anuncio',
+          builder: (_, __) => const AnuncioDetailScreen(anuncioId: 'zz'),
+        ),
+      ],
+    );
+    await tester.pumpWidget(ChangeNotifierProvider(
+      create: (_) => AnuncioProvider(),
+      child: MaterialApp.router(routerConfig: router),
+    ));
+    router.push('/anuncio');
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('anuncio borrado (404): "ya no está disponible" (E5)',
       (tester) async {
     ApiService().httpClientAdapter = _Adapter(404);
+    await abrirDetalle(tester);
+
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.text('Inicio'), findsOneWidget);
+    expect(find.text('Este anuncio ya no está disponible'), findsOneWidget);
+  });
+
+  testWidgets('si falla la carga no queda el spinner colgado',
+      (tester) async {
+    ApiService().httpClientAdapter = _Adapter(500);
     final router = GoRouter(
       routes: [
         GoRoute(
