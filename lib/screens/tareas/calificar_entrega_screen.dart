@@ -4,7 +4,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import '../../config/app_config.dart';
 import '../../models/tarea.dart';
+import '../../utils/file_helper.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/estado_badge.dart';
 import '../../widgets/tareas/archivo_tile.dart';
@@ -430,6 +432,16 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
             child: ArchivoTile(
               archivo: archivo,
               onDelete: null, // No permitir eliminar archivos del estudiante
+              // El docente abre los archivos entregados (?tipo=entrega)
+              onDownload: () => FileHelper.downloadAndOpen(
+                context,
+                AppConfig.tareaArchivoDownload(
+                  widget.tareaId,
+                  archivo.fileId,
+                  tipo: AppConfig.tipoArchivoEntrega,
+                ),
+                archivo.nombre,
+              ),
             ),
           );
         }),

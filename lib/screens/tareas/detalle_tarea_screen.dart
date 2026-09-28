@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../config/app_config.dart';
 import '../../models/tarea.dart';
 import '../../models/usuario.dart';
 import '../../providers/tarea_provider.dart';
@@ -135,7 +136,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
   Future<void> _handleDescargarArchivo(ArchivoTarea archivo) async {
     await FileHelper.downloadAndOpen(
       context,
-      '/tareas/${widget.tareaId}/archivos/${archivo.fileId}',
+      AppConfig.tareaArchivoDownload(widget.tareaId, archivo.fileId),
       archivo.nombre,
     );
   }

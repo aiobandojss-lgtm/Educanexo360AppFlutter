@@ -276,8 +276,16 @@ class AppConfig {
   static String tareaArchivos(String id) => '/tareas/$id/archivos';
   static String tareaArchivoDelete(String tareaId, String archivoId) =>
       '/tareas/$tareaId/archivos/$archivoId';
-  static String tareaArchivoDownload(String tareaId, String archivoId) =>
-      '/tareas/$tareaId/archivos/$archivoId';
+  // Descarga: el backend exige ?tipo=referencia (material del docente) o
+  // ?tipo=entrega (archivos de una entrega); sin él responde 400.
+  static String tareaArchivoDownload(
+    String tareaId,
+    String archivoId, {
+    String tipo = tipoArchivoReferencia,
+  }) =>
+      '/tareas/$tareaId/archivos/$archivoId?tipo=$tipo';
+  static const String tipoArchivoReferencia = 'referencia';
+  static const String tipoArchivoEntrega = 'entrega';
 
   // Entregas de estudiantes
   static String tareaMarcarVista(String id) => '/tareas/$id/marcar-vista';
