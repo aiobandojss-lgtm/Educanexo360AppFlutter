@@ -82,6 +82,10 @@ class AppConfig {
   static const int tareaMaxArchivoMB = 10;
   // calendario: multer de GridFS (config/gridfs.ts), 1 archivo de 5 MB
   static const int calendarioMaxArchivoMB = 5;
+  // anuncios: anuncio.routes.ts, multer 10 MB por archivo y
+  // upload.array('archivos', 5) por petición
+  static const int anuncioMaxArchivos = 5;
+  static const int anuncioMaxArchivoMB = 10;
 
   // Tipos de archivo que acepta el backend (utils/tipoArchivo.ts, validados
   // por extensión y contenido). Sin video ni audio: la declaración de

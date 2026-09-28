@@ -12,6 +12,7 @@ import '../../providers/anuncio_provider.dart';
 import '../../services/anuncio_service.dart' show AdjuntosNoSubidosException;
 import '../../services/api_service.dart' show ApiException;
 import '../../services/permission_service.dart';
+import '../../utils/seleccion_archivos.dart';
 import '../../widgets/common/gradient_header.dart';
 
 class CreateAnuncioScreen extends StatefulWidget {
@@ -571,19 +572,20 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
       );
 
       if (result != null) {
-        final elegidos = result.paths.whereType<String>().toList();
-        // Algunos administradores de archivos ignoran el filtro
-        final rechazado = elegidos.firstWhere(
-            (p) => !AppConfig.extensionPermitida(p.split('/').last),
-            orElse: () => '');
-        if (rechazado.isNotEmpty) {
-          _showError(AppConfig.mensajeTipoNoPermitido(rechazado.split('/').last));
+        // Tipo (algunos administradores de archivos ignoran el filtro),
+        // tamaño y cantidad según el backend, con aviso claro: si no, el
+        // anuncio se guardaría y los adjuntos fallarían después
+        final seleccion = filtrarArchivosElegidos(
+          rutas: result.paths.whereType<String>().toList(),
+          yaSeleccionados: _adjuntos.length,
+          maxArchivos: AppConfig.anuncioMaxArchivos,
+          maxMB: AppConfig.anuncioMaxArchivoMB,
+          unidad: 'archivos por anuncio',
+        );
+        if (seleccion.aviso != null) _showError(seleccion.aviso!);
+        if (seleccion.aceptados.isNotEmpty) {
+          setState(() => _adjuntos.addAll(seleccion.aceptados));
         }
-        setState(() {
-          _adjuntos.addAll(elegidos
-              .where((p) => AppConfig.extensionPermitida(p.split('/').last))
-              .map((path) => File(path)));
-        });
       }
     } catch (e) {
       _showError('Error al seleccionar archivos');
