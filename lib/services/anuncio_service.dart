@@ -195,7 +195,7 @@ class AnuncioService {
       dlog('❌ El anuncio se guardó pero los adjuntos fallaron: $e');
       throw AdjuntosNoSubidosException(
         anuncio: anuncio,
-        motivo: e is ApiException ? e.message : 'Error de conexión',
+        motivo: mensajeDeError(e, 'Error de conexión'),
       );
     }
   }

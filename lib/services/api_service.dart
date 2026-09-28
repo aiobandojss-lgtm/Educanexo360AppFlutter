@@ -511,33 +511,61 @@ class ApiService {
     if (error.response != null) {
       // Error de respuesta del servidor
       final data = error.response!.data;
-      final message = data is Map
-          ? data['message'] ?? 'Error del servidor'
-          : 'Error del servidor';
+      final mensajeBackend = data is Map ? data['message'] : null;
       final statusCode = error.response!.statusCode ?? 0;
 
       return ApiException(
-        message: message,
+        message: mensajeBackend is String && mensajeBackend.trim().isNotEmpty
+            ? mensajeBackend
+            : 'Error del servidor',
         statusCode: statusCode,
         data: data,
       );
-    } else if (error.type == DioExceptionType.connectionTimeout ||
-        error.type == DioExceptionType.receiveTimeout) {
-      return ApiException(
-        message: 'Tiempo de espera agotado. Verifica tu conexión.',
-        statusCode: 0,
-      );
-    } else if (error.type == DioExceptionType.unknown) {
-      return ApiException(
-        message:
-            'No se pudo conectar con el servidor. Verifica tu conexión a internet.',
-        statusCode: 0,
-      );
-    } else {
-      return ApiException(
-        message: error.message ?? 'Error desconocido',
-        statusCode: 0,
-      );
+    }
+
+    // Sin respuesta del servidor: mensajes propios en español. Nunca
+    // error.message de Dio (en inglés y con el host de la API).
+    return ApiException(message: _mensajeDeRed(error.type), statusCode: 0);
+  }
+
+  // Mensajes de error de red que la app puede mostrar tal cual (statusCode 0)
+  static const String mensajeTiempoAgotado =
+      'Tiempo de espera agotado. Verifica tu conexión.';
+  static const String mensajeSinConexion =
+      'Sin conexión a internet. Revisa tu conexión e intenta de nuevo.';
+  static const String mensajeSubidaLenta =
+      'La subida tardó demasiado. Intenta con una conexión más estable.';
+  static const String mensajeCancelado = 'La operación se canceló.';
+  static const String mensajeConexionSegura =
+      'No se pudo establecer una conexión segura con el servidor.';
+  static const String mensajeErrorRed =
+      'No se pudo completar la operación. Intenta de nuevo.';
+
+  static const Set<String> mensajesDeRed = {
+    mensajeTiempoAgotado,
+    mensajeSinConexion,
+    mensajeSubidaLenta,
+    mensajeCancelado,
+    mensajeConexionSegura,
+    mensajeErrorRed,
+  };
+
+  static String _mensajeDeRed(DioExceptionType tipo) {
+    switch (tipo) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.receiveTimeout:
+        return mensajeTiempoAgotado;
+      case DioExceptionType.sendTimeout:
+        return mensajeSubidaLenta;
+      case DioExceptionType.connectionError:
+      case DioExceptionType.unknown:
+        return mensajeSinConexion;
+      case DioExceptionType.cancel:
+        return mensajeCancelado;
+      case DioExceptionType.badCertificate:
+        return mensajeConexionSegura;
+      case DioExceptionType.badResponse:
+        return mensajeErrorRed;
     }
   }
 
@@ -607,9 +635,15 @@ class ApiService {
 
 /// Mensaje para mostrar al usuario: el del backend si es un ApiException
 /// (p. ej. el 400 "Tipo de archivo no permitido"), si no [porDefecto].
+///
+/// Con statusCode > 0 el texto viene del backend. Con statusCode 0 (sin
+/// respuesta) solo se muestran los mensajes de red propios de la app: nunca
+/// texto técnico ni el host de la API.
 String mensajeDeError(Object error, [String porDefecto = 'Ocurrió un error']) {
-  if (error is ApiException && error.message.trim().isNotEmpty) {
-    return error.message;
+  if (error is ApiException) {
+    final mensaje = error.message.trim();
+    if (error.statusCode > 0 && mensaje.isNotEmpty) return mensaje;
+    if (ApiService.mensajesDeRed.contains(mensaje)) return mensaje;
   }
   return porDefecto;
 }
