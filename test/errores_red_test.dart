@@ -1,6 +1,7 @@
 // test/errores_red_test.dart
 // Errores de red en español, sin host ni texto técnico (auditoría E2)
 import 'dart:convert';
+import 'dart:io' show SocketException;
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
@@ -81,6 +82,49 @@ void main() {
       final e = await errorDe(() => ApiService().get('/anuncios'));
       expect(e.message, _sinTextoTecnico(), reason: '$tipo');
       expect(ApiService.mensajesDeRed, contains(e.message), reason: '$tipo');
+    }
+  });
+
+  test(
+      'F1: una descarga sin conexión termina en mensaje en español, sin Dio, '
+      'host ni Exception', () async {
+    ApiService().httpClientAdapter =
+        _fallaDeRed(DioExceptionType.connectionError);
+
+    Object? capturado;
+    try {
+      await ApiService().download(
+          '/tareas/t1/archivos/a1?tipo=referencia', '/tmp/no-se-escribe.pdf');
+    } catch (e) {
+      capturado = e;
+    }
+
+    expect(capturado, isA<ApiException>()); // ya no el DioException crudo
+    final texto = mensajeDeError(capturado!, 'No se pudo abrir el archivo.');
+    expect(texto, ApiService.mensajeSinConexion);
+    for (final prohibido in ['Dio', 'host', 'creativebycode', 'Exception']) {
+      expect(texto, isNot(contains(prohibido)), reason: prohibido);
+    }
+  });
+
+  test('F1: un DioException crudo o una excepción técnica nunca se muestran',
+      () {
+    final crudo = DioException(
+      requestOptions: RequestOptions(path: '/x'),
+      type: DioExceptionType.connectionError,
+      message: "Failed host lookup: 'educanexo360.creativebycode.com'",
+    );
+    final textos = [
+      mensajeDeError(crudo, 'genérico'),
+      mensajeDeError(Exception('Error al descargar: DioException [x]'), 'genérico'),
+      mensajeDeError(
+          const SocketException('Failed host lookup: creativebycode'), 'genérico'),
+      mensajeDeError(StateError('Bad state: No element'), 'genérico'),
+    ];
+    for (final texto in textos) {
+      for (final prohibido in ['Dio', 'host', 'creativebycode', 'Exception']) {
+        expect(texto, isNot(contains(prohibido)), reason: '$texto / $prohibido');
+      }
     }
   });
 

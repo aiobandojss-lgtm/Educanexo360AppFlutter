@@ -502,7 +502,10 @@ class ApiService {
     };
   }
 
-  Exception _handleError(DioException error) {
+  /// Convierte un DioException en un ApiException con mensaje para el usuario
+  static ApiException convertirError(DioException error) => _handleError(error);
+
+  static ApiException _handleError(DioException error) {
     dlog('🔍 Error details:');
     dlog('   Type: ${error.type}');
     dlog('   Message: ${error.message}');
@@ -615,7 +618,9 @@ class ApiService {
     } on DioException catch (e) {
       if (_isStaleError(e)) return _discarded();
       dlog('❌ Error en descarga: $e');
-      rethrow;
+      // Nunca el DioException crudo (inglés y con el host): mismo mapeo
+      // que el resto de peticiones
+      throw _handleError(e);
     } catch (e) {
       dlog('❌ Error en descarga: $e');
       rethrow;
@@ -639,13 +644,39 @@ class ApiService {
 /// Con statusCode > 0 el texto viene del backend. Con statusCode 0 (sin
 /// respuesta) solo se muestran los mensajes de red propios de la app: nunca
 /// texto técnico ni el host de la API.
-String mensajeDeError(Object error, [String porDefecto = 'Ocurrió un error']) {
+///
+/// También: un DioException crudo pasa por el mismo mapeo; las excepciones
+/// propias de la app (Exception('...'), AuthException) muestran su texto en
+/// español, salvo que parezca técnico. Todo lo demás, [porDefecto].
+String mensajeDeError(Object error,
+    [String porDefecto = 'Ocurrió un error. Intenta de nuevo.']) {
+  if (error is DioException) error = ApiService.convertirError(error);
   if (error is ApiException) {
     final mensaje = error.message.trim();
-    if (error.statusCode > 0 && mensaje.isNotEmpty) return mensaje;
+    if (error.statusCode > 0 && mensaje.isNotEmpty && !_pareceTecnico(mensaje)) {
+      return mensaje;
+    }
     if (ApiService.mensajesDeRed.contains(mensaje)) return mensaje;
+    return porDefecto;
+  }
+  final texto = error.toString();
+  for (final prefijo in const ['Exception: ', 'AuthException: ']) {
+    if (texto.startsWith(prefijo)) {
+      final mensaje = texto.substring(prefijo.length).trim();
+      if (mensaje.isNotEmpty && !_pareceTecnico(mensaje)) return mensaje;
+    }
   }
   return porDefecto;
+}
+
+// Red de seguridad: nunca mostrar texto técnico ni el host de la API
+bool _pareceTecnico(String mensaje) {
+  final m = mensaje.toLowerCase();
+  const marcas = [
+    'exception', 'dio', 'host', 'http', 'socket', 'failed', 'creativebycode',
+    'status:', 'null check', 'stack', "type '", 'subtype',
+  ];
+  return marcas.any(m.contains);
 }
 
 /// Marca de una respuesta que pertenece a una sesión ya cerrada (2B.4)

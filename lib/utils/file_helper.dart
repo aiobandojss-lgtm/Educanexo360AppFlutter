@@ -229,7 +229,9 @@ class FileHelper {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al abrir el archivo: $e'),
+            // Nunca el error crudo (inglés, técnico y con el host)
+            content: Text(mensajeDeError(
+                e, 'No se pudo abrir el archivo. Intenta de nuevo.')),
             backgroundColor: const Color(0xFFEF4444),
           ),
         );

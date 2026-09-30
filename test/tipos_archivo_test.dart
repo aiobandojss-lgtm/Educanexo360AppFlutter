@@ -44,6 +44,10 @@ void main() {
         message: 'Tipo de archivo no permitido: video.mp4', statusCode: 400);
     expect(mensajeDeError(error400, 'genérico'),
         'Tipo de archivo no permitido: video.mp4');
-    expect(mensajeDeError(Exception('x'), 'genérico'), 'genérico');
+    // Excepciones propias de la app (texto en español para el usuario)
+    expect(mensajeDeError(Exception('Debe seleccionar un curso'), 'genérico'),
+        'Debe seleccionar un curso');
+    // Cualquier otra cosa → el genérico
+    expect(mensajeDeError(StateError('Bad state'), 'genérico'), 'genérico');
   });
 }

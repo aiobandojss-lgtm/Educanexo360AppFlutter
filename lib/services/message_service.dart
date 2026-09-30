@@ -606,7 +606,7 @@ class MessageService {
       dlog('❌ Error descargando adjunto: $e');
       return {
         'success': false,
-        'message': 'Error al descargar: $e',
+        'message': mensajeDeError(e, 'No se pudo descargar el archivo.'),
       };
     }
   }
