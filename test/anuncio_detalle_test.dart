@@ -97,6 +97,14 @@ void main() {
     expect(find.text('Este anuncio ya no está disponible'), findsOneWidget);
   });
 
+  testWidgets('sin permiso (403): también "ya no está disponible"',
+      (tester) async {
+    ApiService().httpClientAdapter = _Adapter(403);
+    await abrirDetalle(tester);
+
+    expect(find.text('Este anuncio ya no está disponible'), findsOneWidget);
+  });
+
   testWidgets('si falla la carga no queda el spinner colgado',
       (tester) async {
     ApiService().httpClientAdapter = _Adapter(500);

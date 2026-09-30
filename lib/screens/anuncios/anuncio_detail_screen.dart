@@ -60,8 +60,9 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      // 404: el anuncio se borró (p. ej. abierto desde una notificación vieja)
-      _showError(e is ApiException && e.statusCode == 404
+      // 404: el anuncio se borró; 403: ya no es visible para este usuario
+      // (p. ej. despublicado o abierto desde una notificación vieja)
+      _showError(e is ApiException && (e.statusCode == 404 || e.statusCode == 403)
           ? _mensajeNoDisponible
           : 'Error al cargar el anuncio');
     }
