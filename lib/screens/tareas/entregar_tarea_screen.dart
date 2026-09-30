@@ -85,7 +85,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = mensajeDeError(e, 'No se pudo cargar la tarea.');
         _loading = false;
       });
     }
@@ -151,7 +151,7 @@ class _EntregarTareaScreenState extends State<EntregarTareaScreen> {
       context.pop();
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = mensajeDeError(e, 'No se pudo entregar la tarea.');
         _enviando = false;
         _success = false;
       });

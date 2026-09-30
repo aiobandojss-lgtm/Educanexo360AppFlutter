@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
-import '../../services/api_service.dart' show ApiException;
+import '../../services/api_service.dart' show ApiException, mensajeDeError;
 import '../../services/permission_service.dart';
 import '../../utils/file_helper.dart';
 import '../../widgets/common/gradient_header.dart';
@@ -528,7 +528,7 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al publicar: $e')),
+          SnackBar(content: Text(mensajeDeError(e, 'Error al publicar'))),
         );
       }
     }
@@ -575,7 +575,7 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al eliminar: $e')),
+            SnackBar(content: Text(mensajeDeError(e, 'Error al eliminar'))),
           );
         }
       }

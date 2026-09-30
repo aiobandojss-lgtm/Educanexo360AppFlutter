@@ -13,6 +13,7 @@ import '../../widgets/messages/bandeja_selector.dart';
 import '../../widgets/common/gradient_header.dart';
 import '../../services/permission_service.dart';
 import '../mensajes/create_message_screen.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 /// 📨 PANTALLA PRINCIPAL DE MENSAJES
 /// Lista de mensajes con 5 bandejas + búsqueda + FAB crear mensaje
@@ -381,7 +382,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al archivar: $e')),
+          SnackBar(content: Text(mensajeDeError(e, 'Error al archivar'))),
         );
       }
     }
@@ -398,7 +399,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al desarchivar: $e')),
+          SnackBar(content: Text(mensajeDeError(e, 'Error al desarchivar'))),
         );
       }
     }
@@ -415,7 +416,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar: $e')),
+          SnackBar(content: Text(mensajeDeError(e, 'Error al eliminar'))),
         );
       }
     }
@@ -432,7 +433,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al restaurar: $e')),
+          SnackBar(content: Text(mensajeDeError(e, 'Error al restaurar'))),
         );
       }
     }
@@ -449,7 +450,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar: $e')),
+          SnackBar(content: Text(mensajeDeError(e, 'Error al eliminar'))),
         );
       }
     }

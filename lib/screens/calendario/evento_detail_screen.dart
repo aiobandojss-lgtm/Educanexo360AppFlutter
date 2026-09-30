@@ -9,6 +9,7 @@ import '../../services/permission_service.dart';
 import '../../utils/file_helper.dart';
 import '../../widgets/common/gradient_header.dart';
 import 'create_evento_screen.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class EventoDetailScreen extends StatefulWidget {
   final String eventoId;
@@ -635,7 +636,7 @@ class _EventoDetailScreenState extends State<EventoDetailScreen> {
         _loadEvento(); // Recargar evento
       }
     } catch (e) {
-      _showError('Error al cambiar estado: $e');
+      _showError(mensajeDeError(e, 'Error al cambiar estado'));
     }
   }
 

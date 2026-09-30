@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class SearchStudentsScreen extends StatefulWidget {
   final String acudienteId;
@@ -82,7 +83,7 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error buscando estudiantes: $e'),
+          content: Text(mensajeDeError(e, 'Error buscando estudiantes')),
           backgroundColor: Colors.red,
         ),
       );
@@ -132,7 +133,7 @@ class _SearchStudentsScreenState extends State<SearchStudentsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error asociando estudiante: $e'),
+          content: Text(mensajeDeError(e, 'Error asociando estudiante')),
           backgroundColor: Colors.red,
         ),
       );

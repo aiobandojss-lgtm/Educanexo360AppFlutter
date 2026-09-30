@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/evento.dart';
 import '../services/calendario_service.dart';
+import '../services/api_service.dart' show mensajeDeError;
 
 /// 📅 PROVIDER DE CALENDARIO
 /// Maneja el estado de los eventos del calendario
@@ -156,7 +157,7 @@ class CalendarioProvider extends ChangeNotifier {
 
       _errorMessage = null;
     } catch (e) {
-      _errorMessage = 'Error al cargar eventos: $e';
+      _errorMessage = mensajeDeError(e, 'Error al cargar eventos');
       dlog('❌ $_errorMessage');
     } finally {
       _isLoading = false;

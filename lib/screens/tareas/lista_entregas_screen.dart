@@ -8,6 +8,7 @@ import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/estado_badge.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class ListaEntregasScreen extends StatefulWidget {
   final String tareaId;
@@ -61,7 +62,7 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cargar entregas: $e'),
+            content: Text(mensajeDeError(e, 'Error al cargar entregas')),
             backgroundColor: Colors.red,
           ),
         );

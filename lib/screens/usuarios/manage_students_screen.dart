@@ -7,6 +7,7 @@ import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
 import '../../widgets/common/gradient_header.dart';
 import 'search_students_screen.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class ManageStudentsScreen extends StatefulWidget {
   final String acudienteId;
@@ -42,7 +43,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
-      _showError('Error cargando estudiantes: $e');
+      _showError(mensajeDeError(e, 'Error cargando estudiantes'));
     }
   }
 
@@ -126,7 +127,7 @@ class _ManageStudentsScreenState extends State<ManageStudentsScreen> {
       // Recargar lista
       await _loadEstudiantes();
     } catch (e) {
-      _showError('Error desasociando estudiante: $e');
+      _showError(mensajeDeError(e, 'Error desasociando estudiante'));
     }
   }
 

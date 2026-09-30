@@ -59,7 +59,7 @@ class AuthProvider extends ChangeNotifier {
         dlog('🔐 AuthProvider: No hay sesión activa');
       }
     } catch (e) {
-      _errorMessage = 'Error al verificar sesión: $e';
+      _errorMessage = mensajeDeError(e, 'Error al verificar sesión');
       dlog('❌ AuthProvider: $_errorMessage');
     } finally {
       _setLoading(false);

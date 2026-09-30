@@ -10,6 +10,7 @@ import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
 import '../../services/auth_service.dart'; // ✅ AGREGADO
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class EditUserScreen extends StatefulWidget {
   final String? userId; // null = crear, con valor = editar
@@ -220,7 +221,7 @@ class _EditUserScreenState extends State<EditUserScreen> {
     } catch (e) {
       setState(() => _isSaving = false);
       dlog('❌ Error completo: $e');
-      _showError('Error al guardar usuario: ${e.toString()}');
+      _showError(mensajeDeError(e, 'Error al guardar usuario'));
     }
   }
 

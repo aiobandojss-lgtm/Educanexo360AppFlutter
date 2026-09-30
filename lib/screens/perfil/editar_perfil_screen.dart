@@ -7,6 +7,7 @@ import '../../services/usuario_service.dart';
 import '../../services/perfil_rol_service.dart';
 import '../../models/usuario.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class EditarPerfilScreen extends StatefulWidget {
   const EditarPerfilScreen({super.key});
@@ -110,7 +111,7 @@ class _EditarPerfilScreenState extends State<EditarPerfilScreen> {
       Navigator.pop(context);
     } catch (e) {
       dlog('❌ Error actualizando perfil: $e');
-      _showError('Error al actualizar el perfil: ${e.toString()}');
+      _showError(mensajeDeError(e, 'Error al actualizar el perfil'));
     } finally {
       if (mounted) {
         setState(() => _loading = false);

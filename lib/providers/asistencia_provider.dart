@@ -4,6 +4,7 @@ import '../utils/logger.dart';
 import 'package:flutter/foundation.dart';
 import '../models/asistencia.dart';
 import '../services/asistencia_service.dart';
+import '../services/api_service.dart' show mensajeDeError;
 
 /// 📋 PROVIDER DE ASISTENCIA
 /// Gestiona el estado de registros de asistencia
@@ -112,7 +113,7 @@ class AsistenciaProvider extends ChangeNotifier {
       _resumenes = resumenes;
       dlog('✅ Provider: ${_resumenes.length} resumenes cargados');
     } catch (e) {
-      _error = 'Error al cargar asistencia: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al cargar asistencia');
       dlog('❌ Provider error: $_error');
     } finally {
       _isLoading = false;
@@ -135,7 +136,7 @@ class AsistenciaProvider extends ChangeNotifier {
 
       dlog('✅ Provider: Registro cargado');
     } catch (e) {
-      _error = 'Error al cargar registro: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al cargar registro');
       dlog('❌ Provider error: $_error');
     } finally {
       _isLoading = false;
@@ -160,7 +161,7 @@ class AsistenciaProvider extends ChangeNotifier {
 
       dlog('✅ Provider: ${_cursos.length} cursos cargados');
     } catch (e) {
-      _error = 'Error al cargar cursos: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al cargar cursos');
       dlog('❌ Provider error: $_error');
     } finally {
       _isLoadingCursos = false;
@@ -186,7 +187,7 @@ class AsistenciaProvider extends ChangeNotifier {
 
       dlog('✅ Provider: ${_estudiantes.length} estudiantes cargados');
     } catch (e) {
-      _error = 'Error al cargar estudiantes: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al cargar estudiantes');
       dlog('❌ Provider error: $_error');
       _estudiantes = [];
     } finally {
@@ -213,7 +214,7 @@ class AsistenciaProvider extends ChangeNotifier {
 
       dlog('✅ Provider: ${_asignaturas.length} asignaturas cargadas');
     } catch (e) {
-      _error = 'Error al cargar asignaturas: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al cargar asignaturas');
       dlog('❌ Provider error: $_error');
       _asignaturas = [];
     } finally {
@@ -265,7 +266,7 @@ class AsistenciaProvider extends ChangeNotifier {
       dlog('✅ Provider: Registro creado');
       return registro;
     } catch (e) {
-      _error = 'Error al crear registro: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al crear registro');
       dlog('❌ Provider error: $_error');
       notifyListeners();
       return null;
@@ -321,7 +322,7 @@ class AsistenciaProvider extends ChangeNotifier {
       dlog('✅ Provider: Registro actualizado');
       return registro;
     } catch (e) {
-      _error = 'Error al actualizar registro: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al actualizar registro');
       dlog('❌ Provider error: $_error');
       notifyListeners();
       return null;
@@ -353,7 +354,7 @@ class AsistenciaProvider extends ChangeNotifier {
       dlog('✅ Provider: Registro finalizado');
       return true;
     } catch (e) {
-      _error = 'Error al finalizar registro: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al finalizar registro');
       dlog('❌ Provider error: $_error');
       notifyListeners();
       return false;
@@ -381,7 +382,7 @@ class AsistenciaProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = 'Error al eliminar registro: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al eliminar registro');
       dlog('❌ Provider error: $_error');
       notifyListeners();
       return false;
@@ -534,7 +535,7 @@ class AsistenciaProvider extends ChangeNotifier {
           '${_estadisticasEstudiante.ausentes} ausentes | '
           '${_estadisticasEstudiante.porcentajeAsistencia.toStringAsFixed(1)}%');
     } catch (e) {
-      _error = 'Error al cargar asistencia: ${e.toString()}';
+      _error = mensajeDeError(e, 'Error al cargar asistencia');
       dlog('❌ Provider error: $_error');
     } finally {
       _isLoadingMiAsistencia = false;

@@ -106,7 +106,7 @@ class AuthService {
       dlog('❌ Error inesperado: $e');
       return AuthResponse(
         success: false,
-        message: 'Error al iniciar sesión: ${e.toString()}',
+        message: mensajeDeError(e, 'Error al iniciar sesión'),
       );
     }
   }

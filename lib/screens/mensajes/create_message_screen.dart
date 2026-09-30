@@ -362,7 +362,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al guardar: $e'),
+            content: Text(mensajeDeError(e, 'Error al guardar')),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 4),
           ),

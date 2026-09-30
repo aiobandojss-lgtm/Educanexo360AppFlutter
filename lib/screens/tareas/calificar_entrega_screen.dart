@@ -11,6 +11,7 @@ import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/estado_badge.dart';
 import '../../widgets/tareas/archivo_tile.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class CalificarEntregaScreen extends StatefulWidget {
   final String tareaId;
@@ -81,7 +82,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cargar entrega: $e'),
+            content: Text(mensajeDeError(e, 'Error al cargar entrega')),
             backgroundColor: Colors.red,
           ),
         );
@@ -134,7 +135,7 @@ class _CalificarEntregaScreenState extends State<CalificarEntregaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al calificar: $e'),
+            content: Text(mensajeDeError(e, 'Error al calificar')),
             backgroundColor: Colors.red,
           ),
         );

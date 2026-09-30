@@ -17,6 +17,7 @@ import '../../widgets/tareas/estado_badge.dart';
 import '../../widgets/tareas/prioridad_badge.dart';
 import '../../widgets/tareas/archivo_tile.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class DetalleTareaScreen extends StatefulWidget {
   final String tareaId;
@@ -127,7 +128,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = mensajeDeError(e, 'No se pudo cargar la tarea.');
         _loading = false;
       });
     }
@@ -182,7 +183,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(mensajeDeError(e, 'Ocurrió un error. Intenta de nuevo.')),
           backgroundColor: Colors.red,
         ),
       );
@@ -232,7 +233,7 @@ class _DetalleTareaScreenState extends State<DetalleTareaScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error: ${e.toString()}'),
+          content: Text(mensajeDeError(e, 'Ocurrió un error. Intenta de nuevo.')),
           backgroundColor: Colors.red,
         ),
       );

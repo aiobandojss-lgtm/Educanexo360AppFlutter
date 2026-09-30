@@ -12,6 +12,7 @@ import '../../models/usuario.dart';
 import '../../providers/usuario_provider.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class UserDetailScreen extends StatefulWidget {
   final String userId;
@@ -180,7 +181,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           context.pop();
         }
       } catch (e) {
-        _showError('Error al eliminar usuario: $e');
+        _showError(mensajeDeError(e, 'Error al eliminar usuario'));
       }
     }
   }
@@ -265,7 +266,7 @@ class _UserDetailScreenState extends State<UserDetailScreen> {
           );
         }
       } catch (e) {
-        _showError('Error al cambiar contraseña: $e');
+        _showError(mensajeDeError(e, 'Error al cambiar contraseña'));
       }
     }
 

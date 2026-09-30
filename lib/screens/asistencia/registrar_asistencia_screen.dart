@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../models/asistencia.dart';
 import '../../providers/asistencia_provider.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 class RegistrarAsistenciaScreen extends StatefulWidget {
   final String? asistenciaId; // ✅ NUEVO - Para modo edición
@@ -107,7 +108,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
       dlog('✅ Datos cargados para edición — ${registro.estudiantes.length} estudiantes');
     } catch (e) {
       if (mounted) {
-        _mostrarMensaje('Error al cargar: ${e.toString()}', tipo: 'error');
+        _mostrarMensaje(mensajeDeError(e, 'Error al cargar'), tipo: 'error');
         context.go('/asistencia');
       }
     } finally {
@@ -253,7 +254,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _mostrarMensaje('Error: ${e.toString()}', tipo: 'error');
+        _mostrarMensaje(mensajeDeError(e, 'Ocurrió un error. Intenta de nuevo.'), tipo: 'error');
       }
     } finally {
       if (mounted) {

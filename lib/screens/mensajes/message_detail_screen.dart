@@ -11,6 +11,7 @@ import '../../providers/auth_provider.dart';
 import '../../services/message_service.dart';
 import '../../widgets/common/gradient_header.dart';
 import '../mensajes/create_message_screen.dart';
+import '../../services/api_service.dart' show mensajeDeError;
 
 /// ðŸ“– PANTALLA DE DETALLE DE MENSAJE
 /// Muestra el mensaje completo con todas sus caracterÃ­sticas
@@ -106,7 +107,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     } catch (e) {
       dlog('❌ Error cargando mensaje: $e');
       setState(() {
-        _error = e.toString();
+        _error = mensajeDeError(e, 'No se pudo cargar el mensaje.');
         _loading = false;
       });
     }
@@ -629,7 +630,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al archivar: $e')),
+          SnackBar(content: Text(mensajeDeError(e, 'Error al archivar'))),
         );
       }
     }
@@ -692,7 +693,7 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error al eliminar: $e')),
+            SnackBar(content: Text(mensajeDeError(e, 'Error al eliminar'))),
           );
         }
       }
@@ -757,7 +758,7 @@ class _ReportarMensajeDialogState extends State<_ReportarMensajeDialog> {
     } catch (e) {
       setState(() {
         _loading = false;
-        _error = e.toString().replaceFirst('Exception: ', '');
+        _error = mensajeDeError(e, 'No se pudo enviar el reporte.');
       });
     }
   }

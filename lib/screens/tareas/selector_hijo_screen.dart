@@ -183,7 +183,7 @@ class _SelectorHijoScreenState extends State<SelectorHijoScreen> {
       dlog('   Stack: ${stackTrace.toString().split('\n').take(5).join('\n')}');
 
       setState(() {
-        _error = 'Error al cargar estudiantes: $e';
+        _error = mensajeDeError(e, 'Error al cargar estudiantes');
         _isLoading = false;
       });
     }

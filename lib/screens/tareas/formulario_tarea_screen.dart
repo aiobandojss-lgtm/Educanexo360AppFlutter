@@ -92,7 +92,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error al cargar datos: $e'),
+            content: Text(mensajeDeError(e, 'Error al cargar datos')),
             backgroundColor: Colors.red,
           ),
         );
@@ -311,7 +311,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error al eliminar archivo: $e'),
+              content: Text(mensajeDeError(e, 'Error al eliminar archivo')),
               backgroundColor: Colors.red,
             ),
           );
