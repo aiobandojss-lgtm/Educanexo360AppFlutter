@@ -79,21 +79,25 @@ class _MiAsistenciaScreenState extends State<MiAsistenciaScreen>
   // Ciclo de vida
   // ─────────────────────────────────
 
+  // Referencia guardada: en dispose el context ya no se puede usar
+  late final AsistenciaProvider _provider;
+
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    context.read<AsistenciaProvider>().prepareLoadingMiAsistencia();
+    _provider = context.read<AsistenciaProvider>();
+    _provider.prepareLoadingMiAsistencia();
     WidgetsBinding.instance.addPostFrameCallback((_) => _cargarDatos());
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) return;
-      context.read<AsistenciaProvider>().limpiarMiAsistencia();
-    });
+    // Antes: context.read después de desmontar (lanzaba al salir)
+    final provider = _provider;
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => provider.limpiarMiAsistencia());
     super.dispose();
   }
 

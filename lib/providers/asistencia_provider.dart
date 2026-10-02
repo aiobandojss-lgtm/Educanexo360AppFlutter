@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../models/asistencia.dart';
 import '../services/asistencia_service.dart';
 import '../services/api_service.dart' show mensajeDeError;
+import '../utils/reintento.dart';
 
 /// 📋 PROVIDER DE ASISTENCIA
 /// Gestiona el estado de registros de asistencia
@@ -506,10 +507,14 @@ class AsistenciaProvider extends ChangeNotifier {
 
       // GET /asistencia/estadisticas/estudiante/:id?desde=...&hasta=...
       // Devuelve datos del estudiante específico (no del salón completo).
-      final data = await _asistenciaService.obtenerEstadisticasPorEstudiante(
-        estudianteId: estudianteId,
-        desde: desde,
-        hasta: hasta,
+      // Reintento automático único si la primera petición expira o falla
+      // la red (G6): antes salía "Reintentar" y al reintentar funcionaba
+      final data = await conReintentoUnico(
+        () => _asistenciaService.obtenerEstadisticasPorEstudiante(
+          estudianteId: estudianteId,
+          desde: desde,
+          hasta: hasta,
+        ),
       );
 
       final estudianteJson = data['estudiante'] as Map<String, dynamic>? ?? {};
