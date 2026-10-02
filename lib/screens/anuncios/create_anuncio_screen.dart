@@ -344,13 +344,16 @@ class _CreateAnuncioScreenState extends State<CreateAnuncioScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
-                  'Documentos Adjuntos',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                const Expanded(
+                  child: Text(
+                    'Documentos Adjuntos',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
+                const SizedBox(width: 8),
                 SizedBox(
                   height: 32,
                   child: ElevatedButton.icon(

@@ -472,13 +472,16 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
 
   Widget _buildEmptyState() {
     return const Center(
-      child: Column(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(24),
+        child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text('📢', style: TextStyle(fontSize: 64)),
           SizedBox(height: 16),
           Text(
             'No se encontraron anuncios',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
@@ -487,12 +490,14 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
           SizedBox(height: 8),
           Text(
             'Intenta ajustar los filtros de búsqueda',
+            textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 14,
               color: Colors.grey,
             ),
           ),
         ],
+      ),
       ),
     );
   }

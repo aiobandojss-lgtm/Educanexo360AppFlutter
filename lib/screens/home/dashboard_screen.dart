@@ -592,13 +592,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 const Icon(Icons.mail_outline,
                     color: Color(0xFF059669), size: 18),
                 const SizedBox(width: 8),
-                const Text(
-                  'ÚLTIMO MENSAJE',
-                  style: TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
-                    color: Color(0xFF059669),
+                const Flexible(
+                  child: Text(
+                    'ÚLTIMO MENSAJE',
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1.2,
+                      color: Color(0xFF059669),
+                    ),
                   ),
                 ),
                 if (_totalMensajesSinLeer > 1) ...[

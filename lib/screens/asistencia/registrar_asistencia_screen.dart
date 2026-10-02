@@ -49,14 +49,21 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
     super.initState();
 
     _mostrarOpcionesAvanzadas = widget.isEditMode;
+    // En edición, el spinner desde el primer frame (la carga va después)
+    _cargandoDatos = widget.isEditMode && widget.asistenciaId != null;
 
-    if (widget.isEditMode && widget.asistenciaId != null) {
-      // ✅ Modo edición: cargar datos existentes
-      _cargarDatosExistentes();
-    } else {
-      // Modo creación: cargar cursos normalmente
-      _cargarCursos();
-    }
+    // Después del primer frame: las cargas notifican al AsistenciaProvider y
+    // hacerlo dentro de initState es notificar durante el build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.isEditMode && widget.asistenciaId != null) {
+        // ✅ Modo edición: cargar datos existentes
+        _cargarDatosExistentes();
+      } else {
+        // Modo creación: cargar cursos normalmente
+        _cargarCursos();
+      }
+    });
   }
 
   @override
@@ -339,12 +346,19 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
               key: _formKey,
               child: Column(
                 children: [
-            // 📋 INFORMACIÓN GENERAL
-            _buildInfoGeneralPanel(),
-
-            // 👥 LISTA DE ESTUDIANTES
+            // 📋 INFORMACIÓN GENERAL + 👥 LISTA: un solo desplazamiento. Antes
+            // el panel tenía altura fija y en pantallas pequeñas (o con fuente
+            // grande) la lista quedaba sin espacio y la barra de resumen se
+            // desbordaba ("BOTTOM OVERFLOWED").
             Expanded(
-              child: _buildListaEstudiantes(),
+              child: Consumer<AsistenciaProvider>(
+                builder: (context, provider, _) => CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(child: _buildInfoGeneralPanel()),
+                    ..._buildListaEstudiantes(provider),
+                  ],
+                ),
+              ),
             ),
 
             // 💾 BOTÓN GUARDAR
@@ -566,15 +580,18 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
                     color: const Color(0xFF047857),
                   ),
                   const SizedBox(width: 4),
-                  Text(
+                  Flexible(
+                    child: Text(
                     _mostrarOpcionesAvanzadas
                         ? 'Ocultar opciones'
                         : 'Opciones avanzadas',
+                    overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
                       fontSize: 13,
                       color: Color(0xFF047857),
                       fontWeight: FontWeight.w500,
                     ),
+                  ),
                   ),
                 ],
               ),
@@ -704,15 +721,21 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
   // 👥 LISTA DE ESTUDIANTES
   // ========================================
 
-  Widget _buildListaEstudiantes() {
-    return Consumer<AsistenciaProvider>(
-      builder: (context, provider, _) {
+  List<Widget> _buildListaEstudiantes(AsistenciaProvider provider) {
         if (_cargandoEstudiantes) {
-          return const Center(child: CircularProgressIndicator());
+          return const [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ];
         }
 
         if (provider.estudiantes.isEmpty) {
-          return Center(
+          return [
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Center(
             child: Padding(
               padding: const EdgeInsets.all(32),
               child: Column(
@@ -724,6 +747,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
                     _cursoSeleccionado == null
                         ? 'Selecciona un curso para comenzar'
                         : 'No hay estudiantes en este curso',
+                    textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
                       color: Colors.grey[600],
@@ -732,27 +756,23 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
                 ],
               ),
             ),
-          );
-        }
-
-        return Column(
-          children: [
-            _buildAccionesRapidas(),
-            _buildContadorEstudiantes(provider),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: provider.estudiantes.length,
-                itemBuilder: (context, index) {
-                  final estudiante = provider.estudiantes[index];
-                  return _buildEstudianteCard(estudiante);
-                },
               ),
             ),
-          ],
-        );
-      },
-    );
+          ];
+        }
+
+        return [
+          SliverToBoxAdapter(child: _buildAccionesRapidas()),
+          SliverToBoxAdapter(child: _buildContadorEstudiantes(provider)),
+          SliverPadding(
+            padding: const EdgeInsets.all(16),
+            sliver: SliverList.builder(
+              itemCount: provider.estudiantes.length,
+              itemBuilder: (context, index) =>
+                  _buildEstudianteCard(provider.estudiantes[index]),
+            ),
+          ),
+        ];
   }
 
   Widget _buildAccionesRapidas() {
@@ -764,9 +784,12 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
           bottom: BorderSide(color: Colors.grey[200]!),
         ),
       ),
-      child: Row(
+      child: Wrap(
+        crossAxisAlignment: WrapCrossAlignment.center,
+        runSpacing: 6,
         children: [
-          Flexible(
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
             child: Text(
               'Marcar todos como:',
               style: TextStyle(
@@ -774,10 +797,8 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
                 color: Colors.grey[700],
                 fontWeight: FontWeight.w500,
               ),
-              overflow: TextOverflow.ellipsis,
             ),
           ),
-          const SizedBox(width: 8),
           _buildBotonRapido(
             label: 'Presentes',
             icon: Icons.check_circle,
@@ -1002,8 +1023,11 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
           bottom: BorderSide(color: Color(0xFFBBF7D0)),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
+      child: Wrap(
+        alignment: WrapAlignment.spaceAround,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 12,
+        runSpacing: 4,
         children: [
           _buildMiniStat(Icons.check_circle, Colors.green, presentes, 'Pres.'),
           _buildMiniStat(Icons.cancel, Colors.red, ausentes, 'Aus.'),

@@ -312,6 +312,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
             Consumer<AsistenciaProvider>(
               builder: (context, provider, _) {
                 return DropdownButtonFormField<String>(
+                  isExpanded: true, // nombres largos con "…"
                   initialValue: _cursoSeleccionado,
                   decoration: InputDecoration(
                     labelText: 'Curso',
@@ -330,7 +331,8 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                     ...provider.cursos.map((curso) {
                       return DropdownMenuItem(
                         value: curso.id,
-                        child: Text(curso.nombreCompleto),
+                        child: Text(curso.nombreCompleto,
+                            overflow: TextOverflow.ellipsis),
                       );
                     }),
                   ],
@@ -809,7 +811,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
 
   Widget _buildEmpty() {
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -818,6 +820,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
             const SizedBox(height: 16),
             Text(
               'No hay registros de asistencia',
+              textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w500,

@@ -705,6 +705,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
+          isExpanded: true, // nombres largos con "…" en vez de desbordar
           initialValue: _cursoSeleccionado,
           decoration: InputDecoration(
             border: OutlineInputBorder(
@@ -714,11 +715,13 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             fillColor: Colors.grey[50],
             prefixIcon: const Icon(Icons.group),
           ),
-          hint: const Text('Selecciona un curso'),
+          hint: const Text('Selecciona un curso',
+              overflow: TextOverflow.ellipsis),
           items: _cursos.map((curso) {
             return DropdownMenuItem<String>(
               value: curso['_id'],
-              child: Text('${curso['nivel']} ${curso['nombre']}'),
+              child: Text('${curso['nivel']} ${curso['nombre']}',
+                  overflow: TextOverflow.ellipsis),
             );
           }).toList(),
           onChanged: (value) {
@@ -760,6 +763,7 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: _asignaturaSeleccionada,
           decoration: InputDecoration(
             border: OutlineInputBorder(
@@ -769,15 +773,18 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             fillColor: Colors.grey[50],
             prefixIcon: const Icon(Icons.book),
           ),
-          hint: Text(_cursoSeleccionado == null
-              ? 'Primero selecciona un curso'
-              : 'Selecciona una asignatura'),
+          hint: Text(
+              _cursoSeleccionado == null
+                  ? 'Primero selecciona un curso'
+                  : 'Selecciona una asignatura',
+              overflow: TextOverflow.ellipsis),
           items: _cursoSeleccionado == null
               ? []
               : _asignaturasFiltradas.map((asignatura) {
                   return DropdownMenuItem<String>(
                     value: asignatura['_id'],
-                    child: Text(asignatura['nombre']),
+                    child: Text(asignatura['nombre'],
+                        overflow: TextOverflow.ellipsis),
                   );
                 }).toList(),
           onChanged: _cursoSeleccionado == null

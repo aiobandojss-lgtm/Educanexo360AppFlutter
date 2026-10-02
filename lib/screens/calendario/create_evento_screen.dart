@@ -431,11 +431,13 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.w500,
+          Expanded(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           Switch(
@@ -485,9 +487,12 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
                       const Icon(Icons.calendar_today,
                           size: 18, color: Color(0xFF059669)),
                       const SizedBox(width: 8),
-                      Text(
-                        DateFormat('d MMM yyyy', 'es_ES').format(date),
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                      Flexible(
+                        child: Text(
+                          DateFormat('d MMM yyyy', 'es_ES').format(date),
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        ),
                       ),
                     ],
                   ),
@@ -511,9 +516,13 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
                         const Icon(Icons.access_time,
                             size: 18, color: Color(0xFF059669)),
                         const SizedBox(width: 8),
-                        Text(
-                          time.format(context),
-                          style: const TextStyle(fontWeight: FontWeight.w500),
+                        Flexible(
+                          child: Text(
+                            time.format(context),
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                const TextStyle(fontWeight: FontWeight.w500),
+                          ),
                         ),
                       ],
                     ),

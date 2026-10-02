@@ -577,7 +577,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
         tareaProvider.searchQuery.isNotEmpty;
 
     return Center(
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,

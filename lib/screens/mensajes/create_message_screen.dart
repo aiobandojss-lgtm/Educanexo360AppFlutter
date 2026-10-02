@@ -611,12 +611,14 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                 const Icon(Icons.people_outline,
                     size: 22, color: Color(0xFF059669)),
                 const SizedBox(width: 8),
-                Text(
-                  isReadOnly ? 'Para:' : 'Destinatarios individuales',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF059669),
+                Expanded(
+                  child: Text(
+                    isReadOnly ? 'Para:' : 'Destinatarios individuales',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF059669),
+                    ),
                   ),
                 ),
               ],
@@ -689,12 +691,14 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
               children: [
                 Icon(Icons.school_outlined, size: 22, color: Color(0xFF059669)),
                 SizedBox(width: 8),
-                Text(
-                  'Envío masivo a curso',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF059669),
+                Expanded(
+                  child: Text(
+                    'Envío masivo a curso',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF059669),
+                    ),
                   ),
                 ),
               ],
@@ -885,12 +889,14 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
                 const Icon(Icons.attach_file,
                     size: 22, color: Color(0xFF059669)),
                 const SizedBox(width: 8),
-                Text(
-                  'Archivos adjuntos${_attachments.isNotEmpty ? " (${_attachments.length})" : ""}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF059669),
+                Expanded(
+                  child: Text(
+                    'Archivos adjuntos${_attachments.isNotEmpty ? " (${_attachments.length})" : ""}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF059669),
+                    ),
                   ),
                 ),
               ],
