@@ -403,13 +403,22 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
   // Ã°Å¸â€˜Â¥ MOSTRAR SELECTOR DE DESTINATARIOS
   void _showRecipientSelector() async {
     final messageProvider = context.read<MessageProvider>();
-    final recipients = messageProvider.availableRecipients;
+    // Si la carga falló, reintentar al abrir
+    if (messageProvider.availableRecipients.isEmpty &&
+        !messageProvider.cargandoDestinatarios) {
+      messageProvider.loadRecipientsAndCourses();
+    }
 
     final selected = await showDialog<List<User>>(
       context: context,
-      builder: (context) => _RecipientSelectorDialog(
-        recipients: recipients,
-        selectedRecipients: _selectedRecipients,
+      // Escucha el provider: indicador mientras carga y la lista al llegar
+      // (antes recibía una copia, vacía si la carga no había terminado)
+      builder: (context) => Consumer<MessageProvider>(
+        builder: (context, provider, _) => _RecipientSelectorDialog(
+          recipients: provider.availableRecipients,
+          cargando: provider.cargandoDestinatarios,
+          selectedRecipients: _selectedRecipients,
+        ),
       ),
     );
 
@@ -424,11 +433,19 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
   // Ã°Å¸ÂÂ« MOSTRAR SELECTOR DE CURSOS
   void _showCourseSelector() async {
     final messageProvider = context.read<MessageProvider>();
-    final courses = messageProvider.availableCourses;
+    if (messageProvider.availableCourses.isEmpty &&
+        !messageProvider.cargandoDestinatarios) {
+      messageProvider.loadRecipientsAndCourses();
+    }
 
     final selected = await showDialog<Course>(
       context: context,
-      builder: (context) => _CourseSelectorDialog(courses: courses),
+      builder: (context) => Consumer<MessageProvider>(
+        builder: (context, provider, _) => _CourseSelectorDialog(
+          courses: provider.availableCourses,
+          cargando: provider.cargandoDestinatarios,
+        ),
+      ),
     );
 
     if (selected != null) {
@@ -1042,10 +1059,12 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
 class _RecipientSelectorDialog extends StatefulWidget {
   final List<User> recipients;
   final List<User> selectedRecipients;
+  final bool cargando;
 
   const _RecipientSelectorDialog({
     required this.recipients,
     required this.selectedRecipients,
+    this.cargando = false,
   });
 
   @override
@@ -1205,7 +1224,8 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
 
             // LISTA DE USUARIOS
             Expanded(
-              child: filteredRecipients.isEmpty && _searching
+              child: filteredRecipients.isEmpty &&
+                      (_searching || widget.cargando)
                   ? const Center(
                       child: CircularProgressIndicator(
                           color: Color(0xFF059669)))
@@ -1319,8 +1339,9 @@ class _RecipientSelectorDialogState extends State<_RecipientSelectorDialog> {
 
 class _CourseSelectorDialog extends StatelessWidget {
   final List<Course> courses;
+  final bool cargando;
 
-  const _CourseSelectorDialog({required this.courses});
+  const _CourseSelectorDialog({required this.courses, this.cargando = false});
 
   @override
   Widget build(BuildContext context) {
@@ -1365,7 +1386,11 @@ class _CourseSelectorDialog extends StatelessWidget {
 
             // LISTA DE CURSOS
             Expanded(
-              child: courses.isEmpty
+              child: courses.isEmpty && cargando
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                          color: Color(0xFF059669)))
+                  : courses.isEmpty
                   ? Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,

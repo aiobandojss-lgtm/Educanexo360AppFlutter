@@ -585,7 +585,21 @@ class MessageProvider with ChangeNotifier {
   // 📎 CARGAR DESTINATARIOS Y CURSOS
   // ========================================
 
-  Future<void> loadRecipientsAndCourses() async {
+  // Destinatarios y cursos en carga: los selectores muestran un indicador y
+  // reciben la lista al llegar (antes tomaban una copia vacía, G3)
+  bool _cargandoDestinatarios = false;
+  bool get cargandoDestinatarios => _cargandoDestinatarios;
+  Future<void>? _cargaDestinatarios;
+
+  Future<void> loadRecipientsAndCourses() {
+    // Una sola carga a la vez; sin notificar al inicio (se llama desde
+    // initState y notificar ahí sería hacerlo durante el build)
+    return _cargaDestinatarios ??= _cargarDestinatarios()
+        .whenComplete(() => _cargaDestinatarios = null);
+  }
+
+  Future<void> _cargarDestinatarios() async {
+    _cargandoDestinatarios = true;
     try {
       final results = await Future.wait([
         _messageService.getAvailableRecipients(),
@@ -594,10 +608,11 @@ class MessageProvider with ChangeNotifier {
 
       _availableRecipients = results[0] as List<User>;
       _availableCourses = results[1] as List<Course>;
-
-      notifyListeners();
     } catch (e) {
       dlog('❌ Error cargando destinatarios/cursos: $e');
+    } finally {
+      _cargandoDestinatarios = false;
+      notifyListeners();
     }
   }
 
