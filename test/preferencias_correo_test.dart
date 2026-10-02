@@ -126,6 +126,57 @@ void main() {
       expect(request.data, {'email': 'ninguno'});
       expect(pref.email, PreferenciaCorreo.ninguno);
     });
+
+    // G9: "No se pudo guardar tu preferencia" en redes lentas
+    test('PUT con timeout: reintenta una vez y guarda', () async {
+      var peticiones = 0;
+      final adapter = _Adapter((o) async {
+        peticiones++;
+        if (peticiones == 1) {
+          throw DioException(
+              requestOptions: o, type: DioExceptionType.receiveTimeout);
+        }
+        return _json(200, _respuesta('resumen'));
+      });
+      ApiService().httpClientAdapter = adapter;
+
+      final pref = await PreferenciasService(esperaReintento: Duration.zero)
+          .actualizar(PreferenciaCorreo.resumen);
+
+      expect(adapter.requests.length, 2);
+      expect(pref.email, PreferenciaCorreo.resumen);
+    });
+
+    test('GET con error de red: reintenta una vez', () async {
+      var peticiones = 0;
+      final adapter = _Adapter((o) async {
+        peticiones++;
+        if (peticiones == 1) {
+          throw DioException(
+              requestOptions: o, type: DioExceptionType.connectionError);
+        }
+        return _json(200, _respuesta('inmediato'));
+      });
+      ApiService().httpClientAdapter = adapter;
+
+      final pref =
+          await PreferenciasService(esperaReintento: Duration.zero).obtener();
+
+      expect(adapter.requests.length, 2);
+      expect(pref!.email, PreferenciaCorreo.inmediato);
+    });
+
+    test('PUT con error del servidor (400): no reintenta', () async {
+      final adapter = _Adapter((o) async =>
+          _json(400, {'success': false, 'message': 'Preferencia inválida'}));
+      ApiService().httpClientAdapter = adapter;
+
+      await expectLater(
+          PreferenciasService(esperaReintento: Duration.zero)
+              .actualizar(PreferenciaCorreo.ninguno),
+          throwsA(isA<ApiException>()));
+      expect(adapter.requests.length, 1);
+    });
   });
 
   group('PreferenciasCorreoCard', () {
