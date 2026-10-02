@@ -90,7 +90,15 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
     return PermissionService.canAccess('anuncios.editar');
   }
 
+  // Mismo criterio del backend (G10): el creador (p. ej. el DOCENTE que lo
+  // publicó) o quien tenga el permiso de eliminar (ADMIN). A RECTOR y
+  // COORDINADOR el backend les responde 403 con anuncios ajenos.
   bool _canDelete() {
+    if (_anuncio == null) return false;
+    final currentUser = PermissionService.getCurrentUser();
+    if (currentUser != null && _anuncio!.creador.id == currentUser.id) {
+      return true;
+    }
     return PermissionService.canAccess('anuncios.eliminar');
   }
 

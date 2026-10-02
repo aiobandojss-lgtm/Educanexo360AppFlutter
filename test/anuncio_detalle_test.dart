@@ -4,13 +4,16 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:dio/dio.dart';
+import 'package:educanexo360_app/models/usuario.dart';
 import 'package:educanexo360_app/providers/anuncio_provider.dart';
 import 'package:educanexo360_app/screens/anuncios/anuncio_detail_screen.dart';
 import 'package:educanexo360_app/services/api_service.dart';
+import 'package:educanexo360_app/services/permission_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -130,5 +133,48 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsNothing);
     expect(find.text('Inicio'), findsOneWidget);
     expect(find.text('Error al cargar el anuncio'), findsOneWidget);
+  });
+
+  // G10: el anuncio del adaptador lo creó 'u1'
+  group('botón eliminar en el detalle', () {
+    setUpAll(() => initializeDateFormatting('es_ES'));
+
+    Future<bool> veEliminar(WidgetTester tester,
+        {required String id, required String tipo}) async {
+      PermissionService.setCurrentUser(Usuario.fromJson({
+        '_id': id,
+        'nombre': 'Prueba',
+        'apellidos': 'Uno',
+        'email': 'p@colegio.edu.co',
+        'tipo': tipo,
+        'escuelaId': 'e1',
+      }));
+      ApiService().httpClientAdapter = _Adapter(200);
+      await abrirDetalle(tester);
+      final ve = find.byIcon(Icons.delete).evaluate().isNotEmpty;
+      PermissionService.clearCurrentUser();
+      return ve;
+    }
+
+    testWidgets('el DOCENTE creador lo ve', (tester) async {
+      expect(await veEliminar(tester, id: 'u1', tipo: 'DOCENTE'), isTrue);
+    });
+
+    testWidgets('el ADMIN lo ve aunque no sea el creador', (tester) async {
+      expect(await veEliminar(tester, id: 'u2', tipo: 'ADMIN'), isTrue);
+    });
+
+    testWidgets('otro DOCENTE no lo ve', (tester) async {
+      expect(await veEliminar(tester, id: 'u2', tipo: 'DOCENTE'), isFalse);
+    });
+
+    testWidgets('RECTOR con anuncio ajeno no lo ve (el backend da 403)',
+        (tester) async {
+      expect(await veEliminar(tester, id: 'u2', tipo: 'RECTOR'), isFalse);
+    });
+
+    testWidgets('el RECTOR creador lo ve', (tester) async {
+      expect(await veEliminar(tester, id: 'u1', tipo: 'RECTOR'), isTrue);
+    });
   });
 }
