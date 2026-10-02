@@ -162,6 +162,7 @@ class _SelectorHijosAsistenciaState extends State<_SelectorHijosAsistencia> {
         children: [
           const GradientHeader(
             title: 'Asistencia',
+            showBack: true,
             leadingIcon: Icons.fact_check,
           ),
           Expanded(
@@ -252,6 +253,7 @@ class _SinHijosScreen extends StatelessWidget {
         children: [
           const GradientHeader(
             title: 'Asistencia',
+            showBack: true,
             leadingIcon: Icons.fact_check,
           ),
           Expanded(

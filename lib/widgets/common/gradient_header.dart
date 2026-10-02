@@ -1,6 +1,7 @@
 // lib/widgets/common/gradient_header.dart
 
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import '../../config/theme.dart';
 
 /// Encabezado unificado de la aplicación (Patrón A).
@@ -17,6 +18,17 @@ import '../../config/theme.dart';
 /// - Pantallas de detalle/gestión: `showBack` + `leadingIcon`.
 /// - Acciones a la derecha (filtros, cambio de vista): `actions`.
 /// - Contenido extra debajo (chips de estadísticas, TabBar): `bottom`.
+/// Vuelve a la pantalla anterior; si no hay (pantalla abierta con go() o
+/// desde una notificación), va al inicio en vez de no hacer nada (G4).
+void volverOInicio(BuildContext context) {
+  final navigator = Navigator.of(context);
+  if (navigator.canPop()) {
+    navigator.pop();
+    return;
+  }
+  GoRouter.maybeOf(context)?.go('/');
+}
+
 class GradientHeader extends StatelessWidget {
   /// Título principal del encabezado.
   final String title;
@@ -80,7 +92,7 @@ class GradientHeader extends StatelessWidget {
                   if (showBack)
                     _HeaderIconButton(
                       icon: Icons.arrow_back,
-                      onTap: onBack ?? () => Navigator.of(context).maybePop(),
+                      onTap: onBack ?? () => volverOInicio(context),
                       tooltip: 'Atrás',
                     ),
                   if (leadingIcon != null) ...[

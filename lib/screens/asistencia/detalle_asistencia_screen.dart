@@ -116,7 +116,12 @@ class _DetalleAsistenciaScreenState extends State<DetalleAsistenciaScreen> {
 
       if (exito && mounted) {
         _mostrarMensaje('Registro eliminado exitosamente', tipo: 'exito');
-        context.go('/asistencia');
+        // Volver a la lista conservando su botón de volver
+        if (context.canPop()) {
+          context.pop(true);
+        } else {
+          context.go('/asistencia');
+        }
       } else if (mounted) {
         _mostrarMensaje('Error al eliminar el registro', tipo: 'error');
       }

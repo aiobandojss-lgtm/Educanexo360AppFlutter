@@ -385,8 +385,9 @@ class _FormularioTareaScreenState extends State<FormularioTareaScreen> {
             ),
           );
 
-          // Navegar al detalle de la tarea creada
-          context.go('/tareas/${tarea.id}');
+          // Detalle de la tarea creada en lugar del formulario, conservando
+          // la lista debajo (con go() el botón de volver no tenía a dónde ir)
+          context.pushReplacement('/tareas/${tarea.id}');
         }
       } else {
         // ACTUALIZAR

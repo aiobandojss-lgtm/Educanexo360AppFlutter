@@ -39,6 +39,7 @@ import '../screens/tareas/calificar_entrega_screen.dart';
 import '../screens/tareas/tareas_wrapper.dart';
 import '../screens/tareas/selector_hijo_screen.dart';
 import '../screens/tareas/tareas_hijo_screen.dart';
+import '../widgets/common/gradient_header.dart';
 
 /// Configuración de rutas de la aplicación con GoRouter
 class AppRoutes {
@@ -154,7 +155,18 @@ class AppRoutes {
           path: calificaciones,
           name: 'calificaciones',
           builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Calificaciones - Próximamente')),
+            body: Column(
+              children: [
+                GradientHeader(
+                  title: 'Calificaciones',
+                  showBack: true,
+                  leadingIcon: Icons.grade,
+                ),
+                Expanded(
+                  child: Center(child: Text('Calificaciones - Próximamente')),
+                ),
+              ],
+            ),
           ),
         ),
 

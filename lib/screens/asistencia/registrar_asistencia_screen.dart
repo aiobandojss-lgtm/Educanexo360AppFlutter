@@ -90,7 +90,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
             'No se pudo cargar el registro. Verifica tu conexión.',
             tipo: 'error',
           );
-          context.go('/asistencia');
+          _salir('/asistencia');
         }
         return;
       }
@@ -116,7 +116,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
     } catch (e) {
       if (mounted) {
         _mostrarMensaje(mensajeDeError(e, 'Error al cargar'), tipo: 'error');
-        context.go('/asistencia');
+        _salir('/asistencia');
       }
     } finally {
       if (mounted) setState(() => _cargandoDatos = false);
@@ -229,7 +229,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
 
         if (registro != null && mounted) {
           _mostrarMensaje('Asistencia actualizada exitosamente', tipo: 'exito');
-          context.go('/asistencia/${widget.asistenciaId}');
+          _salir('/asistencia/${widget.asistenciaId}');
         } else if (mounted) {
           _mostrarMensaje('Error al actualizar la asistencia', tipo: 'error');
         }
@@ -254,7 +254,7 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
 
         if (registro != null && mounted) {
           _mostrarMensaje('Asistencia registrada exitosamente', tipo: 'exito');
-          context.go('/asistencia');
+          _salir('/asistencia');
         } else if (mounted) {
           _mostrarMensaje('Error al guardar la asistencia', tipo: 'error');
         }
@@ -267,6 +267,16 @@ class _RegistrarAsistenciaScreenState extends State<RegistrarAsistenciaScreen> {
       if (mounted) {
         setState(() => _guardando = false);
       }
+    }
+  }
+
+  /// Vuelve a la pantalla anterior (que conserva su propio botón de volver);
+  /// si no hay, abre [ruta]. Antes go() dejaba la pantalla sin a dónde volver.
+  void _salir(String ruta) {
+    if (context.canPop()) {
+      context.pop(true);
+    } else {
+      context.go(ruta);
     }
   }
 

@@ -123,7 +123,8 @@ class _MiAsistenciaScreenState extends State<MiAsistenciaScreen>
         children: [
           GradientHeader(
             title: widget.nombreEstudiante,
-            showBack: widget.onBack != null,
+            // Siempre: sin onBack vuelve a la pantalla anterior o al inicio
+            showBack: true,
             onBack: widget.onBack,
             leadingIcon: Icons.fact_check,
             bottom: TabBar(
