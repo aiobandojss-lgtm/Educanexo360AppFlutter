@@ -416,6 +416,18 @@ class Tarea {
   bool get vencePronto =>
       tiempoRestante.inDays <= 2 && tiempoRestante.inDays >= 0;
 
+  /// Etiqueta de la fecha límite para quien entrega (estudiante/acudiente):
+  /// si ya entregó o le calificaron, eso; si no, la fecha (o "Vencida").
+  /// Antes una tarea calificada aparecía como "Vencida" (G7).
+  String etiquetaFechaLimite(EntregaTarea? entrega) {
+    final estado = entrega?.estado;
+    if (estado == EstadoEntrega.calificada) return 'Calificada';
+    if (estado == EstadoEntrega.entregada || estado == EstadoEntrega.atrasada) {
+      return 'Entregada';
+    }
+    return fechaLimiteFormateada;
+  }
+
   String get fechaLimiteFormateada {
     final now = DateTime.now();
     final diff = fechaLimite.difference(now);

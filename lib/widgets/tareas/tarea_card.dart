@@ -189,7 +189,7 @@ class TareaCard extends StatelessWidget {
               const SizedBox(width: 4),
               Flexible(
                 child: Text(
-                  tarea.fechaLimiteFormateada,
+                  tarea.etiquetaFechaLimite(miEntrega),
                   style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
