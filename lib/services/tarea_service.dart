@@ -5,6 +5,7 @@ import 'package:dio/dio.dart';
 import '../models/tarea.dart';
 import '../config/app_config.dart';
 import 'api_service.dart';
+import '../utils/fechas.dart';
 
 class TareaService {
   final ApiService _apiService;
@@ -145,7 +146,7 @@ class TareaService {
         'descripcion': descripcion.trim(),
         'asignaturaId': asignaturaId.trim(),
         'cursoId': cursoId.trim(),
-        'fechaLimite': fechaLimite.toIso8601String(),
+        'fechaLimite': fechaParaEnviar(fechaLimite),
         'calificacionMaxima': calificacionMaxima.toInt(),
         'tipo': tipo.value,
         'prioridad': prioridad.value,
@@ -286,7 +287,7 @@ class TareaService {
       final requestBody = {
         'titulo': titulo.trim(),
         'descripcion': descripcion.trim(),
-        'fechaLimite': fechaLimite.toIso8601String(),
+        'fechaLimite': fechaParaEnviar(fechaLimite),
         'calificacionMaxima': calificacionMaxima.toInt(),
       };
 

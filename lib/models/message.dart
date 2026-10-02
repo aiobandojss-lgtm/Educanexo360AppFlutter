@@ -1,4 +1,5 @@
-// lib/models/message.dart
+
+import '../utils/fechas.dart';// lib/models/message.dart
 
 /// 📨 MODELO DE MENSAJE COMPLETO
 /// Soporta: Individual, Grupal, Borradores, Adjuntos, Prioridades
@@ -77,11 +78,11 @@ class Message {
       estado: json['estado'] ?? 'ENVIADO',
       prioridad: _prioridadFromString(json['prioridad'] as String?),
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['updatedAt'] ?? DateTime.now().toIso8601String()),
       fechaEnvio: json['fechaEnvio'] != null
-          ? DateTime.parse(json['fechaEnvio'])
+          ? fechaLocal(json['fechaEnvio'])
           : null,
       archivado: json['archivado'] as bool?,
       eliminado: json['eliminado'] as bool?,
@@ -244,7 +245,7 @@ class Adjunto {
       nombre: json['nombre'] ?? '',
       tipo: json['tipo'] ?? '',
       tamano: json['tamano'] ?? json['tamaño'] ?? 0,
-      fechaSubida: DateTime.parse(
+      fechaSubida: fechaLocal(
           json['fechaSubida'] ?? DateTime.now().toIso8601String()),
     );
   }
@@ -308,7 +309,7 @@ class Lectura {
   factory Lectura.fromJson(Map<String, dynamic> json) {
     return Lectura(
       usuarioId: json['usuarioId'] ?? '',
-      fechaLectura: DateTime.parse(
+      fechaLectura: fechaLocal(
           json['fechaLectura'] ?? DateTime.now().toIso8601String()),
     );
   }

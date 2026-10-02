@@ -1,4 +1,5 @@
-// lib/models/perfil_rol.dart
+
+import '../utils/fechas.dart';// lib/models/perfil_rol.dart
 
 /// Modelo de perfil de rol personalizado por escuela (sistema RBAC)
 ///
@@ -46,10 +47,10 @@ class PerfilRol {
       activo: json['activo'] as bool? ?? true,
       escuelaId: json['escuelaId']?.toString() ?? '',
       createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString())
+          ? fechaLocalOpcional(json['createdAt'].toString())
           : null,
       updatedAt: json['updatedAt'] != null
-          ? DateTime.tryParse(json['updatedAt'].toString())
+          ? fechaLocalOpcional(json['updatedAt'].toString())
           : null,
     );
   }

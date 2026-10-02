@@ -1,4 +1,5 @@
-// lib/models/asistencia_informes.dart
+
+import '../utils/fechas.dart';// lib/models/asistencia_informes.dart
 //
 // Modelos para los 5 informes analíticos de asistencia.
 // Estos modelos son SOLO para lectura (informes), no modifican el registro base.
@@ -200,7 +201,7 @@ class PuntoTendencia {
   factory PuntoTendencia.fromJson(Map<String, dynamic> json) {
     return PuntoTendencia(
       periodo: json['periodo']?.toString() ?? '',
-      fechaInicio: DateTime.tryParse(json['fechaInicio']?.toString() ?? '') ??
+      fechaInicio: soloFechaOpcional(json['fechaInicio']?.toString() ?? '') ??
           DateTime.now(),
       totalClases: (json['totalClases'] ?? 0) as int,
       totalEstudiantes: (json['totalEstudiantes'] ?? 0) as int,
@@ -440,7 +441,7 @@ class RegistroHistorial {
   factory RegistroHistorial.fromJson(Map<String, dynamic> json) {
     return RegistroHistorial(
       fecha:
-          DateTime.tryParse(json['fecha']?.toString() ?? '') ?? DateTime.now(),
+          soloFechaOpcional(json['fecha']?.toString() ?? '') ?? DateTime.now(),
       diaSemana: json['diaSemana']?.toString() ?? '',
       curso: CursoInforme.fromJson(_refMap(json['curso'])),
       asignatura: json['asignatura'] != null

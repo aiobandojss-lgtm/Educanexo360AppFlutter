@@ -1,4 +1,5 @@
-// lib/models/evento.dart
+
+import '../utils/fechas.dart';// lib/models/evento.dart
 
 /// 📅 TIPOS DE EVENTO
 enum EventType {
@@ -115,7 +116,7 @@ class InvitadoEvento {
       usuarioId: json['usuarioId'] ?? '',
       confirmado: json['confirmado'] ?? false,
       fechaConfirmacion: json['fechaConfirmacion'] != null
-          ? DateTime.parse(json['fechaConfirmacion'])
+          ? fechaLocal(json['fechaConfirmacion'])
           : null,
     );
   }
@@ -221,10 +222,10 @@ class Evento {
       id: json['_id'] ?? '',
       titulo: json['titulo'] ?? '',
       descripcion: json['descripcion'] ?? '',
-      fechaInicio: DateTime.parse(
+      fechaInicio: fechaLocal(
           json['fechaInicio'] ?? DateTime.now().toIso8601String()),
       fechaFin:
-          DateTime.parse(json['fechaFin'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['fechaFin'] ?? DateTime.now().toIso8601String()),
       todoElDia: json['todoElDia'] ?? false,
       lugar: json['lugar'],
       tipo: EventType.fromString(json['tipo'] ?? 'OTRO'),
@@ -243,9 +244,9 @@ class Evento {
               .toList() ??
           [],
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['updatedAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 

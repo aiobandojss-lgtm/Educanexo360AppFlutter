@@ -4,6 +4,7 @@ import '../utils/logger.dart';
 import '../config/app_config.dart';
 import '../models/asistencia.dart';
 import 'api_service.dart';
+import '../utils/fechas.dart';
 
 /// 📋 SERVICIO DE ASISTENCIA
 /// Maneja TODOS los endpoints de asistencia
@@ -134,7 +135,7 @@ class AsistenciaService {
 
       // Construir data sin campos null innecesarios
       final data = <String, dynamic>{
-        'fecha': fecha.toIso8601String().split('T')[0],
+        'fecha': soloFechaParaEnviar(fecha),
         'cursoId': cursoId,
         'tipoSesion': tipoSesion,
         'horaInicio': horaInicio,
@@ -193,7 +194,7 @@ class AsistenciaService {
 
       final data = <String, dynamic>{};
 
-      if (fecha != null) data['fecha'] = fecha.toIso8601String().split('T')[0];
+      if (fecha != null) data['fecha'] = soloFechaParaEnviar(fecha);
       if (cursoId != null) data['cursoId'] = cursoId;
       // Siempre incluir asignaturaId en actualización — null = quitar asignatura
       data['asignaturaId'] = asignaturaId;
@@ -494,7 +495,7 @@ class AsistenciaService {
       dlog('📥 Obteniendo asistencia del día: $fecha');
 
       final queryParams = <String, dynamic>{
-        'fecha': fecha.toIso8601String().split('T')[0],
+        'fecha': soloFechaParaEnviar(fecha),
       };
 
       if (cursoId != null && cursoId.isNotEmpty) {

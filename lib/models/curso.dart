@@ -1,4 +1,5 @@
-// lib/models/curso.dart
+
+import '../utils/fechas.dart';// lib/models/curso.dart
 
 /// Niveles educativos
 enum NivelEducativo {
@@ -166,7 +167,7 @@ class EstudianteCurso {
       email: json['email'] ?? '',
       estado: json['estado'],
       fechaNacimiento: json['fechaNacimiento'] != null
-          ? DateTime.tryParse(json['fechaNacimiento'])
+          ? soloFechaOpcional(json['fechaNacimiento'])
           : null,
       genero: json['genero'],
     );
@@ -377,10 +378,10 @@ class Curso {
       asignaturasCount: json['asignaturasCount'] ?? _idsCount(json['asignaturas']),
       escuelaId: json['escuelaId'] ?? '',
       createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'])
+          ? fechaLocalOpcional(json['createdAt'])
           : null,
       updatedAt: json['updatedAt'] != null
-          ? DateTime.tryParse(json['updatedAt'])
+          ? fechaLocalOpcional(json['updatedAt'])
           : null,
     );
   }

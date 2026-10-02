@@ -1,5 +1,6 @@
 ﻿// lib/models/usuario.dart
 import '../utils/logger.dart';
+import '../utils/fechas.dart';
 
 /// Tipos de usuario en el sistema
 /// Traducido desde src/types/entities/user.ts
@@ -255,21 +256,21 @@ class Usuario {
 
       // Fechas con tryParse
       fechaNacimiento: json['fechaNacimiento'] != null
-          ? DateTime.tryParse(json['fechaNacimiento'].toString())
+          ? soloFechaOpcional(json['fechaNacimiento'].toString())
           : null,
 
       genero: json['genero']?.toString(),
 
       ultimoAcceso: json['ultimoAcceso'] != null
-          ? DateTime.tryParse(json['ultimoAcceso'].toString())
+          ? fechaLocalOpcional(json['ultimoAcceso'].toString())
           : null,
 
       createdAt: json['createdAt'] != null
-          ? DateTime.tryParse(json['createdAt'].toString())
+          ? fechaLocalOpcional(json['createdAt'].toString())
           : null,
 
       updatedAt: json['updatedAt'] != null
-          ? DateTime.tryParse(json['updatedAt'].toString())
+          ? fechaLocalOpcional(json['updatedAt'].toString())
           : null,
 
       // Campos sistema futuro
@@ -283,7 +284,7 @@ class Usuario {
       fcmToken: json['fcmToken']?.toString(),
       platform: json['platform']?.toString(),
       fcmTokenUpdatedAt: json['fcmTokenUpdatedAt'] != null
-          ? DateTime.tryParse(json['fcmTokenUpdatedAt'].toString())
+          ? fechaLocalOpcional(json['fcmTokenUpdatedAt'].toString())
           : null,
     );
   }

@@ -1,8 +1,11 @@
+
 // lib/models/asistencia.dart
 
 /// 📋 MODELO DE ASISTENCIA COMPLETO
 /// Basado en la estructura de React Native y backend
 library;
+
+import '../utils/fechas.dart';
 
 // ==========================================
 // CONSTANTES - Estados de Asistencia
@@ -106,7 +109,7 @@ class RegistroAsistencia {
   factory RegistroAsistencia.fromJson(Map<String, dynamic> json) {
     return RegistroAsistencia(
       id: json['_id'] ?? '',
-      fecha: DateTime.parse(json['fecha']),
+      fecha: soloFecha(json['fecha']),
       curso: _parseCurso(json['cursoId']),
       asignatura: _parseAsignatura(json['asignaturaId']),
       docente: _parseDocente(json['docenteId']),
@@ -121,9 +124,9 @@ class RegistroAsistencia {
       observacionesGenerales: json['observacionesGenerales'],
       finalizado: json['finalizado'] ?? false,
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['updatedAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -433,7 +436,7 @@ class ResumenAsistencia {
   factory ResumenAsistencia.fromJson(Map<String, dynamic> json) {
     return ResumenAsistencia(
       id: json['_id'] ?? '',
-      fecha: DateTime.parse(json['fecha']),
+      fecha: soloFecha(json['fecha']),
       curso: _parseCursoResumen(json['curso'] ?? json['cursoId']),
       asignatura: _parseAsignaturaResumen(
           json['asignatura'] ?? json['asignaturaId']), // ✅ NUEVO
@@ -447,7 +450,7 @@ class ResumenAsistencia {
       registradoPor: _parseDocenteResumen(json['registradoPor']),
       finalizado: json['finalizado'] ?? false,
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['createdAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -644,7 +647,7 @@ class AlertaAsistencia {
       porcentajeAusencias: (json['porcentajeAusencias'] ?? 0.0).toDouble(),
       periodoId: json['periodoId'] ?? '',
       fechaEnvio: json['fechaEnvio'] != null
-          ? DateTime.parse(json['fechaEnvio'])
+          ? fechaLocal(json['fechaEnvio'])
           : DateTime.now(),
     );
   }
@@ -735,7 +738,7 @@ class HistorialRegistro {
     final asignatura = json['asignatura'];
 
     return HistorialRegistro(
-      fecha: DateTime.parse(json['fecha']),
+      fecha: soloFecha(json['fecha']),
       diaSemana: json['diaSemana'] ?? '',
       cursoNombre: curso is Map ? curso['nombre'] ?? '' : '',
       asignaturaNombre: asignatura is Map ? asignatura['nombre'] : null,

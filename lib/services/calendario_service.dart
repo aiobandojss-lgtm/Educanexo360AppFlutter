@@ -6,6 +6,7 @@ import 'package:dio/dio.dart';
 import '../config/app_config.dart';
 import '../models/evento.dart';
 import 'api_service.dart';
+import '../utils/fechas.dart';
 
 /// 📅 SERVICIO DE CALENDARIO
 /// Maneja todas las operaciones relacionadas con eventos del calendario
@@ -31,10 +32,10 @@ class CalendarioService {
       Map<String, dynamic> queryParams = {};
 
       if (inicio != null) {
-        queryParams['inicio'] = inicio.toIso8601String();
+        queryParams['inicio'] = fechaParaEnviar(inicio);
       }
       if (fin != null) {
-        queryParams['fin'] = fin.toIso8601String();
+        queryParams['fin'] = fechaParaEnviar(fin);
       }
       if (cursoId != null) {
         queryParams['cursoId'] = cursoId;
@@ -130,8 +131,8 @@ class CalendarioService {
       final data = {
         'titulo': titulo,
         'descripcion': descripcion,
-        'fechaInicio': fechaInicio.toIso8601String(),
-        'fechaFin': fechaFin.toIso8601String(),
+        'fechaInicio': fechaParaEnviar(fechaInicio),
+        'fechaFin': fechaParaEnviar(fechaFin),
         'todoElDia': todoElDia,
         if (lugar != null) 'lugar': lugar,
         'tipo': tipo.value,
@@ -177,8 +178,8 @@ class CalendarioService {
       final formData = FormData.fromMap({
         'titulo': titulo,
         'descripcion': descripcion,
-        'fechaInicio': fechaInicio.toIso8601String(),
-        'fechaFin': fechaFin.toIso8601String(),
+        'fechaInicio': fechaParaEnviar(fechaInicio),
+        'fechaFin': fechaParaEnviar(fechaFin),
         'todoElDia': todoElDia,
         if (lugar != null) 'lugar': lugar,
         'tipo': tipo.value,
@@ -248,9 +249,9 @@ class CalendarioService {
       if (titulo != null) data['titulo'] = titulo;
       if (descripcion != null) data['descripcion'] = descripcion;
       if (fechaInicio != null) {
-        data['fechaInicio'] = fechaInicio.toIso8601String();
+        data['fechaInicio'] = fechaParaEnviar(fechaInicio);
       }
-      if (fechaFin != null) data['fechaFin'] = fechaFin.toIso8601String();
+      if (fechaFin != null) data['fechaFin'] = fechaParaEnviar(fechaFin);
       if (todoElDia != null) data['todoElDia'] = todoElDia;
       if (lugar != null) data['lugar'] = lugar;
       if (tipo != null) data['tipo'] = tipo.value;
@@ -296,9 +297,9 @@ class CalendarioService {
       if (titulo != null) fields['titulo'] = titulo;
       if (descripcion != null) fields['descripcion'] = descripcion;
       if (fechaInicio != null) {
-        fields['fechaInicio'] = fechaInicio.toIso8601String();
+        fields['fechaInicio'] = fechaParaEnviar(fechaInicio);
       }
-      if (fechaFin != null) fields['fechaFin'] = fechaFin.toIso8601String();
+      if (fechaFin != null) fields['fechaFin'] = fechaParaEnviar(fechaFin);
       if (todoElDia != null) fields['todoElDia'] = todoElDia;
       if (lugar != null) fields['lugar'] = lugar;
       if (tipo != null) fields['tipo'] = tipo.value;

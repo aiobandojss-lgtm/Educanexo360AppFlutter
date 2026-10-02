@@ -3,6 +3,7 @@ import '../utils/logger.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
 import '../models/ultimo_mensaje.dart';
+import '../utils/fechas.dart';
 
 /// Modelo para información de la escuela
 class EscuelaInfo {
@@ -173,7 +174,7 @@ class DashboardService {
               try {
                 final f = getFechaStr(e);
                 if (f.isEmpty) return false;
-                final fechaEvento = DateTime.parse(f);
+                final fechaEvento = fechaLocal(f);
                 return fechaEvento.isAfter(ahora) && fechaEvento.isBefore(limite);
               } catch (_) {
                 return false;
@@ -185,8 +186,8 @@ class DashboardService {
             if (proximos.isNotEmpty) {
               proximos.sort((a, b) {
                 try {
-                  return DateTime.parse(getFechaStr(a))
-                      .compareTo(DateTime.parse(getFechaStr(b)));
+                  return fechaLocal(getFechaStr(a))
+                      .compareTo(fechaLocal(getFechaStr(b)));
                 } catch (_) {
                   return 0;
                 }
@@ -195,7 +196,7 @@ class DashboardService {
               try {
                 proximoEvento = ProximoEvento(
                   titulo: (next['titulo'] ?? next['title'] ?? next['nombre'] ?? 'Evento').toString(),
-                  fecha: DateTime.parse(getFechaStr(next)),
+                  fecha: fechaLocal(getFechaStr(next)),
                   lugar: next['lugar']?.toString() ?? next['location']?.toString(),
                   tipo: next['tipo']?.toString() ?? next['type']?.toString(),
                 );
@@ -236,7 +237,7 @@ class DashboardService {
                 if (estado.toString().toUpperCase() != 'PUBLICADO') return false;
                 final fechaStr = a['fechaPublicacion'] ?? a['publishedAt'] ?? a['createdAt'] ?? a['fecha'] ?? '';
                 if (fechaStr.isEmpty) return true;
-                return DateTime.parse(fechaStr).isAfter(limite);
+                return fechaLocal(fechaStr).isAfter(limite);
               } catch (_) {
                 return true;
               }

@@ -1,5 +1,6 @@
 // lib/models/ultimo_mensaje.dart
 import '../utils/logger.dart';
+import '../utils/fechas.dart';
 
 /// Modelo para los últimos mensajes del dashboard
 class UltimoMensaje {
@@ -28,13 +29,13 @@ class UltimoMensaje {
 
     if (json['fechaEnvio'] != null) {
       dlog('   ✅ Usando fechaEnvio: ${json['fechaEnvio']}');
-      fechaEnvio = DateTime.parse(json['fechaEnvio']);
+      fechaEnvio = fechaLocal(json['fechaEnvio']);
     } else if (json['createdAt'] != null) {
       dlog('   ✅ Usando createdAt: ${json['createdAt']}');
-      fechaEnvio = DateTime.parse(json['createdAt']);
+      fechaEnvio = fechaLocal(json['createdAt']);
     } else if (json['updatedAt'] != null) {
       dlog('   ✅ Usando updatedAt: ${json['updatedAt']}');
-      fechaEnvio = DateTime.parse(json['updatedAt']);
+      fechaEnvio = fechaLocal(json['updatedAt']);
     } else {
       dlog('   ⚠️ No hay fecha, usando DateTime.now()');
       fechaEnvio = DateTime.now();

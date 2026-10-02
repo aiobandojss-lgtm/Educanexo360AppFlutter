@@ -1,4 +1,5 @@
-// lib/models/anuncio.dart
+
+import '../utils/fechas.dart';// lib/models/anuncio.dart
 
 /// 📢 MODELO DE ANUNCIO COMPLETO
 /// Basado en la estructura de React Native y backend
@@ -53,7 +54,7 @@ class Anuncio {
       destacado: json['destacado'] ?? false,
       estaPublicado: json['estaPublicado'] ?? false,
       fechaPublicacion: json['fechaPublicacion'] != null
-          ? DateTime.parse(json['fechaPublicacion'])
+          ? fechaLocal(json['fechaPublicacion'])
           : null,
       archivosAdjuntos: (json['archivosAdjuntos'] as List<dynamic>?)
               ?.map(
@@ -69,9 +70,9 @@ class Anuncio {
               .toList() ??
           [],
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['updatedAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -307,7 +308,7 @@ class Lectura {
   factory Lectura.fromJson(Map<String, dynamic> json) {
     return Lectura(
       usuarioId: json['usuarioId'] ?? '',
-      fechaLectura: DateTime.parse(
+      fechaLectura: fechaLocal(
           json['fechaLectura'] ?? DateTime.now().toIso8601String()),
     );
   }

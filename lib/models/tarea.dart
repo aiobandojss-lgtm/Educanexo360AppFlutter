@@ -4,6 +4,8 @@
 /// Basado en la estructura del backend y React Native
 library;
 
+import '../utils/fechas.dart';
+
 // ========================================
 // 🏷️ ENUMS
 // ========================================
@@ -304,9 +306,9 @@ class Tarea {
               ?.map((e) => e.toString())
               .toList() ??
           [],
-      fechaAsignacion: DateTime.parse(
+      fechaAsignacion: fechaLocal(
           json['fechaAsignacion'] ?? DateTime.now().toIso8601String()),
-      fechaLimite: DateTime.parse(
+      fechaLimite: fechaLocal(
           json['fechaLimite'] ?? DateTime.now().toIso8601String()),
       tipo: TipoTareaExtension.fromString(json['tipo'] ?? 'INDIVIDUAL'),
       prioridad:
@@ -328,9 +330,9 @@ class Tarea {
           [],
       estado: EstadoTareaExtension.fromString(json['estado'] ?? 'ACTIVA'),
       createdAt:
-          DateTime.parse(json['createdAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['createdAt'] ?? DateTime.now().toIso8601String()),
       updatedAt:
-          DateTime.parse(json['updatedAt'] ?? DateTime.now().toIso8601String()),
+          fechaLocal(json['updatedAt'] ?? DateTime.now().toIso8601String()),
     );
   }
 
@@ -562,7 +564,7 @@ class EntregaTarea {
       estudianteId: _parseEstudianteId(json['estudianteId']),
       estudiante: _parseEstudiante(json['estudianteId']),
       fechaEntrega: json['fechaEntrega'] != null
-          ? DateTime.parse(json['fechaEntrega'])
+          ? fechaLocal(json['fechaEntrega'])
           : null,
       estado: EstadoEntregaExtension.fromString(json['estado'] ?? 'PENDIENTE'),
       archivos: (json['archivos'] as List<dynamic>?)
@@ -573,7 +575,7 @@ class EntregaTarea {
       calificacion: json['calificacion']?.toDouble(),
       comentarioDocente: json['comentarioDocente'],
       fechaCalificacion: json['fechaCalificacion'] != null
-          ? DateTime.parse(json['fechaCalificacion'])
+          ? fechaLocal(json['fechaCalificacion'])
           : null,
       intentos: json['intentos'] ?? 0,
     );
@@ -647,7 +649,7 @@ class ArchivoTarea {
       nombre: json['nombre'] ?? '',
       tipo: json['tipo'] ?? '',
       tamano: json['tamaño'] ?? json['tamano'] ?? 0,
-      fechaSubida: DateTime.parse(
+      fechaSubida: fechaLocal(
           json['fechaSubida'] ?? DateTime.now().toIso8601String()),
     );
   }
@@ -711,7 +713,7 @@ class VistaTarea {
   factory VistaTarea.fromJson(Map<String, dynamic> json) {
     return VistaTarea(
       estudianteId: json['estudianteId'] ?? '',
-      fechaVista: DateTime.parse(
+      fechaVista: fechaLocal(
           json['fechaVista'] ?? DateTime.now().toIso8601String()),
     );
   }
