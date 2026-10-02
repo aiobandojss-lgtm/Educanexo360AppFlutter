@@ -9,6 +9,7 @@ import '../../models/anuncio.dart';
 import '../../providers/anuncio_provider.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/common/vacio_refrescable.dart';
 
 class AnunciosScreen extends StatefulWidget {
   const AnunciosScreen({super.key});
@@ -71,6 +72,11 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
         }
       }
     });
+  }
+
+  // Al volver de un formulario o del detalle: refrescar la lista (G5)
+  void _refrescarAlVolver() {
+    if (mounted) _onRefresh();
   }
 
   Future<void> _onRefresh() async {
@@ -261,12 +267,13 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
         }
 
         if (anuncios.isEmpty) {
-          return _buildEmptyState();
+          return VacioRefrescable(onRefresh: _onRefresh, child: _buildEmptyState());
         }
 
         return RefreshIndicator(
           onRefresh: _onRefresh,
           child: ListView.builder(
+            physics: const AlwaysScrollableScrollPhysics(),
             controller: _scrollController,
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
             itemCount: anuncios.length + (isLoading ? 1 : 0),
@@ -291,7 +298,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
 
   Widget _buildAnuncioCard(Anuncio anuncio) {
     return GestureDetector(
-      onTap: () => context.push('/anuncios/${anuncio.id}'),
+      onTap: () => context.push('/anuncios/${anuncio.id}').then((_) => _refrescarAlVolver()),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         decoration: BoxDecoration(
@@ -504,7 +511,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
 
   Widget _buildAnuncioCardCompacta(Anuncio anuncio) {
     return GestureDetector(
-      onTap: () => context.push('/anuncios/${anuncio.id}'),
+      onTap: () => context.push('/anuncios/${anuncio.id}').then((_) => _refrescarAlVolver()),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -565,7 +572,7 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
 
   Widget _buildFAB() {
     return FloatingActionButton.extended(
-      onPressed: () => context.push('/anuncios/create'),
+      onPressed: () => context.push('/anuncios/create').then((_) => _refrescarAlVolver()),
       backgroundColor: const Color(0xFF10B981),
       icon: const Icon(Icons.campaign, color: Colors.white),
       label: const Text(

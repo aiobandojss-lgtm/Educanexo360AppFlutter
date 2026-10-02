@@ -9,6 +9,7 @@ import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/tarea_card.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/common/vacio_refrescable.dart';
 
 class MisTareasScreen extends StatefulWidget {
   const MisTareasScreen({super.key});
@@ -54,6 +55,11 @@ class _MisTareasScreenState extends State<MisTareasScreen>
     _scrollController.addListener(() {
       // AquÃ­ podrÃ­a agregarse lÃ³gica de paginaciÃ³n en el futuro
     });
+  }
+
+  // Al volver de un formulario o del detalle: refrescar la lista (G5)
+  void _refrescarAlVolver() {
+    if (mounted) _onRefresh();
   }
 
   Future<void> _onRefresh() async {
@@ -162,13 +168,14 @@ class _MisTareasScreenState extends State<MisTareasScreen>
     }
 
     if (tareaProvider.misTareas.isEmpty) {
-      return _buildEmptyState(filtro);
+      return VacioRefrescable(onRefresh: _onRefresh, child: _buildEmptyState(filtro));
     }
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
       color: const Color(0xFF059669),
       child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
         itemCount: tareaProvider.misTareas.length,
@@ -177,7 +184,7 @@ class _MisTareasScreenState extends State<MisTareasScreen>
           return TareaCard(
             tarea: tarea,
             // âœ… CORREGIDO: NavegaciÃ³n sin /detalle
-            onTap: () => context.push('/tareas/${tarea.id}'),
+            onTap: () => context.push('/tareas/${tarea.id}').then((_) => _refrescarAlVolver()),
           );
         },
       ),

@@ -11,6 +11,7 @@ import '../../providers/tarea_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/tareas/tarea_card.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/common/vacio_refrescable.dart';
 
 class ListaTareasScreen extends StatefulWidget {
   const ListaTareasScreen({super.key});
@@ -61,6 +62,11 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
         }
       }
     });
+  }
+
+  // Al volver de un formulario o del detalle: refrescar la lista (G5)
+  void _refrescarAlVolver() {
+    if (mounted) _onRefresh();
   }
 
   Future<void> _onRefresh() async {
@@ -535,12 +541,13 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
     }
 
     if (tareaProvider.tareas.isEmpty) {
-      return _buildEmptyState();
+      return VacioRefrescable(onRefresh: _onRefresh, child: _buildEmptyState());
     }
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
       child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         controller: _scrollController,
         padding: const EdgeInsets.all(16),
         itemCount:
@@ -558,7 +565,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
 
           return TareaCard(
             tarea: tarea,
-            onTap: () => context.push('/tareas/${tarea.id}'),
+            onTap: () => context.push('/tareas/${tarea.id}').then((_) => _refrescarAlVolver()),
             mostrarDocente: false, // No mostrar docente en su propia lista
           );
         },
@@ -634,7 +641,7 @@ class _ListaTareasScreenState extends State<ListaTareasScreen> {
 
   Widget _buildFAB() {
     return FloatingActionButton.extended(
-      onPressed: () => context.push('/tareas/crear'),
+      onPressed: () => context.push('/tareas/crear').then((_) => _refrescarAlVolver()),
       backgroundColor: const Color(0xFF059669),
       icon: const Icon(Icons.add, size: 24),
       label: const Text(

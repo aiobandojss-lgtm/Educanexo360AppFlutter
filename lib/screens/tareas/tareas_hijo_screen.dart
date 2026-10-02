@@ -7,6 +7,7 @@ import '../../models/tarea.dart';
 import '../../providers/tarea_provider.dart';
 import '../../widgets/tareas/tarea_card.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/common/vacio_refrescable.dart';
 
 class TareasHijoScreen extends StatefulWidget {
   final String estudianteId;
@@ -133,13 +134,14 @@ class _TareasHijoScreenState extends State<TareasHijoScreen>
     final tareasFiltradas = tareaProvider.filtrarTareasPorEstado(_filtroActual);
 
     if (tareasFiltradas.isEmpty) {
-      return _buildEmptyState();
+      return VacioRefrescable(onRefresh: _onRefresh, child: _buildEmptyState());
     }
 
     return RefreshIndicator(
       onRefresh: _onRefresh,
       color: const Color(0xFF059669),
       child: ListView.builder(
+        physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.all(16),
         itemCount: tareasFiltradas.length,
         itemBuilder: (context, index) {

@@ -11,6 +11,7 @@ import '../../providers/asistencia_provider.dart';
 import '../../services/api_service.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/common/vacio_refrescable.dart';
 
 class ListaAsistenciaScreen extends StatefulWidget {
   const ListaAsistenciaScreen({super.key});
@@ -127,6 +128,11 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
     }
   }
 
+  // Al volver de un formulario o del detalle: refrescar la lista (G5)
+  void _refrescarAlVolver() {
+    if (mounted) _onRefresh();
+  }
+
   Future<void> _onRefresh() async {
     await _cargarDatos();
   }
@@ -218,12 +224,13 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
                 }
 
                 if (provider.resumenes.isEmpty) {
-                  return _buildEmpty();
+                  return VacioRefrescable(onRefresh: _onRefresh, child: _buildEmpty());
                 }
 
                 return RefreshIndicator(
                   onRefresh: _onRefresh,
                   child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
                     itemCount: provider.resumenes.length,
                     itemBuilder: (context, index) {
@@ -241,7 +248,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
       // ➕ BOTÓN REGISTRAR (solo DOCENTE/COORDINADOR)
       floatingActionButton: PermissionService.canAccess('asistencia.registrar')
           ? FloatingActionButton.extended(
-              onPressed: () => context.push('/asistencia/registrar'),
+              onPressed: () => context.push('/asistencia/registrar').then((_) => _refrescarAlVolver()),
               backgroundColor: const Color(0xFF059669),
               icon: const Icon(Icons.add),
               label: const Text('Registrar'),
@@ -509,7 +516,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: InkWell(
-        onTap: () => context.push('/asistencia/${resumen.id}'),
+        onTap: () => context.push('/asistencia/${resumen.id}').then((_) => _refrescarAlVolver()),
         borderRadius: BorderRadius.circular(16),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -836,7 +843,7 @@ class _ListaAsistenciaScreenState extends State<ListaAsistenciaScreen> {
             if (PermissionService.canAccess('asistencia.registrar')) ...[
               const SizedBox(height: 24),
               ElevatedButton.icon(
-                onPressed: () => context.push('/asistencia/registrar'),
+                onPressed: () => context.push('/asistencia/registrar').then((_) => _refrescarAlVolver()),
                 icon: const Icon(Icons.add),
                 label: const Text('Registrar Asistencia'),
                 style: ElevatedButton.styleFrom(

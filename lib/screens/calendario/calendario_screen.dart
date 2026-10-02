@@ -596,13 +596,19 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
   // NAVEGACIÓN
   // ==========================================
 
+  // Al volver de crear/editar un evento o del detalle: la lista se
+  // actualiza sin salir y entrar (G5)
+  void _refrescarAlVolver() {
+    if (mounted) context.read<CalendarioProvider>().refresh();
+  }
+
   void _navigateToCreateEvento({DateTime? fechaInicial}) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => CreateEventoScreen(fechaInicial: fechaInicial),
       ),
-    );
+    ).then((_) => _refrescarAlVolver());
   }
 
   void _navigateToEventDetail(Evento evento) {
@@ -611,7 +617,7 @@ class _CalendarioScreenState extends State<CalendarioScreen> {
       MaterialPageRoute(
         builder: (context) => EventoDetailScreen(eventoId: evento.id),
       ),
-    );
+    ).then((_) => _refrescarAlVolver());
   }
 
   // ==========================================

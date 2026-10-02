@@ -14,6 +14,7 @@ import '../../widgets/common/gradient_header.dart';
 import '../../services/permission_service.dart';
 import '../mensajes/create_message_screen.dart';
 import '../../services/api_service.dart' show mensajeDeError;
+import '../../widgets/common/vacio_refrescable.dart';
 
 /// 📨 PANTALLA PRINCIPAL DE MENSAJES
 /// Lista de mensajes con 5 bandejas + búsqueda + FAB crear mensaje
@@ -99,6 +100,11 @@ class _MessagesScreenState extends State<MessagesScreen> {
   // 🔄 ACCIONES
   // ========================================
 
+  // Al volver de un formulario o del detalle: refrescar la lista (G5)
+  void _refrescarAlVolver() {
+    if (mounted) _onRefresh();
+  }
+
   Future<void> _onRefresh() async {
     final messageProvider = context.read<MessageProvider>();
     await messageProvider.loadMessages(
@@ -167,7 +173,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   }
 
   void _onCreateMessage() {
-    context.push('/mensajes/create');
+    context.push('/mensajes/create').then((_) => _refrescarAlVolver());
     //dlog('🔧 TODO: Navegar a crear mensaje');
     // Navigator.pushNamed(context, '/messages/create');
   }
@@ -228,12 +234,13 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 }
 
                 if (messages.isEmpty) {
-                  return _buildEmptyState(bandeja);
+                  return VacioRefrescable(onRefresh: _onRefresh, child: _buildEmptyState(bandeja));
                 }
 
                 return RefreshIndicator(
                   onRefresh: _onRefresh,
                   child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
                     controller: _scrollController,
                     itemCount: messages.length + (isLoading ? 1 : 0),
                     separatorBuilder: (context, index) =>
