@@ -15,6 +15,7 @@ import '../../services/api_service.dart' show mensajeDeError;
 import '../../services/message_service.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../utils/html_texto.dart';
 
 class CreateMessageScreen extends StatefulWidget {
   final Message? originalMessage;
@@ -74,7 +75,7 @@ class _CreateMessageScreenState extends State<CreateMessageScreen> {
       _prioridad = original.prioridad;
     } else if (widget.isDraftEdit) {
       _asuntoController.text = original.asunto;
-      _contenidoController.text = original.contenido;
+      _contenidoController.text = htmlATexto(original.contenido);
       _selectedRecipients = original.destinatarios;
       _prioridad = original.prioridad;
     }

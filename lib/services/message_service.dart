@@ -8,6 +8,7 @@ import '../models/message.dart';
 import 'api_service.dart';
 import '../utils/file_helper.dart';
 import 'package:path_provider/path_provider.dart';
+import '../utils/html_texto.dart';
 
 /// 📨 SERVICIO DE MENSAJERÍA
 /// Maneja TODOS los endpoints de mensajes, borradores, adjuntos, etc.
@@ -144,7 +145,7 @@ class MessageService {
 
       FormData formData = FormData.fromMap({
         'asunto': asunto,
-        'contenido': contenido,
+        'contenido': textoAHtml(contenido),
         'prioridad': prioridad.name.toUpperCase(),
       });
 
@@ -211,7 +212,7 @@ class MessageService {
       if (adjuntos != null && adjuntos.isNotEmpty) {
         FormData formData = FormData.fromMap({
           'asunto': asunto.isEmpty ? '(Sin asunto)' : asunto,
-          'contenido': contenido,
+          'contenido': textoAHtml(contenido),
           'prioridad': prioridad.name.toUpperCase(),
         });
 
@@ -253,7 +254,7 @@ class MessageService {
             'destinatarios': destinatarios ?? [],
             'cursoIds': cursoIds ?? [],
             'asunto': asunto.isEmpty ? '(Sin asunto)' : asunto,
-            'contenido': contenido,
+            'contenido': textoAHtml(contenido),
             'prioridad': prioridad.name.toUpperCase(),
           },
         );
@@ -288,7 +289,7 @@ class MessageService {
       if (adjuntos != null && adjuntos.isNotEmpty) {
         FormData formData = FormData.fromMap({
           'asunto': asunto.isEmpty ? '(Sin asunto)' : asunto,
-          'contenido': contenido,
+          'contenido': textoAHtml(contenido),
           'prioridad': prioridad.name.toUpperCase(),
           'clearExistingAttachments': clearExistingAttachments,
         });
@@ -331,7 +332,7 @@ class MessageService {
             'destinatarios': destinatarios ?? [],
             'cursoIds': cursoIds ?? [],
             'asunto': asunto.isEmpty ? '(Sin asunto)' : asunto,
-            'contenido': contenido,
+            'contenido': textoAHtml(contenido),
             'prioridad': prioridad.name.toUpperCase(),
             'clearExistingAttachments': clearExistingAttachments,
           },
@@ -415,7 +416,7 @@ class MessageService {
       if (adjuntos != null && adjuntos.isNotEmpty) {
         // Con adjuntos
         FormData formData = FormData.fromMap({
-          'contenido': contenido,
+          'contenido': textoAHtml(contenido),
           'asunto': asunto,
         });
 
@@ -440,7 +441,7 @@ class MessageService {
         final response = await _apiService.post(
           '/mensajes/$originalId/responder',
           data: {
-            'contenido': contenido,
+            'contenido': textoAHtml(contenido),
             'asunto': asunto,
           },
         );
@@ -765,7 +766,7 @@ class MessageService {
         ..writeln('ID interno: ${message.id}')
         ..writeln()
         ..writeln('Contenido:')
-        ..writeln(_recortar(message.contenido, 2000));
+        ..writeln(_recortar(htmlATexto(message.contenido), 2000));
 
       if (message.hasAttachments) {
         contenido

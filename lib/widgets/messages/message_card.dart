@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/message.dart';
+import '../../utils/html_texto.dart';
 
 /// 📨 CARD DE MENSAJE
 /// Muestra un mensaje en la lista con avatar, nombre, asunto, preview y metadata
@@ -295,12 +296,9 @@ class MessageCard extends StatelessWidget {
     return Colors.white;
   }
 
-  String _stripHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .trim();
-  }
+  // Vista previa en una línea, con los párrafos separados por espacio
+  String _stripHtml(String html) =>
+      htmlATexto(html).replaceAll(RegExp(r'\s+'), ' ').trim();
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();

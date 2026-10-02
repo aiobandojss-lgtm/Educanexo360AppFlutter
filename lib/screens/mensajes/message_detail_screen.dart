@@ -12,6 +12,7 @@ import '../../services/message_service.dart';
 import '../../widgets/common/gradient_header.dart';
 import '../mensajes/create_message_screen.dart';
 import '../../services/api_service.dart' show mensajeDeError;
+import '../../widgets/common/contenido_html.dart';
 
 /// ðŸ“– PANTALLA DE DETALLE DE MENSAJE
 /// Muestra el mensaje completo con todas sus caracterÃ­sticas
@@ -495,14 +496,8 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       color: Colors.white,
-      child: Text(
-        _stripHtml(message.contenido),
-        style: const TextStyle(
-          fontSize: 16,
-          height: 1.6,
-          color: Colors.black87,
-        ),
-      ),
+      // Respeta párrafos, citas, listas, negritas y enlaces (G8)
+      child: ContenidoHtml(message.contenido),
     );
   }
 
@@ -583,13 +578,6 @@ class _MessageDetailScreenState extends State<MessageDetailScreen> {
   // ========================================
   // ðŸ”§ HELPERS
   // ========================================
-
-  String _stripHtml(String html) {
-    return html
-        .replaceAll(RegExp(r'<[^>]*>'), '')
-        .replaceAll('&nbsp;', ' ')
-        .trim();
-  }
 
   String _formatDate(DateTime date) {
     return DateFormat('EEEE, d MMMM yyyy - HH:mm', 'es').format(date);

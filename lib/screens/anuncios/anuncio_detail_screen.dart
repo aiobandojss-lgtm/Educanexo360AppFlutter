@@ -11,6 +11,7 @@ import '../../services/api_service.dart' show ApiException, mensajeDeError;
 import '../../services/permission_service.dart';
 import '../../utils/file_helper.dart';
 import '../../widgets/common/gradient_header.dart';
+import '../../widgets/common/contenido_html.dart';
 
 class AnuncioDetailScreen extends StatefulWidget {
   final String anuncioId;
@@ -333,14 +334,8 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
       width: double.infinity,
       color: Colors.white,
       padding: const EdgeInsets.all(20),
-      child: Text(
-        _anuncio!.contenido,
-        style: const TextStyle(
-          fontSize: 16,
-          height: 1.6,
-          color: Colors.black87,
-        ),
-      ),
+      // El contenido viene en HTML desde la web (G8)
+      child: ContenidoHtml(_anuncio!.contenido),
     );
   }
 

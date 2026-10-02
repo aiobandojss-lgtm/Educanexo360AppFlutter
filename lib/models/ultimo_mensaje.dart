@@ -1,6 +1,7 @@
 // lib/models/ultimo_mensaje.dart
 import '../utils/logger.dart';
 import '../utils/fechas.dart';
+import '../utils/html_texto.dart';
 
 /// Modelo para los últimos mensajes del dashboard
 class UltimoMensaje {
@@ -68,24 +69,8 @@ class UltimoMensaje {
   }
 
   /// Limpia etiquetas HTML del texto
-  static String _limpiarHtml(String texto) {
-    // Remover etiquetas HTML
-    String limpio = texto.replaceAll(RegExp(r'<[^>]*>'), '');
-
-    // Decodificar entidades HTML comunes
-    limpio = limpio
-        .replaceAll('&nbsp;', ' ')
-        .replaceAll('&amp;', '&')
-        .replaceAll('&lt;', '<')
-        .replaceAll('&gt;', '>')
-        .replaceAll('&quot;', '"')
-        .replaceAll('&#39;', "'");
-
-    // Limpiar espacios múltiples
-    limpio = limpio.replaceAll(RegExp(r'\s+'), ' ').trim();
-
-    return limpio;
-  }
+  static String _limpiarHtml(String texto) =>
+      htmlATexto(texto).replaceAll(RegExp(r'\s+'), ' ').trim();
 
   /// Calcula el tiempo relativo desde la fecha de envío
   static String _calcularTiempoRelativo(DateTime fechaEnvio) {
