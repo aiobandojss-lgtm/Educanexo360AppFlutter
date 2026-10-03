@@ -82,6 +82,23 @@ void main() {
         '• Uno\n• Dos & tres');
   });
 
+  test('listas ordenadas con números (también anidadas y con start)', () {
+    expect(htmlATexto('<ol><li>Uno</li><li>Dos</li></ol>'), '1. Uno\n2. Dos');
+    expect(htmlATexto('<ol start="3"><li>Tres</li><li>Cuatro</li></ol>'),
+        '3. Tres\n4. Cuatro');
+    expect(
+        htmlATexto('<ol><li>Uno<ul><li>a</li></ul></li><li>Dos</li></ol>'),
+        '1. Uno\n• a\n2. Dos');
+  });
+
+  test('entidades numéricas y con nombre', () {
+    expect(htmlATexto('<p>Reuni&oacute;n&#160;de padres &ndash; d&#237;a &#x2F; '
+            'hora&rsquo;s &hellip;</p>'),
+        'Reunión de padres – día / hora’s …');
+    // Desconocidas o inválidas quedan tal cual; &amp;lt; es el texto "&lt;"
+    expect(htmlATexto('<p>&foo; &#0; &amp;lt;</p>'), '&foo; &#0; &lt;');
+  });
+
   test('texto plano de versiones anteriores de la app conserva sus saltos',
       () {
     expect(htmlATexto('Hola\nsegunda línea'), 'Hola\nsegunda línea');

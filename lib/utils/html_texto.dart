@@ -41,18 +41,38 @@ final _etiqueta = RegExp(
     caseSensitive: false);
 final _tieneEtiquetas =
     RegExp('<\\s*/?\\s*($_conocidas)(?=[\\s/>])[^>]*>', caseSensitive: false);
+final _inicioLista =
+    RegExp(r'''start\s*=\s*["']?(\d+)''', caseSensitive: false);
 final _href = RegExp(r'''href\s*=\s*["']([^"']*)["']''', caseSensitive: false);
 
 const _bloques = {'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr'};
 
-String _decodificar(String s) => s
-    .replaceAll('&nbsp;', ' ')
-    .replaceAll('&lt;', '<')
-    .replaceAll('&gt;', '>')
-    .replaceAll('&quot;', '"')
-    .replaceAll('&#39;', "'")
-    .replaceAll('&#x27;', "'")
-    .replaceAll('&amp;', '&');
+// Entidades con nombre que traen los editores de texto (Word, Gmail…)
+const _entidades = {
+  'nbsp': ' ', 'lt': '<', 'gt': '>', 'quot': '"', 'apos': "'", 'amp': '&',
+  'rsquo': '’', 'lsquo': '‘', 'rdquo': '”', 'ldquo': '“', 'ndash': '–',
+  'mdash': '—', 'hellip': '…', 'bull': '•', 'middot': '·', 'deg': '°',
+  'iquest': '¿', 'iexcl': '¡', 'laquo': '«', 'raquo': '»', 'euro': '€',
+  'aacute': 'á', 'eacute': 'é', 'iacute': 'í', 'oacute': 'ó', 'uacute': 'ú',
+  'Aacute': 'Á', 'Eacute': 'É', 'Iacute': 'Í', 'Oacute': 'Ó', 'Uacute': 'Ú',
+  'ntilde': 'ñ', 'Ntilde': 'Ñ', 'uuml': 'ü', 'Uuml': 'Ü', 'copy': '©',
+};
+final _entidad = RegExp(r'&(#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[a-zA-Z]{2,8});');
+
+/// Decodifica entidades numéricas (&#160;, &#x27;) y con nombre (&rsquo;)
+/// en una sola pasada (así '&amp;lt;' queda '&lt;', como en el navegador).
+/// Las desconocidas se dejan tal cual.
+String _decodificar(String s) => s.replaceAllMapped(_entidad, (m) {
+      final e = m.group(1)!;
+      if (e.startsWith('#')) {
+        final hex = e.length > 1 && (e[1] == 'x' || e[1] == 'X');
+        final codigo = int.tryParse(e.substring(hex ? 2 : 1), radix: hex ? 16 : 10);
+        if (codigo == null || codigo == 0 || codigo > 0x10FFFF) return m[0]!;
+        // &#160; (espacio duro) cuenta como espacio normal
+        return codigo == 160 ? ' ' : String.fromCharCode(codigo);
+      }
+      return _entidades[e] ?? m[0]!;
+    });
 
 /// Interpreta [html] en segmentos con estilo. Un texto sin etiquetas (lo que
 /// enviaban versiones anteriores de la app) se devuelve tal cual, con sus
@@ -68,6 +88,8 @@ List<SegmentoHtml> segmentosHtml(String html) {
   final segmentos = <SegmentoHtml>[];
   var negrita = 0, cursiva = 0, cita = 0;
   String? enlace;
+  // Listas abiertas: null = con viñetas (ul), número = numerada (ol)
+  final listas = <int?>[];
 
   void agregar(String texto) {
     if (texto.isEmpty) return;
@@ -90,10 +112,24 @@ List<SegmentoHtml> segmentosHtml(String html) {
       case 'br':
         agregar('\n');
       case 'li':
-        if (!cierre) agregar('\n• ');
+        if (!cierre) {
+          final numerada = listas.isNotEmpty && listas.last != null;
+          if (numerada) listas[listas.length - 1] = listas.last! + 1;
+          agregar(numerada ? '\n${listas.last}. ' : '\n• ');
+        }
       case 'ul':
       case 'ol':
-        agregar('\n');
+        // Una lista anidada no separa con línea propia: cada <li> ya abre línea
+        final anidada = cierre ? listas.length > 1 : listas.isNotEmpty;
+        if (!anidada) agregar('\n');
+        if (cierre) {
+          if (listas.isNotEmpty) listas.removeLast();
+        } else if (nombre == 'ol') {
+          final inicio = _inicioLista.firstMatch(m.group(3) ?? '')?.group(1);
+          listas.add((int.tryParse(inicio ?? '') ?? 1) - 1);
+        } else {
+          listas.add(null);
+        }
       case 'blockquote':
         agregar('\n');
         cita += cierre ? -1 : 1;
