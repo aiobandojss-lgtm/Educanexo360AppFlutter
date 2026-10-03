@@ -26,8 +26,21 @@ class SegmentoHtml {
   final String? enlace;
 }
 
-final _etiqueta = RegExp(r'<\s*(/)?\s*([a-zA-Z0-9]+)([^>]*)>');
-final _tieneEtiquetas = RegExp(r'<\s*/?\s*[a-zA-Z][a-zA-Z0-9]*[^>]*>');
+// Solo estas etiquetas cuentan como HTML (J5). Cualquier otro '<…>' es texto
+// literal: un texto plano con "<coordinacion@colegio.edu>" no debe perder sus
+// saltos de línea ni el correo.
+const _conocidas = 'p|br|div|strong|b|em|i|u|ul|ol|li|blockquote|a|span|h[1-6]';
+
+// Etiquetas que la web puede traer pegadas desde Word u otras páginas: se
+// quitan sin mostrarse (no activan el modo HTML por sí solas)
+const _ignoradas =
+    'font|img|hr|table|thead|tbody|tfoot|tr|td|th|sup|sub|s|del|small|mark|code|pre';
+
+final _etiqueta = RegExp(
+    '<\\s*(/)?\\s*($_conocidas|$_ignoradas)(?=[\\s/>])([^>]*)>',
+    caseSensitive: false);
+final _tieneEtiquetas =
+    RegExp('<\\s*/?\\s*($_conocidas)(?=[\\s/>])[^>]*>', caseSensitive: false);
 final _href = RegExp(r'''href\s*=\s*["']([^"']*)["']''', caseSensitive: false);
 
 const _bloques = {'p', 'div', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'tr'};
@@ -100,7 +113,7 @@ List<SegmentoHtml> segmentosHtml(String html) {
           agregar('\n');
           if (nombre.startsWith('h')) negrita += cierre ? -1 : 1;
         }
-      // Otras etiquetas (span, font, img, script…) se ignoran: solo texto
+      // Otras etiquetas conocidas (span, u, font, img…) se ignoran: solo texto
     }
     if (negrita < 0) negrita = 0;
     if (cursiva < 0) cursiva = 0;

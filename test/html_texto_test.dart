@@ -56,6 +56,27 @@ void main() {
         'Ana');
   });
 
+  // J5: un '<…>' que no es una etiqueta conocida es texto literal
+  test('texto plano con un correo entre <> conserva saltos y el correo', () {
+    expect(
+        htmlATexto('Buenas tardes\nEscribir a <coordinacion@colegio.edu>\n'
+            'Gracias'),
+        'Buenas tardes\nEscribir a <coordinacion@colegio.edu>\nGracias');
+    // <b@…> o <ana…> no son <b> ni <a>
+    expect(htmlATexto('Hola\n<b@x.co> y <ana@x.co>'),
+        'Hola\n<b@x.co> y <ana@x.co>');
+  });
+
+  test('en HTML, un <correo> sin escapar se muestra como texto', () {
+    expect(htmlATexto('<p>Escribir a <coordinacion@colegio.edu></p><p>Fin</p>'),
+        'Escribir a <coordinacion@colegio.edu>\n\nFin');
+  });
+
+  test('etiquetas pegadas desde Word se quitan sin mostrarse', () {
+    expect(htmlATexto('<p><font color="red">Rojo</font> y <span>normal</span></p>'),
+        'Rojo y normal');
+  });
+
   test('listas con viñetas y entidades decodificadas', () {
     expect(htmlATexto('<ul><li>Uno</li><li>Dos &amp; tres</li></ul>'),
         '• Uno\n• Dos & tres');
