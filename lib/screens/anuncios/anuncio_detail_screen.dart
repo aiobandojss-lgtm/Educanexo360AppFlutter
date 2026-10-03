@@ -13,6 +13,24 @@ import '../../utils/file_helper.dart';
 import '../../widgets/common/gradient_header.dart';
 import '../../widgets/common/contenido_html.dart';
 
+/// Regla vigente del backend para DELETE /anuncios/:id (G10, J3):
+/// - la ruta usa authorize('ADMIN','DOCENTE','RECTOR','COORDINADOR'), que
+///   además deja pasar a ADMINISTRATIVO (ROLES_ADMINISTRATIVOS) y deja fuera
+///   a SUPER_ADMIN;
+/// - el controlador exige ser el creador o ser ADMIN.
+/// No se usa el permiso RBAC 'anuncios.eliminar': el backend no lo consulta.
+bool puedeEliminarAnuncio({required String tipo, required bool esCreador}) {
+  const pasanLaRuta = {
+    'ADMIN',
+    'DOCENTE',
+    'RECTOR',
+    'COORDINADOR',
+    'ADMINISTRATIVO',
+  };
+  if (!pasanLaRuta.contains(tipo)) return false;
+  return tipo == 'ADMIN' || esCreador;
+}
+
 class AnuncioDetailScreen extends StatefulWidget {
   final String anuncioId;
 
@@ -90,16 +108,14 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
     return PermissionService.canAccess('anuncios.editar');
   }
 
-  // Mismo criterio del backend (G10): el creador (p. ej. el DOCENTE que lo
-  // publicó) o quien tenga el permiso de eliminar (ADMIN). A RECTOR y
-  // COORDINADOR el backend les responde 403 con anuncios ajenos.
   bool _canDelete() {
     if (_anuncio == null) return false;
     final currentUser = PermissionService.getCurrentUser();
-    if (currentUser != null && _anuncio!.creador.id == currentUser.id) {
-      return true;
-    }
-    return PermissionService.canAccess('anuncios.eliminar');
+    if (currentUser == null) return false;
+    return puedeEliminarAnuncio(
+      tipo: currentUser.tipo.value,
+      esCreador: _anuncio!.creador.id == currentUser.id,
+    );
   }
 
   @override

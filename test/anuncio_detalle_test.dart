@@ -135,12 +135,28 @@ void main() {
     expect(find.text('Error al cargar el anuncio'), findsOneWidget);
   });
 
+  test('regla del backend para eliminar anuncios (J3)', () {
+    for (final tipo in ['DOCENTE', 'RECTOR', 'COORDINADOR', 'ADMINISTRATIVO']) {
+      expect(puedeEliminarAnuncio(tipo: tipo, esCreador: true), isTrue,
+          reason: '$tipo creador');
+      expect(puedeEliminarAnuncio(tipo: tipo, esCreador: false), isFalse,
+          reason: '$tipo ajeno');
+    }
+    expect(puedeEliminarAnuncio(tipo: 'ADMIN', esCreador: false), isTrue);
+    for (final tipo in ['SUPER_ADMIN', 'ESTUDIANTE', 'ACUDIENTE']) {
+      expect(puedeEliminarAnuncio(tipo: tipo, esCreador: true), isFalse,
+          reason: tipo);
+    }
+  });
+
   // G10: el anuncio del adaptador lo creó 'u1'
   group('botón eliminar en el detalle', () {
     setUpAll(() => initializeDateFormatting('es_ES'));
 
     Future<bool> veEliminar(WidgetTester tester,
-        {required String id, required String tipo}) async {
+        {required String id,
+        required String tipo,
+        List<String>? permisos}) async {
       PermissionService.setCurrentUser(Usuario.fromJson({
         '_id': id,
         'nombre': 'Prueba',
@@ -148,6 +164,7 @@ void main() {
         'email': 'p@colegio.edu.co',
         'tipo': tipo,
         'escuelaId': 'e1',
+        if (permisos != null) 'permisos': permisos,
       }));
       ApiService().httpClientAdapter = _Adapter(200);
       await abrirDetalle(tester);
@@ -175,6 +192,27 @@ void main() {
 
     testWidgets('el RECTOR creador lo ve', (tester) async {
       expect(await veEliminar(tester, id: 'u1', tipo: 'RECTOR'), isTrue);
+    });
+
+    // J3: casos en que el backend responde 403 (o deja eliminar)
+    testWidgets('SUPER_ADMIN con anuncio ajeno no lo ve', (tester) async {
+      expect(await veEliminar(tester, id: 'u2', tipo: 'SUPER_ADMIN'), isFalse);
+    });
+
+    testWidgets('perfil RBAC con anuncios.eliminar y anuncio ajeno no lo ve',
+        (tester) async {
+      expect(
+          await veEliminar(tester,
+              id: 'u2',
+              tipo: 'COORDINADOR',
+              permisos: ['anuncios.ver', 'anuncios.eliminar']),
+          isFalse);
+    });
+
+    testWidgets('ADMINISTRATIVO creador lo ve (authorize lo deja pasar)',
+        (tester) async {
+      expect(await veEliminar(tester, id: 'u1', tipo: 'ADMINISTRATIVO'),
+          isTrue);
     });
   });
 }
