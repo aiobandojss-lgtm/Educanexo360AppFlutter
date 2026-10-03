@@ -16,6 +16,7 @@ class SegmentoHtml {
     this.negrita = false,
     this.cursiva = false,
     this.cita = false,
+    this.titulo = false,
     this.enlace,
   });
 
@@ -23,6 +24,9 @@ class SegmentoHtml {
   final bool negrita;
   final bool cursiva;
   final bool cita;
+
+  /// Título (h1-h3): se muestra un poco más grande
+  final bool titulo;
   final String? enlace;
 }
 
@@ -62,7 +66,7 @@ final _entidad = RegExp(r'&(#[0-9]{1,7}|#[xX][0-9a-fA-F]{1,6}|[a-zA-Z]{2,8});');
 /// Decodifica entidades numéricas (&#160;, &#x27;) y con nombre (&rsquo;)
 /// en una sola pasada (así '&amp;lt;' queda '&lt;', como en el navegador).
 /// Las desconocidas se dejan tal cual.
-String _decodificar(String s) => s.replaceAllMapped(_entidad, (m) {
+String decodificarEntidades(String s) => s.replaceAllMapped(_entidad, (m) {
       final e = m.group(1)!;
       if (e.startsWith('#')) {
         final hex = e.length > 1 && (e[1] == 'x' || e[1] == 'X');
@@ -79,14 +83,14 @@ String _decodificar(String s) => s.replaceAllMapped(_entidad, (m) {
 /// saltos de línea.
 List<SegmentoHtml> segmentosHtml(String html) {
   if (!_tieneEtiquetas.hasMatch(html)) {
-    final texto = _decodificar(html).trim();
+    final texto = decodificarEntidades(html).trim();
     return texto.isEmpty ? const [] : [SegmentoHtml(texto)];
   }
 
   // En HTML los saltos y espacios repetidos valen como un solo espacio
   final fuente = html.replaceAll(RegExp(r'\s+'), ' ');
   final segmentos = <SegmentoHtml>[];
-  var negrita = 0, cursiva = 0, cita = 0;
+  var negrita = 0, cursiva = 0, cita = 0, titulo = 0;
   String? enlace;
   // Listas abiertas: null = con viñetas (ul), número = numerada (ol)
   final listas = <int?>[];
@@ -98,13 +102,14 @@ List<SegmentoHtml> segmentosHtml(String html) {
       negrita: negrita > 0,
       cursiva: cursiva > 0,
       cita: cita > 0,
+      titulo: titulo > 0,
       enlace: enlace,
     ));
   }
 
   var pos = 0;
   for (final m in _etiqueta.allMatches(fuente)) {
-    agregar(_decodificar(fuente.substring(pos, m.start)));
+    agregar(decodificarEntidades(fuente.substring(pos, m.start)));
     pos = m.end;
     final cierre = m.group(1) != null;
     final nombre = m.group(2)!.toLowerCase();
@@ -143,25 +148,32 @@ List<SegmentoHtml> segmentosHtml(String html) {
         // El href viene escapado como cualquier atributo: '&amp;' separa los
         // parámetros de enlaces de Forms/Drive/YouTube (J4)
         final href = _href.firstMatch(m.group(3) ?? '')?.group(1);
-        enlace = cierre || href == null ? null : _decodificar(href.trim());
+        enlace = cierre || href == null ? null : decodificarEntidades(href.trim());
       default:
         if (_bloques.contains(nombre)) {
           agregar('\n');
-          if (nombre.startsWith('h')) negrita += cierre ? -1 : 1;
+          if (nombre.startsWith('h')) {
+            negrita += cierre ? -1 : 1;
+            if (const {'h1', 'h2', 'h3'}.contains(nombre)) {
+              titulo += cierre ? -1 : 1;
+            }
+          }
         }
       // Otras etiquetas conocidas (span, u, font, img…) se ignoran: solo texto
     }
     if (negrita < 0) negrita = 0;
     if (cursiva < 0) cursiva = 0;
     if (cita < 0) cita = 0;
+    if (titulo < 0) titulo = 0;
   }
-  agregar(_decodificar(fuente.substring(pos)));
-  return _normalizar(segmentos);
+  agregar(decodificarEntidades(fuente.substring(pos)));
+  return normalizarSegmentos(segmentos);
 }
 
+/// (También la usan los anuncios en Markdown, markdown_texto.dart.)
 /// Quita espacios al inicio de cada línea, deja como máximo una línea en
 /// blanco seguida y recorta los saltos del principio y del final.
-List<SegmentoHtml> _normalizar(List<SegmentoHtml> segmentos) {
+List<SegmentoHtml> normalizarSegmentos(List<SegmentoHtml> segmentos) {
   final resultado = <SegmentoHtml>[];
   var saltosSeguidos = 2; // al inicio no se aceptan saltos
   var inicioDeLinea = true;
@@ -183,9 +195,9 @@ List<SegmentoHtml> _normalizar(List<SegmentoHtml> segmentos) {
           if (buffer.isEmpty) {
             // Espacio entre segmentos: sin el estilo del siguiente (p. ej.
             // que no quede subrayado como parte de un enlace)
-            resultado.add(SegmentoHtml(' ' * espaciosPendientes));
+            resultado.add(const SegmentoHtml(' '));
           } else {
-            buffer.write(' ' * espaciosPendientes);
+            buffer.write(' '); // varios espacios valen uno (como en el navegador)
           }
           espaciosPendientes = 0;
         }
@@ -199,6 +211,7 @@ List<SegmentoHtml> _normalizar(List<SegmentoHtml> segmentos) {
           negrita: s.negrita,
           cursiva: s.cursiva,
           cita: s.cita,
+          titulo: s.titulo,
           enlace: s.enlace));
     }
   }
@@ -212,6 +225,7 @@ List<SegmentoHtml> _normalizar(List<SegmentoHtml> segmentos) {
         negrita: ultimo.negrita,
         cursiva: ultimo.cursiva,
         cita: ultimo.cita,
+        titulo: ultimo.titulo,
         enlace: ultimo.enlace));
   }
   return resultado;

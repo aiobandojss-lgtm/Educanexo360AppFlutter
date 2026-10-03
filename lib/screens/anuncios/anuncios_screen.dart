@@ -10,6 +10,7 @@ import '../../providers/anuncio_provider.dart';
 import '../../services/permission_service.dart';
 import '../../widgets/common/gradient_header.dart';
 import '../../widgets/common/vacio_refrescable.dart';
+import '../../utils/markdown_texto.dart';
 
 class AnunciosScreen extends StatefulWidget {
   const AnunciosScreen({super.key});
@@ -380,9 +381,10 @@ class _AnunciosScreenState extends State<AnunciosScreen> {
 
                   const SizedBox(height: 8),
 
-                  // Contenido preview
+                  // Contenido preview (Markdown → texto en una línea, J6)
                   Text(
-                    anuncio.contenido,
+                    markdownATexto(anuncio.contenido)
+                        .replaceAll(RegExp(r'\s+'), ' '),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(

@@ -358,8 +358,8 @@ class _AnuncioDetailScreenState extends State<AnuncioDetailScreen> {
       width: double.infinity,
       color: Colors.white,
       padding: const EdgeInsets.all(20),
-      // El contenido viene en HTML desde la web (G8)
-      child: ContenidoHtml(_anuncio!.contenido),
+      // La web guarda y muestra los anuncios en Markdown (J6)
+      child: ContenidoHtml.markdown(_anuncio!.contenido),
     );
   }
 
