@@ -12,6 +12,11 @@ import '../../models/evento.dart';
 import '../../providers/calendario_provider.dart';
 import '../../widgets/common/gradient_header.dart';
 
+/// Fin por defecto de un evento nuevo: la siguiente hora en punto. DateTime
+/// pasa solo al día siguiente cuando la hora llega a 24.
+DateTime finPorDefectoEvento(DateTime inicio) =>
+    DateTime(inicio.year, inicio.month, inicio.day, inicio.hour + 1);
+
 class CreateEventoScreen extends StatefulWidget {
   final Evento? evento;
   final DateTime? fechaInicial;
@@ -35,10 +40,14 @@ class _CreateEventoScreenState extends State<CreateEventoScreen> {
   final _descripcionController = TextEditingController();
   final _lugarController = TextEditingController();
 
-  DateTime _fechaInicio = DateTime.now();
-  DateTime _fechaFin = DateTime.now().add(const Duration(hours: 1));
-  TimeOfDay _horaInicio = TimeOfDay.now();
-  TimeOfDay _horaFin = TimeOfDay(hour: TimeOfDay.now().hour + 1, minute: 0);
+  // Por defecto: empieza ahora y termina en la siguiente hora en punto
+  // (a las 23:xx termina a las 00:00 del día siguiente; antes
+  // TimeOfDay(hour: 24) era inválido)
+  final DateTime _ahora = DateTime.now();
+  late DateTime _fechaInicio = _ahora;
+  late DateTime _fechaFin = finPorDefectoEvento(_ahora);
+  late TimeOfDay _horaInicio = TimeOfDay.fromDateTime(_ahora);
+  late TimeOfDay _horaFin = TimeOfDay.fromDateTime(_fechaFin);
   bool _todoElDia = false;
   EventType _tipoSeleccionado = EventType.academico;
   EventStatus _estadoSeleccionado = EventStatus.activo;
