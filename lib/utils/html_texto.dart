@@ -91,7 +91,10 @@ List<SegmentoHtml> segmentosHtml(String html) {
       case 'i':
         cursiva += cierre ? -1 : 1;
       case 'a':
-        enlace = cierre ? null : _href.firstMatch(m.group(3) ?? '')?.group(1);
+        // El href viene escapado como cualquier atributo: '&amp;' separa los
+        // parámetros de enlaces de Forms/Drive/YouTube (J4)
+        final href = _href.firstMatch(m.group(3) ?? '')?.group(1);
+        enlace = cierre || href == null ? null : _decodificar(href.trim());
       default:
         if (_bloques.contains(nombre)) {
           agregar('\n');

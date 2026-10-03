@@ -46,6 +46,16 @@ void main() {
         ['aquí']);
   });
 
+  test('el enlace decodifica &amp; (parámetros de Google Forms/YouTube)', () {
+    final segmentos = segmentosHtml(
+        '<p><a href="https://docs.google.com/forms/d/x/viewform?usp=sf_link&amp;entry.1=Ana">'
+        'Formulario</a></p>');
+    expect(segmentos.single.enlace,
+        'https://docs.google.com/forms/d/x/viewform?usp=sf_link&entry.1=Ana');
+    expect(Uri.parse(segmentos.single.enlace!).queryParameters['entry.1'],
+        'Ana');
+  });
+
   test('listas con viñetas y entidades decodificadas', () {
     expect(htmlATexto('<ul><li>Uno</li><li>Dos &amp; tres</li></ul>'),
         '• Uno\n• Dos & tres');
