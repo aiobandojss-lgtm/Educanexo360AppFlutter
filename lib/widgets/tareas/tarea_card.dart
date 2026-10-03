@@ -113,14 +113,14 @@ class TareaCard extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     // âœ… CORRECCIÃ“N 4: Solo mostrar "VENCIDA" si NO ha sido entregada
-    final bool yafueEntregada = miEntrega?.estado == EstadoEntrega.entregada ||
-        miEntrega?.estado == EstadoEntrega.atrasada ||
-        miEntrega?.estado == EstadoEntrega.calificada;
+    final bool yafueEntregada = miEntrega?.yaEntregada ?? false;
 
+    // ATRASADA sin fechaEntrega = venció sin entregarse (J1)
     final bool mostrarVencida = tarea.estaVencida &&
         !yafueEntregada &&
         (miEntrega?.estado == EstadoEntrega.pendiente ||
-            miEntrega?.estado == EstadoEntrega.vista);
+            miEntrega?.estado == EstadoEntrega.vista ||
+            (miEntrega?.vencioSinEntregar ?? false));
 
     return Row(
       children: [

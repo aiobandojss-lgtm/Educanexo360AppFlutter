@@ -422,8 +422,12 @@ class Tarea {
   String etiquetaFechaLimite(EntregaTarea? entrega) {
     final estado = entrega?.estado;
     if (estado == EstadoEntrega.calificada) return 'Calificada';
-    if (estado == EstadoEntrega.entregada || estado == EstadoEntrega.atrasada) {
-      return 'Entregada';
+    if (estado == EstadoEntrega.entregada) return 'Entregada';
+    // El backend pasa a ATRASADA tanto la entrega tardía (con fechaEntrega)
+    // como la nunca entregada al vencer (sin fechaEntrega): misma regla que
+    // la web (J1)
+    if (estado == EstadoEntrega.atrasada) {
+      return entrega!.vencioSinEntregar ? 'Vencida' : 'Entregada';
     }
     return fechaLimiteFormateada;
   }
@@ -625,6 +629,16 @@ class EntregaTarea {
   bool get estaCalificada => estado == EstadoEntrega.calificada;
   bool get tieneArchivos => archivos.isNotEmpty;
   bool get estaAtrasada => estado == EstadoEntrega.atrasada;
+
+  /// ATRASADA agrupa la entrega tardía (con fechaEntrega) y la que venció
+  /// sin entregarse (sin fechaEntrega), J1
+  bool get vencioSinEntregar => estaAtrasada && !fueEntregada;
+
+  /// El estudiante ya entregó (a tiempo, tarde o ya calificada)
+  bool get yaEntregada =>
+      estado == EstadoEntrega.entregada ||
+      estado == EstadoEntrega.calificada ||
+      (estaAtrasada && fueEntregada);
 
   /// Texto de la nota sin asumir que el estado CALIFICADA trae calificación
   /// (p. ej. una re-entrega sobre una calificada queda sin nota, 5.C12).

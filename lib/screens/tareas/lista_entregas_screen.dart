@@ -135,12 +135,8 @@ class _ListaEntregasScreenState extends State<ListaEntregasScreen> {
     }
 
     final total = _tarea!.estudiantesIds.length;
-    final entregadas = _entregas
-        .where((e) =>
-            e.estado == EstadoEntrega.entregada ||
-            e.estado == EstadoEntrega.atrasada ||
-            e.estado == EstadoEntrega.calificada)
-        .length;
+    // ATRASADA sin fechaEntrega no cuenta como entregada (J1)
+    final entregadas = _entregas.where((e) => e.yaEntregada).length;
     final calificadas =
         _entregas.where((e) => e.estado == EstadoEntrega.calificada).length;
     final pendientes =

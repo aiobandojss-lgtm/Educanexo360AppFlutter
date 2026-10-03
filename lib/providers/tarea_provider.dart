@@ -701,14 +701,14 @@ class TareaProvider with ChangeNotifier {
       switch (filtro) {
         case FiltroTareaEstudiante.pendientes:
           // Pendientes: estado PENDIENTE o VISTA (no entregada aún)
+          // (o ATRASADA sin fechaEntrega: venció sin entregarse, J1)
           return entrega.estado == EstadoEntrega.pendiente ||
-              entrega.estado == EstadoEntrega.vista;
+              entrega.estado == EstadoEntrega.vista ||
+              entrega.vencioSinEntregar;
 
         case FiltroTareaEstudiante.entregadas:
           // Entregadas: estado ENTREGADA o ATRASADA (pero NO calificada)
-          return (entrega.estado == EstadoEntrega.entregada ||
-                  entrega.estado == EstadoEntrega.atrasada) &&
-              !entrega.estaCalificada;
+          return entrega.yaEntregada && !entrega.estaCalificada;
 
         case FiltroTareaEstudiante.calificadas:
           // Calificadas: estado CALIFICADA o tiene calificación
